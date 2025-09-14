@@ -1565,7 +1565,11 @@ class RAFTDICGUI:
             self.crop_size_h.set(str(h))
 
 
-if __name__ == '__main__':
+def main():
+    """Main entry point for the RAFT-DIC GUI application."""
     root = tk.Tk()
     app = RAFTDICGUI(root)
     root.mainloop()
+
+if __name__ == '__main__':
+    main() 

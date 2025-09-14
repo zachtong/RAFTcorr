@@ -63,7 +63,8 @@ def demo(args):
             viz(image1, flow_up)
 
 
-if __name__ == '__main__':
+def main():
+    """Main entry point for the RAFT-DIC demo application."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--path', help="dataset for evaluation")
@@ -71,5 +72,8 @@ if __name__ == '__main__':
     parser.add_argument('--mixed_precision', action='store_true', help='use mixed precision')
     parser.add_argument('--alternate_corr', action='store_true', help='use efficent correlation implementation')
     args = parser.parse_args()
-
+    
     demo(args)
+
+if __name__ == '__main__':
+    main()
