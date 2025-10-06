@@ -390,8 +390,8 @@ def cut_image_pair_with_flow(ref_img, def_img, project_root, model, device,
     
     return displacement_field, windows
 
-def save_displacement_results(displacement_field, output_dir, index):
-    """Save displacement field results in npy and mat formats"""
+def save_displacement_results(displacement_field, output_dir, index, roi_rect=None, roi_mask=None):
+    """Save displacement field results in npy and mat formats with coordinate information"""
     # Create directory structure
     npy_dir = os.path.join(output_dir, "displacement_results_npy")
     mat_dir = os.path.join(output_dir, "displacement_results_mat")
@@ -402,12 +402,59 @@ def save_displacement_results(displacement_field, output_dir, index):
     npy_file = os.path.join(npy_dir, f"displacement_field_{index}.npy")
     np.save(npy_file, displacement_field)
     
-    # Save .mat format
+    # Calculate coordinate information
+    h, w = displacement_field.shape[:2]
+    
+    # Create coordinate grids
+    if roi_rect is not None:
+        xmin, ymin, xmax, ymax = roi_rect
+        # Create reference coordinates (same for all time points)
+        y_coords, x_coords = np.mgrid[ymin:ymin+h, xmin:xmin+w]
+        X_ref = x_coords.astype(np.float64)
+        Y_ref = y_coords.astype(np.float64)
+        
+        # Calculate current coordinates by applying displacement
+        u = displacement_field[:, :, 0]
+        v = displacement_field[:, :, 1]
+        X_current = X_ref + u
+        Y_current = Y_ref + v
+        
+        # Apply ROI mask to set invalid regions to NaN
+        if roi_mask is not None:
+            # Crop ROI mask to match displacement field size
+            roi_mask_crop = roi_mask[ymin:ymax, xmin:xmax]
+            invalid_mask = ~roi_mask_crop
+            
+            X_ref[invalid_mask] = np.nan
+            Y_ref[invalid_mask] = np.nan
+            X_current[invalid_mask] = np.nan
+            Y_current[invalid_mask] = np.nan
+    else:
+        # Fallback: create coordinate grids without ROI information
+        y_coords, x_coords = np.mgrid[0:h, 0:w]
+        X_ref = x_coords.astype(np.float64)
+        Y_ref = y_coords.astype(np.float64)
+        
+        u = displacement_field[:, :, 0]
+        v = displacement_field[:, :, 1]
+        X_current = X_ref + u
+        Y_current = Y_ref + v
+    
+    # Save .mat format with coordinate information
     mat_file = os.path.join(mat_dir, f"displacement_field_{index}.mat")
     # Separate U and V components
     u = displacement_field[:, :, 0]
     v = displacement_field[:, :, 1]
-    sio.savemat(mat_file, {'U': u, 'V': v})
+    
+    # Save all data including coordinates
+    sio.savemat(mat_file, {
+        'U': u, 
+        'V': v,
+        'X_ref': X_ref,
+        'Y_ref': Y_ref,
+        'X_current': X_current,
+        'Y_current': Y_current
+    })
 
 def smooth_displacement_field(displacement_field, sigma=2.0):
     """

@@ -39,6 +39,8 @@ import matplotlib.pyplot as plt
 import visualization as vis
 import io
 import scipy.io as sio
+from scipy.interpolate import griddata
+from scipy.ndimage import gaussian_filter
 
 class CollapsibleFrame(ttk.LabelFrame):
     """A collapsible frame widget that can be expanded or collapsed."""
@@ -233,6 +235,10 @@ class RAFTDICGUI:
         self.overlay_density = tk.StringVar(value="20")
         self.overlay_alpha = tk.StringVar(value="0.5")  # Changed default to 0.5
         
+        # Add background image mode variables for deformed image visualization
+        self.background_mode = tk.StringVar(value="reference")  # reference or deformed
+        self.use_smooth_interpolation = tk.BooleanVar(value=True)  # for deformed mode interpolation
+        
     def create_control_panel(self, parent):
         """Create control panel with collapsible sections"""
         # Main control frame with scrollbar
@@ -404,6 +410,25 @@ class RAFTDICGUI:
                                     width=15,
                                     state="readonly")
         colormap_combo.grid(row=3, column=0, sticky="w", padx=5, pady=(0,5))
+        
+        # Background Image Mode selection
+        bg_mode_frame = ttk.LabelFrame(vis_frame, text="Background Image Mode", padding=5)
+        bg_mode_frame.grid(row=4, column=0, sticky="ew", pady=5)
+        bg_mode_frame.grid_columnconfigure(0, weight=1)
+        
+        # Mode radio buttons
+        ttk.Radiobutton(bg_mode_frame, text="Reference Image", variable=self.background_mode, 
+                       value="reference", command=self.update_displacement_preview).grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Radiobutton(bg_mode_frame, text="Deformed Image", variable=self.background_mode, 
+                       value="deformed", command=self.update_displacement_preview).grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        
+        # Deformed mode options
+        deformed_options_frame = ttk.Frame(bg_mode_frame)
+        deformed_options_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=2)
+        
+        ttk.Checkbutton(deformed_options_frame, text="Smooth Interpolation", 
+                       variable=self.use_smooth_interpolation,
+                       command=self.update_displacement_preview).grid(row=0, column=0, sticky="w", padx=20)
         
         # Add separator
         ttk.Separator(control_frame, orient="horizontal").grid(row=5, column=0, sticky="ew", pady=5)
@@ -846,8 +871,9 @@ class RAFTDICGUI:
                     sigma=args.sigma
                 )
 
-            # Save displacement field results
-            hf.save_displacement_results(displacement_field, args.project_root, i)
+            # Save displacement field results with coordinate information
+            hf.save_displacement_results(displacement_field, args.project_root, i, 
+                                       roi_rect=self.roi_rect, roi_mask=self.roi_mask)
 
             # If incremental mode, update reference image
             if args.mode == "incremental":
@@ -869,7 +895,7 @@ class RAFTDICGUI:
             self.update_displacement_preview()
 
     def update_displacement_preview(self, *args):
-        """Update displacement field preview"""
+        """Update displacement field preview with support for both reference and deformed image modes"""
         if not self.displacement_results or not hasattr(self, 'current_image'):
             return
         
@@ -892,14 +918,8 @@ class RAFTDICGUI:
             
             if self.roi_rect is None:
                 return
-                
-            # Get ROI coordinates
-            xmin, ymin, xmax, ymax = self.roi_rect
             
-            # Create figure with two subplots
-            fig, (ax_u, ax_v) = plt.subplots(1, 2, figsize=(16, 8))
-            
-            # Get displacement components
+            # Get displacement components for colorbar range calculation
             u = displacement[:, :, 0]
             v = displacement[:, :, 1]
             
@@ -914,66 +934,33 @@ class RAFTDICGUI:
             # Get current colormap
             current_colormap = self.colormap.get()
             
-            # Create full-size displacement fields initialized with NaN
-            h, w = self.current_image.shape[:2]
-            u_full = np.full((h, w), np.nan)
-            v_full = np.full((h, w), np.nan)
-            
-            # Place displacement fields in their correct position
-            u_full[ymin:ymax, xmin:xmax] = u
-            v_full[ymin:ymax, xmin:xmax] = v
-            
-            # Display U component
-            ax_u.imshow(self.current_image)  # Display full reference image
+            # Determine colorbar ranges
             if self.use_fixed_colorbar.get():
                 try:
                     vmin_u = float(self.colorbar_u_min.get())
                     vmax_u = float(self.colorbar_u_max.get())
-                except ValueError:
-                    vmin_u = np.nanmin(u)
-                    vmax_u = np.nanmax(u)
-            else:
-                vmin_u = np.nanmin(u)
-                vmax_u = np.nanmax(u)
-            
-            # Create mask for non-NaN values
-            mask_u = ~np.isnan(u_full)
-            u_masked = np.ma.array(u_full, mask=~mask_u)
-            
-            im_u = ax_u.imshow(u_masked, cmap=current_colormap, 
-                             alpha=alpha * mask_u, vmin=vmin_u, vmax=vmax_u)
-            ax_u.set_title("U Component Overlay")
-            fig.colorbar(im_u, ax=ax_u)
-            
-            # Display V component
-            ax_v.imshow(self.current_image)  # Display full reference image
-            if self.use_fixed_colorbar.get():
-                try:
                     vmin_v = float(self.colorbar_v_min.get())
                     vmax_v = float(self.colorbar_v_max.get())
                 except ValueError:
+                    vmin_u = np.nanmin(u)
+                    vmax_u = np.nanmax(u)
                     vmin_v = np.nanmin(v)
                     vmax_v = np.nanmax(v)
             else:
+                vmin_u = np.nanmin(u)
+                vmax_u = np.nanmax(u)
                 vmin_v = np.nanmin(v)
                 vmax_v = np.nanmax(v)
             
-            # Create mask for non-NaN values
-            mask_v = ~np.isnan(v_full)
-            v_masked = np.ma.array(v_full, mask=~mask_v)
-            
-            im_v = ax_v.imshow(v_masked, cmap=current_colormap, 
-                             alpha=alpha * mask_v, vmin=vmin_v, vmax=vmax_v)
-            ax_v.set_title("V Component Overlay")
-            fig.colorbar(im_v, ax=ax_v)
-            
-            # Remove axes
-            ax_u.set_axis_off()
-            ax_v.set_axis_off()
-            
-            # Ensure correct aspect ratio
-            ax_u.set_aspect('equal')
-            ax_v.set_aspect('equal')
+            # Create visualization based on selected background mode
+            if self.background_mode.get() == "deformed":
+                fig = self.create_deformed_displacement_visualization(
+                    displacement, current_frame, alpha, current_colormap, 
+                    vmin_u, vmax_u, vmin_v, vmax_v)
+            else:  # reference mode (default)
+                fig = self.create_reference_displacement_visualization(
+                    displacement, self.current_image, alpha, current_colormap, 
+                    vmin_u, vmax_u, vmin_v, vmax_v)
             
             # Save to memory buffer
             buf = io.BytesIO()
@@ -1003,6 +990,353 @@ class RAFTDICGUI:
             print(f"Error in update_displacement_preview: {str(e)}")
             import traceback
             traceback.print_exc()
+
+    def create_deformed_displacement_visualization(self, displacement, current_frame, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v):
+        """
+        Create displacement field visualization on deformed image background
+        
+        The algorithm:
+        1. Start with the original complex polygon ROI (not just bounding box)
+        2. For each point within the original ROI polygon, apply displacement field
+        3. Create deformed ROI shape by mapping original polygon points to new locations
+        4. Display displacement field on deformed image within the deformed polygon ROI
+        
+        Args:
+            displacement: displacement field array
+            current_frame: current frame index
+            alpha: transparency value
+            current_colormap: colormap name
+            vmin_u, vmax_u: U component range
+            vmin_v, vmax_v: V component range
+            
+        Returns:
+            matplotlib figure
+        """
+        try:
+            # Load current deformed image
+            if hasattr(self, 'image_files') and len(self.image_files) > current_frame + 1:
+                deformed_img_path = os.path.join(self.input_path.get(), self.image_files[current_frame + 1])
+                deformed_image = hf.load_and_convert_image(deformed_img_path)
+                if deformed_image is None:
+                    # Fallback to reference image if loading fails
+                    deformed_image = self.current_image
+            else:
+                # Fallback to reference image
+                deformed_image = self.current_image
+                
+            # Get ROI bounding box coordinates (for displacement field indexing)
+            xmin, ymin, xmax, ymax = self.roi_rect
+            
+            # Get displacement components
+            u = displacement[:, :, 0]
+            v = displacement[:, :, 1]
+            
+            # Get the original ROI polygon mask within the bounding box
+            roi_mask_crop = self.roi_mask[ymin:ymax, xmin:xmax] if self.roi_mask is not None else None
+            
+            if roi_mask_crop is None:
+                # Fallback to reference visualization if no ROI mask
+                return self.create_reference_displacement_visualization(displacement, deformed_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v)
+            
+            # Create coordinate grids for the ROI bounding box area
+            roi_h, roi_w = u.shape
+            y_coords, x_coords = np.mgrid[0:roi_h, 0:roi_w]
+            
+            # Transform coordinates to global image coordinates
+            x_global = x_coords + xmin
+            y_global = y_coords + ymin
+            
+            # Apply displacement field to get deformed coordinates
+            x_deformed = x_global + u
+            y_deformed = y_global + v
+            
+            # Initialize full-size arrays for the entire image
+            h, w = deformed_image.shape[:2]
+            u_full = np.full((h, w), np.nan)
+            v_full = np.full((h, w), np.nan)
+            deformed_mask = np.zeros((h, w), dtype=bool)
+            
+            # Only process points that are within the original polygon ROI
+            valid_roi_points = 0
+            for i in range(roi_h):
+                for j in range(roi_w):
+                    # Check if this point is within the original polygon ROI
+                    if not roi_mask_crop[i, j]:
+                        continue
+                        
+                    # Skip invalid displacements
+                    if np.isnan(u[i, j]) or np.isnan(v[i, j]):
+                        continue
+                    
+                    # Get deformed coordinates (rounded to nearest pixel)
+                    x_def = int(np.round(x_deformed[i, j]))
+                    y_def = int(np.round(y_deformed[i, j]))
+                    
+                    # Check if deformed coordinates are within image bounds
+                    if 0 <= x_def < w and 0 <= y_def < h:
+                        u_full[y_def, x_def] = u[i, j]
+                        v_full[y_def, x_def] = v[i, j]
+                        deformed_mask[y_def, x_def] = True
+                        valid_roi_points += 1
+            
+            print(f"Processed {valid_roi_points} points within original polygon ROI")
+            
+            # If we have too few valid points, try interpolation approach
+            if valid_roi_points < 10:
+                return self._create_deformed_visualization_with_interpolation(
+                    displacement, deformed_image, alpha, current_colormap, 
+                    vmin_u, vmax_u, vmin_v, vmax_v)
+            
+            # Apply smoothing if requested to fill gaps and smooth the field
+            if self.use_smooth_interpolation.get():
+                # Create a denser field using interpolation
+                u_full, v_full, deformed_mask = self._interpolate_sparse_displacement_field(
+                    u_full, v_full, deformed_mask, h, w)
+            
+            # Create figure with two subplots
+            fig, (ax_u, ax_v) = plt.subplots(1, 2, figsize=(16, 8))
+            
+            # Display U component on deformed image
+            ax_u.imshow(deformed_image, cmap='gray')
+            
+            # Create masked array for U component
+            u_masked = np.ma.array(u_full, mask=~deformed_mask)
+            
+            im_u = ax_u.imshow(u_masked, cmap=current_colormap, 
+                             alpha=alpha, vmin=vmin_u, vmax=vmax_u)
+            ax_u.set_title("U Component on Deformed Image (Polygon ROI)")
+            fig.colorbar(im_u, ax=ax_u)
+            
+            # Display V component on deformed image
+            ax_v.imshow(deformed_image, cmap='gray')
+            
+            # Create masked array for V component
+            v_masked = np.ma.array(v_full, mask=~deformed_mask)
+            
+            im_v = ax_v.imshow(v_masked, cmap=current_colormap, 
+                             alpha=alpha, vmin=vmin_v, vmax=vmax_v)
+            ax_v.set_title("V Component on Deformed Image (Polygon ROI)")
+            fig.colorbar(im_v, ax=ax_v)
+            
+            # Remove axes and set aspect ratio
+            ax_u.set_axis_off()
+            ax_v.set_axis_off()
+            ax_u.set_aspect('equal')
+            ax_v.set_aspect('equal')
+            
+            return fig
+            
+        except Exception as e:
+            print(f"Error in deformed visualization: {str(e)}, falling back to reference mode")
+            import traceback
+            traceback.print_exc()
+            # Fallback to reference image visualization
+            return self.create_reference_displacement_visualization(displacement, self.current_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v)
+    
+    def _interpolate_sparse_displacement_field(self, u_full, v_full, mask, h, w):
+        """
+        Interpolate sparse displacement field to create a denser representation
+        
+        Args:
+            u_full: sparse U displacement field
+            v_full: sparse V displacement field  
+            mask: mask indicating valid displacement locations
+            h, w: image dimensions
+            
+        Returns:
+            tuple: (interpolated_u, interpolated_v, new_mask)
+        """
+        try:
+            # Get coordinates of valid points
+            valid_coords = np.column_stack(np.where(mask))
+            if len(valid_coords) < 4:
+                return u_full, v_full, mask
+                
+            # Get displacement values at valid points
+            u_values = u_full[mask]
+            v_values = v_full[mask]
+            
+            # Create coordinate grid for interpolation
+            Y_grid, X_grid = np.mgrid[0:h, 0:w]
+            
+            # Interpolate U and V components
+            u_interp = griddata(valid_coords[:, [1, 0]], u_values, (X_grid, Y_grid), 
+                              method='linear', fill_value=np.nan)
+            v_interp = griddata(valid_coords[:, [1, 0]], v_values, (X_grid, Y_grid), 
+                              method='linear', fill_value=np.nan)
+            
+            # Apply Gaussian smoothing to reduce artifacts
+            u_temp = np.nan_to_num(u_interp, nan=0.0)
+            v_temp = np.nan_to_num(v_interp, nan=0.0)
+            
+            u_smoothed = gaussian_filter(u_temp, sigma=2.0)
+            v_smoothed = gaussian_filter(v_temp, sigma=2.0)
+            
+            # Create new mask (only where interpolation was successful)
+            new_mask = ~np.isnan(u_interp) & ~np.isnan(v_interp)
+            
+            # Restore original values at known points
+            u_smoothed[mask] = u_full[mask]
+            v_smoothed[mask] = v_full[mask]
+            
+            # Combine masks
+            final_mask = new_mask | mask
+            
+            return u_smoothed, v_smoothed, final_mask
+            
+        except Exception as e:
+            print(f"Interpolation failed: {e}")
+            return u_full, v_full, mask
+    
+    def _create_deformed_visualization_with_interpolation(self, displacement, deformed_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v):
+        """
+        Fallback method using interpolation when direct mapping produces too few points
+        This method also respects the complex polygon ROI
+        """
+        try:
+            # Get ROI coordinates
+            xmin, ymin, xmax, ymax = self.roi_rect
+            
+            # Get displacement components
+            u = displacement[:, :, 0]
+            v = displacement[:, :, 1]
+            
+            # Get the original ROI polygon mask within the bounding box
+            roi_mask_crop = self.roi_mask[ymin:ymax, xmin:xmax] if self.roi_mask is not None else None
+            
+            # Create coordinate grids for the ROI area
+            roi_h, roi_w = u.shape
+            y_coords, x_coords = np.mgrid[0:roi_h, 0:roi_w]
+            
+            # Transform to global coordinates and apply displacement
+            x_global = x_coords + xmin
+            y_global = y_coords + ymin
+            x_deformed = x_global + u
+            y_deformed = y_global + v
+            
+            # Create full image grid
+            h, w = deformed_image.shape[:2]
+            Y_full, X_full = np.mgrid[0:h, 0:w]
+            
+            # Only use points within the original polygon ROI for interpolation
+            if roi_mask_crop is not None:
+                # Combine ROI mask with validity mask
+                valid_mask = (~np.isnan(u) & ~np.isnan(v) & roi_mask_crop)
+            else:
+                # Fallback to just validity mask if no ROI mask available
+                valid_mask = ~np.isnan(u) & ~np.isnan(v)
+                
+            if np.sum(valid_mask) < 4:
+                return self.create_reference_displacement_visualization(displacement, deformed_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v)
+            
+            points_deformed = np.column_stack((x_deformed[valid_mask], y_deformed[valid_mask]))
+            u_values = u[valid_mask]
+            v_values = v[valid_mask]
+            
+            print(f"Interpolation fallback using {len(u_values)} points from polygon ROI")
+            
+            # Interpolate onto full image grid
+            u_full = griddata(points_deformed, u_values, (X_full, Y_full), 
+                            method='linear', fill_value=np.nan)
+            v_full = griddata(points_deformed, v_values, (X_full, Y_full), 
+                            method='linear', fill_value=np.nan)
+            
+            # Create figure
+            fig, (ax_u, ax_v) = plt.subplots(1, 2, figsize=(16, 8))
+            
+            # Display U component
+            ax_u.imshow(deformed_image, cmap='gray')
+            mask_u = ~np.isnan(u_full)
+            u_masked = np.ma.array(u_full, mask=~mask_u)
+            
+            im_u = ax_u.imshow(u_masked, cmap=current_colormap, 
+                             alpha=alpha, vmin=vmin_u, vmax=vmax_u)
+            ax_u.set_title("U Component on Deformed Image (Polygon ROI, Interpolated)")
+            fig.colorbar(im_u, ax=ax_u)
+            
+            # Display V component
+            ax_v.imshow(deformed_image, cmap='gray')
+            mask_v = ~np.isnan(v_full)
+            v_masked = np.ma.array(v_full, mask=~mask_v)
+            
+            im_v = ax_v.imshow(v_masked, cmap=current_colormap, 
+                             alpha=alpha, vmin=vmin_v, vmax=vmax_v)
+            ax_v.set_title("V Component on Deformed Image (Polygon ROI, Interpolated)")
+            fig.colorbar(im_v, ax=ax_v)
+            
+            # Remove axes and set aspect ratio
+            ax_u.set_axis_off()
+            ax_v.set_axis_off()
+            ax_u.set_aspect('equal')
+            ax_v.set_aspect('equal')
+            
+            return fig
+            
+        except Exception as e:
+            print(f"Interpolation fallback failed: {e}")
+            return self.create_reference_displacement_visualization(displacement, deformed_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v)
+
+    def create_reference_displacement_visualization(self, displacement, background_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v):
+        """
+        Create displacement field visualization on reference image background (original method)
+        
+        Args:
+            displacement: displacement field array
+            background_image: background image to display
+            alpha: transparency value
+            current_colormap: colormap name
+            vmin_u, vmax_u: U component range
+            vmin_v, vmax_v: V component range
+            
+        Returns:
+            matplotlib figure
+        """
+        # Get ROI coordinates
+        xmin, ymin, xmax, ymax = self.roi_rect
+        
+        # Create figure with two subplots
+        fig, (ax_u, ax_v) = plt.subplots(1, 2, figsize=(16, 8))
+        
+        # Get displacement components
+        u = displacement[:, :, 0]
+        v = displacement[:, :, 1]
+        
+        # Create full-size displacement fields initialized with NaN
+        h, w = background_image.shape[:2]
+        u_full = np.full((h, w), np.nan)
+        v_full = np.full((h, w), np.nan)
+        
+        # Place displacement fields in their correct position
+        u_full[ymin:ymax, xmin:xmax] = u
+        v_full[ymin:ymax, xmin:xmax] = v
+        
+        # Display U component
+        ax_u.imshow(background_image, cmap='gray')
+        mask_u = ~np.isnan(u_full)
+        u_masked = np.ma.array(u_full, mask=~mask_u)
+        
+        im_u = ax_u.imshow(u_masked, cmap=current_colormap, 
+                         alpha=alpha * mask_u, vmin=vmin_u, vmax=vmax_u)
+        ax_u.set_title("U Component on Reference Image")
+        fig.colorbar(im_u, ax=ax_u)
+        
+        # Display V component
+        ax_v.imshow(background_image, cmap='gray')
+        mask_v = ~np.isnan(v_full)
+        v_masked = np.ma.array(v_full, mask=~mask_v)
+        
+        im_v = ax_v.imshow(v_masked, cmap=current_colormap, 
+                         alpha=alpha * mask_v, vmin=vmin_v, vmax=vmax_v)
+        ax_v.set_title("V Component on Reference Image")
+        fig.colorbar(im_v, ax=ax_v)
+        
+        # Remove axes and set aspect ratio
+        ax_u.set_axis_off()
+        ax_v.set_axis_off()
+        ax_u.set_aspect('equal')
+        ax_v.set_aspect('equal')
+        
+        return fig
 
     def fig2img(self, fig):
         """Convert matplotlib image to PhotoImage"""
@@ -1432,13 +1766,22 @@ class RAFTDICGUI:
         
         # If mouse position provided, adjust scroll position to keep point under mouse
         if x is not None and y is not None:
-            # Calculate new scroll position
-            new_x = x * (self.zoom_factor / old_zoom) - event.x
-            new_y = y * (self.zoom_factor / old_zoom) - event.y
+            # Calculate the relative position change
+            canvas_width = self.roi_canvas.winfo_width()
+            canvas_height = self.roi_canvas.winfo_height()
             
-            # Set new scroll position
-            self.roi_canvas.xview_moveto(new_x / self.roi_canvas.winfo_width())
-            self.roi_canvas.yview_moveto(new_y / self.roi_canvas.winfo_height())
+            if canvas_width > 0 and canvas_height > 0:
+                # Calculate new scroll position to keep the point under the cursor
+                new_x = (x * self.zoom_factor - canvas_width / 2) / (self.roi_canvas.winfo_reqwidth() * self.zoom_factor)
+                new_y = (y * self.zoom_factor - canvas_height / 2) / (self.roi_canvas.winfo_reqheight() * self.zoom_factor)
+                
+                # Clamp values between 0 and 1
+                new_x = max(0, min(1, new_x))
+                new_y = max(0, min(1, new_y))
+                
+                # Set new scroll position
+                self.roi_canvas.xview_moveto(new_x)
+                self.roi_canvas.yview_moveto(new_y)
 
     def reset_zoom(self):
         """Reset scaling"""
