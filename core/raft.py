@@ -8,17 +8,18 @@ from extractor import BasicEncoder, SmallEncoder
 from corr import CorrBlock, AlternateCorrBlock
 from utils.utils import bilinear_sampler, coords_grid, upflow8
 
-try:
-    autocast = torch.cuda.amp.autocast
-except:
-    # dummy autocast for PyTorch < 1.6
-    class autocast:
-        def __init__(self, enabled):
-            pass
-        def __enter__(self):
-            pass
-        def __exit__(self, *args):
-            pass
+# use new torch.amp.autocast API; context chosen per device
+def _amp_autocast(enabled: bool, is_cuda: bool):
+    try:
+        return torch.amp.autocast(device_type='cuda', enabled=(enabled and is_cuda))
+    except Exception:
+        # Fallback: no autocast
+        class _NoOp:
+            def __enter__(self):
+                return None
+            def __exit__(self, *args):
+                return False
+        return _NoOp()
 
 
 class RAFT(nn.Module):
@@ -96,7 +97,7 @@ class RAFT(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with autocast(enabled=self.args.mixed_precision):
+        with _amp_autocast(self.args.mixed_precision, image1.is_cuda):
             fmap1, fmap2 = self.fnet([image1, image2])        
         
         fmap1 = fmap1.float()
@@ -107,7 +108,7 @@ class RAFT(nn.Module):
             corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
         # run the context network
-        with autocast(enabled=self.args.mixed_precision):
+        with _amp_autocast(self.args.mixed_precision, image1.is_cuda):
             cnet = self.cnet(image1)
             net, inp = torch.split(cnet, [hdim, cdim], dim=1)
             net = torch.tanh(net)
@@ -124,7 +125,7 @@ class RAFT(nn.Module):
             corr = corr_fn(coords1) # index correlation volume
 
             flow = coords1 - coords0
-            with autocast(enabled=self.args.mixed_precision):
+            with _amp_autocast(self.args.mixed_precision, image1.is_cuda):
                 net, up_mask, delta_flow = self.update_block(net, inp, corr, flow)
 
             # F(t+1) = F(t) + \Delta(t)

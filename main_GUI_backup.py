@@ -33,7 +33,7 @@ import customtkinter as ctk
 import tkinter.font as tkfont
 import os
 import cv2
-from PIL import Image, ImageTk, ImageDraw
+from PIL import Image, ImageTk
 from raft_dic_gui import processing as proc
 from raft_dic_gui import model as mdl
 from raft_dic_gui import preview as vis
@@ -458,13 +458,7 @@ class RAFTDICGUI:
             ttk = _TTKAdapter()
         except Exception:
             pass
-        # Respect title possibly set by external config in main()
-        try:
-            current_title = self.root.title()
-        except Exception:
-            current_title = ""
-        if not current_title or current_title in ("Tk", "CTk"):
-            self.root.title("RAFT-DIC Displacement Field Calculator")
+        self.root.title("RAFT-DIC Displacement Field Calculator")
         # Apply a consistent ttk theme and styles for a more modern look
         self.apply_theme()
         # Set default and minimum window size (taller to reveal Run button)
@@ -884,7 +878,7 @@ class RAFTDICGUI:
         except Exception:
             pass
         ttk.Checkbutton(tile_frame, text="Show Tiles Overlay", variable=self.show_tiles_overlay,
-                        command=lambda: self.update_roi_label(self.current_image)).grid(row=4, column=0, sticky="w", padx=(5,5), pady=(2,0))
+                        command=lambda: self.update_roi_label(self.current_image)).grid(row=2, column=3, sticky="w", padx=(15,5), pady=(4,0))
         # Help button for tiling
         help_btn = self.create_help_button(tile_frame, "tiling")
         help_btn.grid(row=2, column=4, padx=6, pady=(4,0))
@@ -1298,13 +1292,11 @@ class RAFTDICGUI:
         self.frame_slider.grid(row=2, column=0, sticky=(tk.W, tk.E), padx=5, pady=5)
         
         # Image information display (fixed under ROI panel)
-        self.info_font = ctk.CTkFont(family="Segoe UI", size=11)
-        self.image_info = ttk.Label(roi_frame, text="", font=self.info_font)
+        self.image_info = ttk.Label(roi_frame, text="")
         self.image_info.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5)
 
         # ROI metrics text area (live tiling/budget info)
-        self.metrics_font = ("Consolas", 11)
-        self.roi_metrics_text = tk.Text(roi_frame, height=6, wrap=tk.WORD, font=self.metrics_font)
+        self.roi_metrics_text = tk.Text(roi_frame, height=6, wrap=tk.WORD)
         self.roi_metrics_text.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(0,5))
         try:
             # Make it read-only by default
@@ -1457,10 +1449,8 @@ class RAFTDICGUI:
     def process_images(self, args):
         """Process all images"""
         # Get image file list
-        image_files = sorted([
-            f for f in os.listdir(args.img_dir)
-            if f.lower().endswith(('.tif', '.tiff', '.png', '.jpg', '.jpeg', '.bmp'))
-        ])
+        image_files = sorted([f for f in os.listdir(args.img_dir) 
+                          if f.endswith(('.tif', '.tiff', '.png', '.jpg', '.jpeg', '.bmp'))])
 
         if len(image_files) < 2:
             raise Exception("At least 2 images are needed")
@@ -3352,10 +3342,7 @@ class RAFTDICGUI:
         """Create a compact info button that shows a help dialog on click."""
         def _show():
             try:
-                if tooltip_key == "smooth":
-                    msg = "Smoothing sigma range: 0.5-5"
-                else:
-                    msg = self.tooltips.get(tooltip_key, "")
+                msg = self.tooltips.get(tooltip_key, "")
                 messagebox.showinfo("Info", msg)
             except Exception:
                 pass
@@ -3369,9 +3356,10 @@ class RAFTDICGUI:
     def apply_theme(self):
         """Apply a modern CustomTkinter theme, fonts, and sizing."""
         try:
-            # Appearance/theme are handled via app_config.json in main();
-            # avoid overriding here to respect user configuration.
-            pass
+            # Appearance adapts to OS theme
+            ctk.set_appearance_mode("system")
+            # Neutral modern color theme
+            ctk.set_default_color_theme("blue")
 
             # Set readable default fonts across widgets
             try:
@@ -3593,115 +3581,7 @@ class RAFTDICGUI:
 
 def main():
     """Main entry point for the RAFT-DIC GUI application."""
-    # Load optional external app config
-    def _load_app_config():
-        cfg_paths = [
-            os.path.join('assets', 'app_config.json'),
-            os.path.join('assets', 'config', 'app_config.json')
-        ]
-        for p in cfg_paths:
-            try:
-                if os.path.isfile(p):
-                    import json
-                    with open(p, 'r', encoding='utf-8') as f:
-                        return json.load(f)
-            except Exception:
-                pass
-        return {}
-
     root = ctk.CTk()
-    # Apply configurable branding and theme without hardcoding
-    try:
-        cfg = _load_app_config()
-        title = cfg.get('app_title') or 'RAFT-DIC GUI'
-        root.title(title)
-        # Appearance and color theme
-        if 'appearance_mode' in cfg:
-            try: ctk.set_appearance_mode(cfg['appearance_mode'])
-            except Exception: pass
-        if 'color_theme' in cfg:
-            try:
-                ct = cfg['color_theme']
-                # If a JSON path is provided, treat it as an override on top of a base theme
-                if isinstance(ct, str) and ct.lower().endswith('.json') and os.path.isfile(ct):
-                    import json
-                    # Start from a known-good base theme
-                    ctk.set_default_color_theme('blue')
-                    try:
-                        with open(ct, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        overrides = data.get('overrides', data)
-                        def _deep_update(dst, src):
-                            for k, v in src.items():
-                                if isinstance(v, dict) and isinstance(dst.get(k), dict):
-                                    _deep_update(dst[k], v)
-                                else:
-                                    dst[k] = v
-                        # Apply overrides into the live theme dict before widgets are created
-                        _deep_update(ctk.ThemeManager.theme, overrides)
-                    except Exception:
-                        # Fall back to base theme if override fails
-                        pass
-                else:
-                    # Use built-in or file-based theme directly
-                    ctk.set_default_color_theme(ct)
-                # Validate essential keys exist in theme; if not, fallback to 'blue'
-                try:
-                    th = ctk.ThemeManager.theme
-                    required = [
-                        ('CTkFrame', None),
-                        ('CTkScrollbar', 'fg_color'),
-                        ('CTkScrollbar', 'border_spacing'),
-                        ('CTkButton', 'text_color_disabled')
-                    ]
-                    for key, sub in required:
-                        if key not in th:
-                            raise KeyError(key)
-                        if sub and sub not in th[key]:
-                            raise KeyError(f"{key}.{sub}")
-                except Exception:
-                    ctk.set_default_color_theme('blue')
-            except Exception:
-                # If loading fails entirely, keep default
-                pass
-        # Window icon (png/ico)
-        try:
-            icon_png = cfg.get('icon_png')
-            icon_ico = cfg.get('icon_ico')
-            # Auto-generate simple default icons if missing
-            def _ensure_icon(path_png, path_ico):
-                try:
-                    os.makedirs(os.path.dirname(path_png), exist_ok=True)
-                except Exception:
-                    pass
-                if not os.path.isfile(path_png):
-                    try:
-                        img = Image.new('RGBA', (256, 256), (17, 94, 164, 255))
-                        drw = ImageDraw.Draw(img)
-                        drw.ellipse((40, 40, 216, 216), fill=(255, 180, 0, 255))
-                        img.save(path_png, format='PNG')
-                    except Exception:
-                        pass
-                if path_ico and not os.path.isfile(path_ico):
-                    try:
-                        img = Image.open(path_png).convert('RGBA')
-                        img.save(path_ico, sizes=[(256,256)])
-                    except Exception:
-                        pass
-            if icon_png:
-                _ensure_icon(icon_png, icon_ico)
-            if icon_png and os.path.isfile(icon_png):
-                root.iconphoto(True, tk.PhotoImage(file=icon_png))
-            if icon_ico and os.path.isfile(icon_ico):
-                try:
-                    root.iconbitmap(icon_ico)
-                except Exception:
-                    pass
-        except Exception:
-            pass
-    except Exception:
-        pass
-
     app = RAFTDICGUI(root)
     try:
         # Adaptive window size and centering

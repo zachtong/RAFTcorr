@@ -1,0 +1,8 @@
+{
+  "app_title": "RAFTcorr: Digital Image Correlation with RAFT",
+  "appearance_mode": "system",
+  "color_theme": "assets/themes/my_theme.json",
+  "icon_png": "assets/icons/app_icon.png",
+  "icon_ico": "assets/icons/app_icon.ico"
+}
+

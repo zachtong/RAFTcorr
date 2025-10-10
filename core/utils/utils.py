@@ -28,7 +28,7 @@ def forward_interpolate(flow):
     dx, dy = flow[0], flow[1]
 
     ht, wd = dx.shape
-    x0, y0 = np.meshgrid(np.arange(wd), np.arange(ht))
+    x0, y0 = np.meshgrid(np.arange(wd), np.arange(ht), indexing='xy')
 
     x1 = x0 + dx
     y1 = y0 + dy
@@ -72,7 +72,7 @@ def bilinear_sampler(img, coords, mode='bilinear', mask=False):
 
 
 def coords_grid(batch, ht, wd, device):
-    coords = torch.meshgrid(torch.arange(ht, device=device), torch.arange(wd, device=device))
+    coords = torch.meshgrid(torch.arange(ht, device=device), torch.arange(wd, device=device), indexing='ij')
     coords = torch.stack(coords[::-1], dim=0).float()
     return coords[None].repeat(batch, 1, 1, 1)
 

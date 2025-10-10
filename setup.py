@@ -216,7 +216,6 @@ setup(
     entry_points={
         "console_scripts": [
             "raft-dic-gui=main_GUI:main",
-            "raft-dic-demo=demo:main",
         ],
     },
     
