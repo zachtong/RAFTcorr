@@ -2282,7 +2282,10 @@ class RAFTDICGUI:
         args.prefer_square = bool(self.prefer_square.get())
         # Load model
         model_args = mdl.Args()
-        args.model = mdl.load_model("models/raft-dic_v1.pth", args=model_args)
+        # Set parameters to match the new model architecture
+        model_args.corr_levels = 2  # Changed from default 4 to 2
+        model_args.corr_radius = 4  # Keep as 4
+        args.model = mdl.load_model("models/raft_dic_small_mixed_precision_no_alt_5000.pth", args=model_args)
         args.device = 'cuda'
         
         # Ensure output directory exists

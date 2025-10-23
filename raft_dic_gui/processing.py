@@ -25,11 +25,22 @@ from .model import inference
 
 
 def load_and_convert_image(img_path: str) -> np.ndarray:
-    """Load image and convert to 8-bit RGB with sensible handling for TIFF/float/uint16."""
+    """Load image and convert to 8-bit RGB with sensible handling for TIFF/float/uint16.
+
+    Robustness improvements:
+    - If a file has .tif/.tiff extension but is actually PNG (or another format),
+      gracefully fall back to OpenCV instead of raising a hard error from tifffile.
+    """
     ext = os.path.splitext(img_path)[1].lower()
 
+    frame = None
     if ext in ['.tif', '.tiff']:
-        frame = tifffile.imread(img_path)
+        try:
+            frame = tifffile.imread(img_path)
+        except Exception as e:
+            # Fallback if mislabeled TIFF or unsupported TIFF variant; try generic reader
+            print(f"Warning: TIFF reader failed for '{img_path}' ({e}); falling back to cv2.")
+            frame = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
     else:
         frame = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
 
