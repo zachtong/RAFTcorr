@@ -561,6 +561,12 @@ class RAFTDICGUI:
         # Path variables
         self.input_path = tk.StringVar()
         self.output_path = tk.StringVar()
+        self.selected_model = tk.StringVar()
+        self.model_summary_text = tk.StringVar(value="No checkpoint selected.")
+        self.available_models = []
+        self.model_lookup = {}
+        self._current_model_metadata = None
+        self.model_combobox = None
         
         # Processing parameter variables
         self.mode = tk.StringVar(value="accumulative")
@@ -618,6 +624,7 @@ class RAFTDICGUI:
         # Help tooltips text
         self.tooltips = {
             "path": "Select input image directory and output directory for results",
+            "model": "Choose the RAFT checkpoint to run; settings are inferred automatically per file",
             "mode": "Accumulative: Calculate displacement relative to first frame\nIncremental: Calculate displacement relative to previous frame",
             "crop": "Enable/disable image cropping for processing",
             "crop_size": "Size of the cropping window (Width ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Height)",
@@ -718,6 +725,20 @@ class RAFTDICGUI:
         output_entry = ttk.Entry(path_content, textvariable=self.output_path)
         output_entry.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
         ttk.Button(path_content, text="Browse", command=self.browse_output, width=8).grid(row=1, column=2, padx=5, pady=5)
+
+        # Model selection
+        ttk.Label(path_content, text="Model Checkpoint:").grid(row=2, column=0, sticky="w", padx=5, pady=(5, 0))
+        self.model_combobox = ttk.Combobox(path_content, textvariable=self.selected_model, values=(), width=38, state="readonly")
+        self.model_combobox.grid(row=2, column=1, sticky="ew", padx=5, pady=(5, 0))
+        try:
+            self.model_combobox.bind('<<ComboboxSelected>>', lambda e: self.on_model_selected())
+        except Exception:
+            pass
+        ttk.Button(path_content, text="Refresh", command=self.refresh_model_list, width=8).grid(row=2, column=2, padx=5, pady=(5, 0))
+        ttk.Label(path_content, textvariable=self.model_summary_text, justify="left", wraplength=360).grid(
+            row=3, column=0, columnspan=3, sticky="w", padx=5, pady=(2, 6)
+        )
+        self.refresh_model_list(initial=True)
         
         # Add separator
         ttk.Separator(control_frame, orient="horizontal").grid(row=1, column=0, sticky="ew", pady=5)
@@ -1106,6 +1127,75 @@ class RAFTDICGUI:
         self.update_max_disp_hint()
         # Initialize smoothing UI state
         self.update_smoothing_state()
+
+    def refresh_model_list(self, *_args, initial: bool = False):
+        """Populate available RAFT checkpoints in the model selector."""
+        try:
+            entries = mdl.discover_models()
+        except Exception as exc:
+            entries = []
+            if not initial:
+                messagebox.showerror("Model Discovery Failed", f"Could not scan models folder:\n{exc}")
+
+        labels = [entry.label for entry in entries]
+        self.available_models = entries
+        self.model_lookup = {entry.label: entry for entry in entries}
+
+        if self.model_combobox is not None:
+            try:
+                self.model_combobox.configure(values=labels)
+            except Exception:
+                self.model_combobox['values'] = labels
+
+        current_label = self.selected_model.get()
+        default_label = None
+        if current_label and current_label in self.model_lookup:
+            default_label = current_label
+        elif labels:
+            target_suffix = "raft_dic_small_mixed_precision_no_alt_5000.pth"
+            for entry in entries:
+                if entry.label.lower().endswith(target_suffix):
+                    default_label = entry.label
+                    break
+            if default_label is None:
+                default_label = labels[0]
+
+        if default_label:
+            self.selected_model.set(default_label)
+            if self.model_combobox is not None:
+                try:
+                    self.model_combobox.set(default_label)
+                except Exception:
+                    pass
+            self.on_model_selected(show_errors=not initial)
+        else:
+            self.selected_model.set("")
+            self._current_model_metadata = None
+            self.model_summary_text.set("No checkpoints found in models directory.")
+            if not initial and not entries:
+                messagebox.showwarning("Model Discovery", "No *.pth checkpoints were found in the models directory.")
+
+    def on_model_selected(self, *_args, show_errors: bool = False):
+        """Update model summary and cached metadata when selection changes."""
+        label = self.selected_model.get()
+        entry = self.model_lookup.get(label)
+        if not entry:
+            self.model_summary_text.set("Select a model checkpoint.")
+            self._current_model_metadata = None
+            if show_errors and self.available_models:
+                messagebox.showwarning("Model Selection", "Please choose a valid checkpoint before running.")
+            return
+
+        try:
+            metadata = mdl.describe_checkpoint(entry.path)
+            summary = mdl.metadata_summary(metadata)
+            self.model_summary_text.set(summary)
+            self._current_model_metadata = metadata
+        except Exception as exc:
+            self.model_summary_text.set(f"Failed to inspect checkpoint: {exc}")
+            self._current_model_metadata = None
+            if show_errors:
+                messagebox.showerror("Model Inspection Failed", f"Could not read checkpoint metadata:\n{exc}")
 
     def create_preview_panel(self, roi_pane, vis_pane):
         """Create ROI and Visualization panels in provided panes"""
@@ -2280,13 +2370,27 @@ class RAFTDICGUI:
             args.p_max_pixels = 1100*1100
             self.p_max_pixels.set("1100*1100")
         args.prefer_square = bool(self.prefer_square.get())
-        # Load model
-        model_args = mdl.Args()
-        # Set parameters to match the new model architecture
-        model_args.corr_levels = 2  # Changed from default 4 to 2
-        model_args.corr_radius = 4  # Keep as 4
-        args.model = mdl.load_model("models/raft_dic_small_mixed_precision_no_alt_5000.pth", args=model_args)
-        args.device = 'cuda'
+        # Load model based on current selection
+        selected_label = self.selected_model.get()
+        entry = self.model_lookup.get(selected_label)
+        if not entry:
+            messagebox.showerror("Model Selection", "Please select a model checkpoint before running.")
+            return
+
+        device = getattr(mdl, "DEFAULT_DEVICE", "cuda")
+        try:
+            metadata = self._current_model_metadata
+            if metadata is None or os.path.abspath(metadata.path) != os.path.abspath(entry.path):
+                metadata = mdl.describe_checkpoint(entry.path)
+                self._current_model_metadata = metadata
+            args.model = mdl.load_model(entry.path, metadata=metadata, device=device)
+            args.model_metadata = metadata
+            args.model_path = entry.path
+            self.model_summary_text.set(mdl.metadata_summary(metadata))
+        except Exception as exc:
+            messagebox.showerror("Model Load Failed", f"Could not load the selected checkpoint:\n{exc}")
+            return
+        args.device = device
         
         # Ensure output directory exists
         os.makedirs(args.project_root, exist_ok=True)

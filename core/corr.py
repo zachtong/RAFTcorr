@@ -11,7 +11,7 @@ except:
 
 class CorrBlock:
     def __init__(self, fmap1, fmap2, num_levels=4, radius=4):
-        self.num_levels = num_levels
+        self.num_levels = num_levels if num_levels is not None else 4
         self.radius = radius
         self.corr_pyramid = []
 
@@ -62,7 +62,7 @@ class CorrBlock:
 
 class AlternateCorrBlock:
     def __init__(self, fmap1, fmap2, num_levels=4, radius=4):
-        self.num_levels = num_levels
+        self.num_levels = num_levels if num_levels is not None else 4
         self.radius = radius
 
         self.pyramid = [(fmap1, fmap2)]

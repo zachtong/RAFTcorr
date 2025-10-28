@@ -22,22 +22,62 @@ def _amp_autocast(enabled: bool, is_cuda: bool):
         return _NoOp()
 
 
+VARIANT_PYRAMID = "pyramid"
+VARIANT_FULL_RES = "full_res"
+DEFAULT_VARIANT = VARIANT_PYRAMID
+_VARIANT_SPECS = {
+    VARIANT_PYRAMID: {
+        "full_resolution": False,
+        "default_corr_levels": 4,
+        "default_radius_small": 3,
+        "default_radius_large": 4,
+        "needs_upsample": True,
+    },
+    VARIANT_FULL_RES: {
+        "full_resolution": True,
+        "default_corr_levels": 2,
+        "default_radius_small": 3,
+        "default_radius_large": 4,
+        "needs_upsample": False,
+    },
+}
+
+
 class RAFT(nn.Module):
     def __init__(self, args):
         super(RAFT, self).__init__()
         self.args = args
+        variant_raw = getattr(args, 'variant', DEFAULT_VARIANT)
+        variant = variant_raw.lower().replace('-', '_') if isinstance(variant_raw, str) else DEFAULT_VARIANT
+        if variant not in _VARIANT_SPECS:
+            variant = DEFAULT_VARIANT
+        self.variant = variant
+        spec = _VARIANT_SPECS[variant]
+        self.full_resolution = spec["full_resolution"]
+        self._needs_upsample = spec["needs_upsample"]
+        setattr(self.args, 'variant', self.variant)
+        setattr(self.args, 'full_resolution', self.full_resolution)
 
         if args.small:
             self.hidden_dim = hdim = 96
             self.context_dim = cdim = 64
-            args.corr_levels = 4
-            args.corr_radius = 3
-        
+            default_levels = spec["default_corr_levels"]
+            default_radius = spec["default_radius_small"]
         else:
             self.hidden_dim = hdim = 128
             self.context_dim = cdim = 128
-            args.corr_levels = 4
-            args.corr_radius = 4
+            default_levels = spec["default_corr_levels"]
+            default_radius = spec["default_radius_large"]
+
+        if not hasattr(self.args, 'corr_levels') or self.args.corr_levels is None:
+            self.args.corr_levels = default_levels
+        else:
+            self.args.corr_levels = int(self.args.corr_levels)
+
+        if not hasattr(self.args, 'corr_radius') or self.args.corr_radius is None:
+            self.args.corr_radius = default_radius
+        else:
+            self.args.corr_radius = int(self.args.corr_radius)
 
         if 'dropout' not in self.args:
             self.args.dropout = 0
@@ -45,15 +85,17 @@ class RAFT(nn.Module):
         if 'alternate_corr' not in self.args:
             self.args.alternate_corr = False
 
+        encoder_kwargs = {'full_resolution': self.full_resolution}
+
         # feature network, context network, and update block
         if args.small:
-            self.fnet = SmallEncoder(output_dim=128, norm_fn='instance', dropout=args.dropout)        
-            self.cnet = SmallEncoder(output_dim=hdim+cdim, norm_fn='none', dropout=args.dropout)
+            self.fnet = SmallEncoder(output_dim=128, norm_fn='instance', dropout=args.dropout, **encoder_kwargs)
+            self.cnet = SmallEncoder(output_dim=hdim+cdim, norm_fn='none', dropout=args.dropout, **encoder_kwargs)
             self.update_block = SmallUpdateBlock(self.args, hidden_dim=hdim)
 
         else:
-            self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)        
-            self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=args.dropout)
+            self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout, **encoder_kwargs)
+            self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=args.dropout, **encoder_kwargs)
             self.update_block = BasicUpdateBlock(self.args, hidden_dim=hdim)
 
     def freeze_bn(self):
@@ -64,8 +106,12 @@ class RAFT(nn.Module):
     def initialize_flow(self, img):
         """ Flow is represented as difference between two coordinate grids flow = coords1 - coords0"""
         N, C, H, W = img.shape
-        coords0 = coords_grid(N, H//8, W//8, device=img.device)
-        coords1 = coords_grid(N, H//8, W//8, device=img.device)
+        if self.full_resolution:
+            coords0 = coords_grid(N, H, W, device=img.device)
+            coords1 = coords_grid(N, H, W, device=img.device)
+        else:
+            coords0 = coords_grid(N, H//8, W//8, device=img.device)
+            coords1 = coords_grid(N, H//8, W//8, device=img.device)
 
         # optical flow computed as difference: flow = coords1 - coords0
         return coords0, coords1
@@ -103,9 +149,9 @@ class RAFT(nn.Module):
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
         if self.args.alternate_corr:
-            corr_fn = AlternateCorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
+            corr_fn = AlternateCorrBlock(fmap1, fmap2, num_levels=self.args.corr_levels, radius=self.args.corr_radius)
         else:
-            corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
+            corr_fn = CorrBlock(fmap1, fmap2, num_levels=self.args.corr_levels, radius=self.args.corr_radius)
 
         # run the context network
         with _amp_autocast(self.args.mixed_precision, image1.is_cuda):
@@ -132,10 +178,13 @@ class RAFT(nn.Module):
             coords1 = coords1 + delta_flow
 
             # upsample predictions
-            if up_mask is None:
-                flow_up = upflow8(coords1 - coords0)
+            if not self._needs_upsample:
+                flow_up = coords1 - coords0
             else:
-                flow_up = self.upsample_flow(coords1 - coords0, up_mask)
+                if up_mask is None:
+                    flow_up = upflow8(coords1 - coords0)
+                else:
+                    flow_up = self.upsample_flow(coords1 - coords0, up_mask)
             
             flow_predictions.append(flow_up)
 
