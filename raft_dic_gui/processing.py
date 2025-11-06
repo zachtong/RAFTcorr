@@ -188,12 +188,12 @@ def cut_image_pair_with_flow(ref_img: np.ndarray, def_img: np.ndarray, project_r
             print(f"Warning: Failed to save windows layout: {str(e)}")
 
     total_time = time.time() - start_total
-    print("\nTime statistics:")
-    print(f"Total processing time: {total_time:.2f} seconds")
-    print(f"RAFT inference time: {inference_time:.2f} seconds")
+    _emit_status("\nTime statistics:")
+    _emit_status(f"Total processing time: {total_time:.2f} seconds")
+    _emit_status(f"RAFT inference time: {inference_time:.2f} seconds")
     if total_time > 0:
-        print(f"RAFT inference percentage: {(inference_time/total_time*100):.1f}%")
-        print(f"Other operations time: {(total_time-inference_time):.2f} seconds")
+        _emit_status(f"RAFT inference percentage: {(inference_time/total_time*100):.1f}%")
+        _emit_status(f"Other operations time: {(total_time-inference_time):.2f} seconds")
 
     return displacement_field, windows
 
@@ -229,18 +229,49 @@ def process_image_pair(ref_img: np.ndarray, def_img: np.ndarray, project_root: s
         displacement_field = smooth_displacement_field(displacement_field, sigma=sigma)
 
     total_time = time.time() - start_total
-    print("\nTime statistics:")
-    print(f"Total processing time: {total_time:.2f} seconds")
-    print(f"RAFT inference time: {inference_time:.2f} seconds")
+    _emit_status("\nTime statistics:")
+    _emit_status(f"Total processing time: {total_time:.2f} seconds")
+    _emit_status(f"RAFT inference time: {inference_time:.2f} seconds")
     if total_time > 0:
-        print(f"RAFT inference percentage: {(inference_time/total_time*100):.1f}%")
-        print(f"Other operations time: {(total_time-inference_time):.2f} seconds")
+        _emit_status(f"RAFT inference percentage: {(inference_time/total_time*100):.1f}%")
+        _emit_status(f"Other operations time: {(total_time-inference_time):.2f} seconds")
 
     return displacement_field, None
 
 
 # ------------------------- New tiled ROI processing -------------------------
 import torch
+
+_status_logger = None
+
+def set_status_logger(callback):
+    global _status_logger
+    _status_logger = callback
+
+def _emit_status(message: str):
+    print(message, flush=True)
+    if _status_logger:
+        try:
+            _status_logger(message)
+        except Exception:
+            pass
+
+
+
+_status_logger = None
+
+def set_status_logger(callback):
+    global _status_logger
+    _status_logger = callback
+
+def _emit_status(message: str):
+    print(message, flush=True)
+    if _status_logger:
+        try:
+            _status_logger(message)
+        except Exception:
+            pass
+
 
 
 def _compute_min_bounding_box(roi_mask_full: np.ndarray):
@@ -613,3 +644,4 @@ def save_displacement_sequence(displacements, output_dir: str, roi_rect=None, ro
             'X_current': Xcur_cells,
             'Y_current': Ycur_cells,
         })
+

@@ -285,12 +285,13 @@ def _inspect_checkpoint(abs_path: str) -> Dict[str, Any]:
                     return state_dict[name]
             return None
 
-        conv1 = lookup('module.fnet.conv1.weight', 'fnet.conv1.weight')
+        conv1 = lookup('module.fnet.conv1.weight', 'fnet.conv1.weight',
+                       'module.fnet.layer0.0.conv1.weight', 'fnet.layer0.0.conv1.weight')
         if conv1 is not None and conv1.ndim >= 1:
             out_channels = conv1.shape[0]
-            if out_channels == 32:
+            if out_channels in (32, 48):
                 info['small'] = True
-            elif out_channels == 64:
+            elif out_channels in (64, 96):
                 info['small'] = False
 
         convc1 = lookup('module.update_block.encoder.convc1.weight',
@@ -301,6 +302,10 @@ def _inspect_checkpoint(abs_path: str) -> Dict[str, Any]:
             if levels > 0:
                 info['corr_levels'] = levels
                 info['corr_radius'] = radius
+                if 'variant' not in info:
+                    info['variant'] = VARIANT_FULL_RES if levels <= 2 else VARIANT_PYRAMID
+                if 'full_resolution' not in info:
+                    info['full_resolution'] = bool(levels <= 2)
     finally:
         # Free references eagerly
         del state_dict
@@ -308,26 +313,26 @@ def _inspect_checkpoint(abs_path: str) -> Dict[str, Any]:
 
 
 def _resolve_bool(info_value: Any, hint_value: Any, default: bool) -> bool:
-    if hint_value is not None:
-        return _coerce_bool(hint_value, default)
     if info_value is not None:
         return _coerce_bool(info_value, default)
+    if hint_value is not None:
+        return _coerce_bool(hint_value, default)
     return default
 
 
 def _resolve_int(info_value: Any, hint_value: Any, default: Optional[int]) -> Optional[int]:
-    if hint_value is not None:
-        return _coerce_int(hint_value, default)
     if info_value is not None:
         return _coerce_int(info_value, default)
+    if hint_value is not None:
+        return _coerce_int(hint_value, default)
     return default
 
 
 def _resolve_float(info_value: Any, hint_value: Any, default: Optional[float]) -> Optional[float]:
-    if hint_value is not None:
-        return _coerce_float(hint_value, default)
     if info_value is not None:
         return _coerce_float(info_value, default)
+    if hint_value is not None:
+        return _coerce_float(hint_value, default)
     return default
 
 
@@ -352,9 +357,6 @@ def describe_checkpoint(weights_path: str,
     variant = _normalize_variant(hints.get('variant')) or _normalize_variant(info.get('variant'))
     if variant not in _KNOWN_VARIANTS:
         variant = None
-
-    if variant is None and corr_levels is not None and corr_levels <= 2:
-        variant = VARIANT_FULL_RES
 
     full_resolution_default = (variant == VARIANT_FULL_RES) if variant else False
     full_resolution = _resolve_bool(info.get('full_resolution'), hints.get('full_resolution'),

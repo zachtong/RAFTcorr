@@ -1,4 +1,4 @@
-"""
+﻿"""
 RAFT-DIC GUI Application
 ------------------------
 This module implements a graphical user interface for the RAFT-DIC displacement field calculator.
@@ -32,6 +32,7 @@ from tkinter import ttk, filedialog, messagebox, simpledialog
 import customtkinter as ctk
 import tkinter.font as tkfont
 import os
+import threading
 import cv2
 from PIL import Image, ImageTk, ImageDraw
 from raft_dic_gui import processing as proc
@@ -448,7 +449,97 @@ class RAFTDICGUI:
             self.confirm_roi_btn.grid()
         except Exception:
             pass
-        
+
+    def _ui_call(self, func, *args, wait: bool = False, **kwargs):
+        """Execute a callable on the Tk main thread."""
+        if threading.current_thread() is threading.main_thread():
+            return func(*args, **kwargs)
+
+        result = {}
+        event = threading.Event()
+
+        def _wrapper():
+            try:
+                result['value'] = func(*args, **kwargs)
+            finally:
+                event.set()
+
+        self.root.after(0, _wrapper)
+        if wait:
+            event.wait()
+            return result.get('value')
+
+    def _set_running_state(self, running: bool):
+        """Toggle global UI state while processing runs in background."""
+        def _toggle():
+            try:
+                self.root.configure(cursor="watch" if running else "")
+            except Exception:
+                pass
+
+            state = 'disabled' if running else 'normal'
+            for child in self.root.winfo_children():
+                for widget in child.winfo_children():
+                    if isinstance(widget, (ttk.Button, ttk.Entry, ttk.Radiobutton)):
+                        try:
+                            if widget is self.stop_button:
+                                widget.configure(state='normal' if running else 'disabled')
+                            else:
+                                widget.configure(state=state)
+                        except Exception:
+                            pass
+
+            try:
+                self.run_button.configure(state='disabled' if running else 'normal')
+            except Exception:
+                pass
+            try:
+                self.stop_button.configure(state='normal' if running else 'disabled')
+            except Exception:
+                pass
+
+        self._ui_call(_toggle, wait=True)
+
+    def _update_progress(self, percent: float = None, current: int = None, total: int = None):
+        """Update progress bar and text safely from any thread."""
+        def _apply():
+            if percent is not None:
+                try:
+                    self.progress.configure(value=percent)
+                except Exception:
+                    pass
+            if current is not None and total is not None:
+                try:
+                    self.progress_text.configure(text=f"{current}/{total}")
+                except Exception:
+                    pass
+
+        self._ui_call(_apply)
+
+    def _update_results_ui(self, total_frames: int):
+        """Refresh playback controls after new results arrive."""
+        def _apply():
+            try:
+                self.frame_slider.configure(to=total_frames)
+                self.frame_slider.set(1 if total_frames > 0 else 0)
+            except Exception:
+                pass
+            try:
+                self.total_frames_label.configure(text=f"/{total_frames}")
+            except Exception:
+                pass
+            try:
+                self.frame_entry.delete(0, tk.END)
+                self.frame_entry.insert(0, "1" if total_frames > 0 else "0")
+            except Exception:
+                pass
+            try:
+                self.update_displacement_preview()
+            except Exception:
+                pass
+
+        self._ui_call(_apply)
+
     def __init__(self, root):
         self.root = root
         # Ensure CTk adapters are active at runtime
@@ -484,6 +575,8 @@ class RAFTDICGUI:
         
         # Initialize variables
         self.init_variables()
+        self._worker_thread = None
+        self._last_run_stopped = False
         
         # Create main container with padding
         main_container = ttk.Frame(root, padding="5")
@@ -1088,12 +1181,18 @@ class RAFTDICGUI:
         run_content.grid_columnconfigure(0, weight=1)
         
         # Run/Stop controls and progress
-        ttk.Button(run_content, text="Run", command=self.run, width=12).grid(row=0, column=0, pady=5, padx=(0,6))
-        ttk.Button(run_content, text="Stop", command=self.request_stop, width=12).grid(row=0, column=1, pady=5)
+        self.run_button = ttk.Button(run_content, text="Run", command=self.run, width=12)
+        self.run_button.grid(row=0, column=0, pady=5, padx=(0,6))
+        self.stop_button = ttk.Button(run_content, text="Stop", command=self.request_stop, width=12, state='disabled')
+        self.stop_button.grid(row=0, column=1, pady=5)
         self.progress = ttk.Progressbar(run_content, length=220, mode='determinate')
         self.progress.grid(row=1, column=0, columnspan=2, pady=5, sticky='ew')
         self.progress_text = ttk.Label(run_content, text="0/0")
         self.progress_text.grid(row=2, column=0, columnspan=2)
+        self.time_log = tk.Text(run_content, height=5, wrap="word", state="disabled")
+        self.time_log.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(6, 0))
+        run_content.grid_columnconfigure(0, weight=1)
+        run_content.grid_columnconfigure(1, weight=1)
         
         # Configure canvas scrolling
         def configure_scroll_region(event):
@@ -1461,7 +1560,7 @@ class RAFTDICGUI:
             if self.roi_rect:
                 xmin, ymin, xmax, ymax = self.roi_rect
                 info_text += f"\nROI size: {xmax-xmin}x{ymax-ymin}"
-            self.image_info.config(text=info_text)
+            self.image_info.configure(text=info_text)
             
         except Exception as e:
             # Auto-fit image to ROI canvas
@@ -1589,14 +1688,12 @@ class RAFTDICGUI:
         else:
             xC, yC, wC, hC = 0, 0, W_ref, H_ref
 
+        self._last_run_stopped = False
+
         # Process each image pair
         total_pairs = len(image_files) - 1
         # Initialize progress UI for this run
-        try:
-            self.progress.configure(value=0)
-            self.progress_text.config(text=f"0/{total_pairs}")
-        except Exception:
-            pass
+        self._update_progress(0, 0, total_pairs)
         # Accumulate displacements in memory for consolidated save
         sequence_displacements = []
 
@@ -1609,12 +1706,7 @@ class RAFTDICGUI:
                 percent = (i / max(1, total_pairs)) * 100.0
             except Exception:
                 percent = 0.0
-            self.progress.configure(value=percent)
-            try:
-                self.progress_text.config(text=f"{i}/{total_pairs}")
-            except Exception:
-                pass
-            self.root.update_idletasks()
+            self._update_progress(percent, i, total_pairs)
 
             # Load deformed image
             def_img_path = os.path.join(args.img_dir, image_files[i])
@@ -1672,19 +1764,12 @@ class RAFTDICGUI:
         if self.stop_requested:
             # Reset flag and notify
             self.stop_requested = False
-            try:
-                messagebox.showinfo("Stopped", "Processing stopped by user.")
-            except Exception:
-                pass
+            self._last_run_stopped = True
+            self._ui_call(lambda: messagebox.showinfo("Stopped", "Processing stopped by user."))
         
         # Update slider range
         if self.displacement_results:
-            self.frame_slider.configure(to=len(self.displacement_results))
-            self.frame_slider.set(1)
-            self.total_frames_label.configure(text=f"/{len(self.displacement_results)}")
-            self.frame_entry.delete(0, tk.END)
-            self.frame_entry.insert(0, "1")
-            self.update_displacement_preview()
+            self._update_results_ui(len(self.displacement_results))
 
     def update_displacement_preview(self, *args):
         """Update displacement field preview with support for both reference and deformed image modes"""
@@ -2312,39 +2397,39 @@ class RAFTDICGUI:
         """Signal the processing loop to stop after current frame."""
         self.stop_requested = True
     def run(self):
-        """Run processing program"""
+        """Run processing program asynchronously."""
+        if self._worker_thread and self._worker_thread.is_alive():
+            messagebox.showwarning("Processing", "Processing is already running.")
+            return
+
         if not self.validate_inputs():
             return
-        
+
         # Create parameter object
         class Args:
             pass
         args = Args()
-        
+
         args.img_dir = self.input_path.get()
         args.project_root = self.output_path.get()
         args.mode = self.mode.get()
         args.scale_factor = 1.0  # Fixed at 1.0, no longer use variable scaling
         args.crop_size = (int(self.crop_size_h.get() or "0"), int(self.crop_size_w.get() or "0"))
         args.shift = int(self.shift_size.get() or "0")
-        
+
         # Add smoothing parameters
         args.use_smooth = self.use_smooth.get()
         args.sigma = float(self.sigma.get())
-        # New tiling/context parameters
-        # Ensure D_global/g_tile reflect the selected displacement preset before reading
-        # so that args picks up the correct values (Small/Large/Custom)
+        # Ensure displacement preset synced
         self.on_disp_preset_change()
         try:
             args.D_global = int(float(self.D_global.get()))
         except Exception:
-            # Fallback to Small preset default
             args.D_global = 100
             self.D_global.set(str(args.D_global))
         try:
             args.g_tile = int(float(self.g_tile.get()))
         except Exception:
-            # Fallback to Small preset default
             args.g_tile = 100
             self.g_tile.set(str(args.g_tile))
         try:
@@ -2354,23 +2439,23 @@ class RAFTDICGUI:
         except Exception:
             args.overlap_ratio = 0.10
             self.overlap_ratio.set("0.10")
-        
-        # Parse pixel budget input allowing forms like "1100*1100" or "1100x1100"
+
+        # Parse pixel budget input
         try:
             s = (self.p_max_pixels.get() or "").lower().replace(' ', '')
             if '*' in s:
-                a,b = s.split('*',1)
+                a, b = s.split('*', 1)
                 args.p_max_pixels = int(float(a)) * int(float(b))
             elif 'x' in s:
-                a,b = s.split('x',1)
+                a, b = s.split('x', 1)
                 args.p_max_pixels = int(float(a)) * int(float(b))
             else:
                 args.p_max_pixels = int(float(s))
         except Exception:
-            args.p_max_pixels = 1100*1100
+            args.p_max_pixels = 1100 * 1100
             self.p_max_pixels.set("1100*1100")
         args.prefer_square = bool(self.prefer_square.get())
-        # Load model based on current selection
+
         selected_label = self.selected_model.get()
         entry = self.model_lookup.get(selected_label)
         if not entry:
@@ -2391,45 +2476,31 @@ class RAFTDICGUI:
             messagebox.showerror("Model Load Failed", f"Could not load the selected checkpoint:\n{exc}")
             return
         args.device = device
-        
+
         # Ensure output directory exists
         os.makedirs(args.project_root, exist_ok=True)
-        
-        try:
-            # Disable interface
-            self.root.config(cursor="watch")
-            for child in self.root.winfo_children():
-                for widget in child.winfo_children():
-                    if isinstance(widget, (ttk.Button, ttk.Entry, ttk.Radiobutton)):
-                        widget.configure(state='disabled')
-            
-            # Reset progress bar
-            self.progress.configure(value=0)
-            
-            # Run processing
-            self.process_images(args)
-            
-            # Update slider and frame number display
-            total_frames = len(self.displacement_results)
-            self.frame_slider.configure(to=total_frames)
-            self.frame_slider.set(1)
-            self.total_frames_label.configure(text=f"/{total_frames}")
-            self.frame_entry.delete(0, tk.END)
-            self.frame_entry.insert(0, "1")
-            self.update_displacement_preview()
-            
-            messagebox.showinfo("Success", "Processing completed!")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-            print(f"Error details: {str(e)}")  # Add detailed error output
-        finally:
-            # Restore interface
-            self.root.config(cursor="")
-            for child in self.root.winfo_children():
-                for widget in child.winfo_children():
-                    if isinstance(widget, (ttk.Button, ttk.Entry, ttk.Radiobutton)):
-                        widget.configure(state='normal')
-            self.progress.configure(value=0)
+
+        # Reset state and launch worker
+        self.stop_requested = False
+        self._last_run_stopped = False
+        self._set_running_state(True)
+        self._update_progress(0, 0, 0)
+
+        def _worker():
+            try:
+                self.process_images(args)
+                if not self._last_run_stopped:
+                    self._ui_call(lambda: messagebox.showinfo("Success", "Processing completed!"))
+            except Exception as e:
+                self._ui_call(lambda err=e: messagebox.showerror("Error", str(err)))
+                print(f"Error details: {str(e)}")
+            finally:
+                self._set_running_state(False)
+                self._update_progress(0)
+                self._worker_thread = None
+
+        self._worker_thread = threading.Thread(target=_worker, daemon=True)
+        self._worker_thread.start()
 
     def start_cutting_roi(self):
         """Start ROI cutting mode"""
@@ -2978,7 +3049,7 @@ class RAFTDICGUI:
             if self.roi_rect:
                 xmin, ymin, xmax, ymax = self.roi_rect
                 info_text = f"Image size: {w}x{h}\nNumber of images: {len(self.image_files)}\nROI size: {xmax-xmin}x{ymax-ymin}"
-                self.image_info.config(text=info_text)
+                self.image_info.configure(text=info_text)
         except Exception:
             pass
         # Visual hint: overlay a subtle cyan mask
