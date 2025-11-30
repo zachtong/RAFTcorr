@@ -1,2 +1,9 @@
-
 imgaussfilt.m
+
+# Python
+__pycache__/
+*.pyc
+
+# Legacy and Large Files
+legacy_archive/
+models/
