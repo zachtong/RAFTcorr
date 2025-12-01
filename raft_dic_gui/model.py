@@ -451,6 +451,13 @@ def load_model(weights_path: str,
                overrides: Optional[Dict[str, Any]] = None,
                reuse_cached: bool = True):
     """Load RAFT with weights and place on the requested device."""
+    if not weights_path:
+        raise ValueError("Model checkpoint path is empty. Please select a model.")
+    if os.path.isdir(weights_path):
+        raise ValueError(f"Model path is a directory, expected a file: {weights_path}")
+    if not os.path.exists(weights_path):
+        raise FileNotFoundError(f"Model checkpoint not found: {weights_path}")
+        
     metadata = metadata or describe_checkpoint(weights_path, overrides=overrides)
     device = device or DEFAULT_DEVICE
     if strict is None:

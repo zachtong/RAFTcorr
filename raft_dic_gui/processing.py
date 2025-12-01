@@ -11,7 +11,9 @@ import numpy as np
 import cv2
 import tifffile
 import scipy.io as sio
-from scipy.interpolate import griddata
+import io
+from PIL import Image
+from scipy.interpolate import griddata, Rbf
 from scipy.ndimage import gaussian_filter
 
 import matplotlib
@@ -644,4 +646,322 @@ def save_displacement_sequence(displacements, output_dir: str, roi_rect=None, ro
             'X_current': Xcur_cells,
             'Y_current': Ycur_cells,
         })
+
+
+def fig2img(fig):
+    """Convert matplotlib image to PIL Image"""
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    buf.seek(0)
+    img = Image.open(buf)
+    # Set uniform display size
+    display_size = (400, 400)
+    img = img.resize(display_size, Image.LANCZOS)
+    plt.close(fig)
+    return img
+
+
+def create_reference_displacement_visualization(displacement, background_image, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v, roi_rect):
+    """Create displacement field visualization on reference image background"""
+    xmin, ymin, xmax, ymax = roi_rect
+    
+    fig, (ax_u, ax_v) = plt.subplots(1, 2, figsize=(12, 6), constrained_layout=False)
+    
+    u = displacement[:, :, 0]
+    v = displacement[:, :, 1]
+    
+    h, w = background_image.shape[:2]
+    u_full = np.full((h, w), np.nan)
+    v_full = np.full((h, w), np.nan)
+    
+    u_full[ymin:ymax, xmin:xmax] = u
+    v_full[ymin:ymax, xmin:xmax] = v
+    
+    ax_u.imshow(background_image, cmap='gray')
+    mask_u = ~np.isnan(u_full)
+    u_masked = np.ma.array(u_full, mask=~mask_u)
+    
+    im_u = ax_u.imshow(u_masked, cmap=current_colormap, alpha=alpha * mask_u, vmin=vmin_u, vmax=vmax_u)
+    ax_u.set_title("U Component on Reference Image")
+    fig.colorbar(im_u, ax=ax_u, fraction=0.046, pad=0.04)
+    
+    ax_v.imshow(background_image, cmap='gray')
+    mask_v = ~np.isnan(v_full)
+    v_masked = np.ma.array(v_full, mask=~mask_v)
+    
+    im_v = ax_v.imshow(v_masked, cmap=current_colormap, alpha=alpha * mask_v, vmin=vmin_v, vmax=vmax_v)
+    ax_v.set_title("V Component on Reference Image")
+    fig.colorbar(im_v, ax=ax_v, fraction=0.046, pad=0.04)
+    
+    ax_u.set_axis_off()
+    ax_v.set_axis_off()
+    ax_u.set_aspect('equal')
+    ax_v.set_aspect('equal')
+    
+    return fig
+
+
+def _create_deformed_displacement_image_fast(img_crop, u_full, v_full, deformed_mask, alpha, current_colormap, vmin_u, vmax_u, vmin_v, vmax_v):
+    import matplotlib.colors as mcolors
+    bg = img_crop
+    if bg.ndim == 2:
+        bg_rgb = np.stack([bg, bg, bg], axis=-1)
+    else:
+        bg_rgb = bg[:, :, :3]
+
+    def blend_component(comp, vmin, vmax):
+        norm = (comp - vmin) / max(1e-8, (vmax - vmin))
+        norm = np.clip(norm, 0.0, 1.0)
+        cmap = cm.get_cmap(current_colormap)
+        rgba = cmap(norm)  # float 0-1
+        rgb = (rgba[..., :3] * 255.0).astype(np.uint8)
+        out = bg_rgb.copy()
+        m = deformed_mask
+        out[m] = (out[m].astype(np.float32) * (1.0 - alpha) + rgb[m].astype(np.float32) * alpha).astype(np.uint8)
+        return out
+
+    img_u = blend_component(u_full, vmin_u, vmax_u)
+    img_v = blend_component(v_full, vmin_v, vmax_v)
+    combined = np.concatenate([img_u, img_v], axis=1)
+    return Image.fromarray(combined)
+
+
+def prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
+                               preview_scale, interp_sample_step, background_mode,
+                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step):
+    """Prepare data for visualization without creating a figure"""
+    data = {
+        'background_mode': background_mode,
+        'img_crop': None,
+        'u_masked': None,
+        'v_masked': None,
+        'boundary_points': None,
+        'quiver_data': None,
+        'error': None
+    }
+
+    if background_mode == 'reference':
+        # Reference mode logic
+        try:
+            xmin, ymin, xmax, ymax = roi_rect
+            u = displacement[:, :, 0]
+            v = displacement[:, :, 1]
+            h, w = reference_image.shape[:2]
+            u_full = np.full((h, w), np.nan)
+            v_full = np.full((h, w), np.nan)
+            u_full[ymin:ymax, xmin:xmax] = u
+            v_full[ymin:ymax, xmin:xmax] = v
+            
+            data['img_crop'] = reference_image
+            data['u_masked'] = np.ma.array(u_full, mask=np.isnan(u_full))
+            data['v_masked'] = np.ma.array(v_full, mask=np.isnan(v_full))
+            return data
+        except Exception as e:
+            data['error'] = str(e)
+            return data
+
+    try:
+        xmin, ymin, xmax, ymax = roi_rect
+        u = displacement[:, :, 0]
+        v = displacement[:, :, 1]
+        
+        roi_mask_crop = roi_mask[ymin:ymax, xmin:xmax] if roi_mask is not None else None
+        if roi_mask_crop is None:
+             # Fallback to reference
+             return prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
+                               preview_scale, interp_sample_step, 'reference',
+                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step)
+
+        roi_h, roi_w = u.shape
+        Yg, Xg = np.mgrid[ymin:ymin+roi_h, xmin:xmin+roi_w]
+        
+        valid = roi_mask_crop & ~np.isnan(u) & ~np.isnan(v)
+        sstep = max(1, int(interp_sample_step))
+        if sstep > 1:
+            stride_mask = np.zeros_like(valid, dtype=bool)
+            stride_mask[::sstep, ::sstep] = True
+            valid = valid & stride_mask
+        if not np.any(valid):
+             return prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
+                               preview_scale, interp_sample_step, 'reference',
+                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step)
+
+        x_def = (Xg[valid] + u[valid]).astype(np.float64)
+        y_def = (Yg[valid] + v[valid]).astype(np.float64)
+        pts = np.column_stack((x_def, y_def))
+
+        h, w = deformed_image.shape[:2]
+        x0 = int(max(0, np.floor(x_def.min())))
+        x1 = int(min(w-1, np.ceil(x_def.max())))
+        y0 = int(max(0, np.floor(y_def.min())))
+        y1 = int(min(h-1, np.ceil(y_def.max())))
+        if x1 <= x0 or y1 <= y0:
+             return prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
+                               preview_scale, interp_sample_step, 'reference',
+                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step)
+
+        Xq, Yq = np.meshgrid(np.arange(x0, x1+1), np.arange(y0, y1+1))
+
+        method = deform_interp
+        # Interpolate U
+        if method == 'rbf' and pts.shape[0] >= 10:
+            try:
+                rbf_u = Rbf(x_def, y_def, u[valid], function='multiquadric')
+                u_grid = rbf_u(Xq, Yq)
+            except Exception:
+                u_grid = griddata(pts, u[valid], (Xq, Yq), method='linear')
+        else:
+            u_grid = griddata(pts, u[valid], (Xq, Yq), method='linear')
+            if np.isnan(u_grid).all():
+                u_grid = griddata(pts, u[valid], (Xq, Yq), method='nearest')
+
+        # Interpolate V
+        if method == 'rbf' and pts.shape[0] >= 10:
+            try:
+                rbf_v = Rbf(x_def, y_def, v[valid], function='multiquadric')
+                v_grid = rbf_v(Xq, Yq)
+            except Exception:
+                v_grid = griddata(pts, v[valid], (Xq, Yq), method='linear')
+        else:
+            v_grid = griddata(pts, v[valid], (Xq, Yq), method='linear')
+            if np.isnan(v_grid).all():
+                v_grid = griddata(pts, v[valid], (Xq, Yq), method='nearest')
+
+        # Build deformed mask
+        mask_grid = np.zeros_like(u_grid, dtype=np.uint8)
+        xi = np.clip(np.round(x_def).astype(int) - x0, 0, (x1 - x0))
+        yi = np.clip(np.round(y_def).astype(int) - y0, 0, (y1 - y0))
+        mask_grid[yi, xi] = 1
+        try:
+            kernel = np.ones((3, 3), np.uint8)
+            mask_grid = cv2.morphologyEx(mask_grid, cv2.MORPH_CLOSE, kernel, iterations=1)
+        except Exception:
+            pass
+
+        u_grid = np.where(mask_grid.astype(bool), u_grid, np.nan)
+        v_grid = np.where(mask_grid.astype(bool), v_grid, np.nan)
+
+        img_crop = deformed_image[y0:y1+1, x0:x1+1]
+        u_full = u_grid
+        v_full = v_grid
+        deformed_mask = ~np.isnan(u_full) & ~np.isnan(v_full)
+        
+        # Downsampling
+        try:
+            pscale = float(preview_scale)
+        except Exception:
+            pscale = 0.5
+        base_w, base_h = 800, 400
+        max_w = int(base_w * max(0.25, min(1.0, pscale)))
+        max_h = int(base_h * max(0.25, min(1.0, pscale)))
+        target_w = max_w // 2
+        target_h = max_h
+        scale = min(target_w / (x1 - x0 + 1), target_h / (y1 - y0 + 1), 1.0)
+        if scale < 1.0:
+            try:
+                new_size = (max(1, int((x1 - x0 + 1) * scale)), max(1, int((y1 - y0 + 1) * scale)))
+                img_crop = cv2.resize(img_crop, new_size, interpolation=cv2.INTER_AREA)
+                u_full = cv2.resize(u_full.astype(np.float32), new_size, interpolation=cv2.INTER_AREA)
+                v_full = cv2.resize(v_full.astype(np.float32), new_size, interpolation=cv2.INTER_AREA)
+                deformed_mask = cv2.resize(deformed_mask.astype(np.uint8), new_size, interpolation=cv2.INTER_NEAREST).astype(bool)
+            except Exception:
+                pass
+
+        data['img_crop'] = img_crop
+        data['u_masked'] = np.ma.array(u_full, mask=~deformed_mask)
+        data['v_masked'] = np.ma.array(v_full, mask=~deformed_mask)
+
+        if show_deformed_boundary:
+            try:
+                cnts, _ = cv2.findContours(roi_mask_crop.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                if len(cnts) > 0:
+                    cnt = max(cnts, key=cv2.contourArea)
+                    pts_local = cnt[:, 0, :]
+                    xs = pts_local[:, 0]
+                    ys = pts_local[:, 1]
+                    xs_g = xs + xmin
+                    ys_g = ys + ymin
+                    xs_r = np.clip((xs).astype(int), 0, roi_w-1)
+                    ys_r = np.clip((ys).astype(int), 0, roi_h-1)
+                    u_b = u[ys_r, xs_r]
+                    v_b = v[ys_r, xs_r]
+                    x_def_b = xs_g + u_b
+                    y_def_b = ys_g + v_b
+                    x_def_b = (x_def_b - x0) * scale
+                    y_def_b = (y_def_b - y0) * scale
+                    data['boundary_points'] = (x_def_b, y_def_b)
+            except Exception:
+                pass
+
+        if deform_display_mode == 'quiver':
+            try:
+                step = max(2, int(quiver_step))
+            except Exception:
+                step = 20
+            xsq = ((Xg[::step, ::step] - x0) * scale)
+            ysq = ((Yg[::step, ::step] - y0) * scale)
+            uq = u[::step, ::step]
+            vq = v[::step, ::step]
+            maskq = roi_mask_crop[::step, ::step] & np.isfinite(uq) & np.isfinite(vq)
+            data['quiver_data'] = (xsq[maskq], ysq[maskq], uq[maskq], vq[maskq])
+        
+        return data
+        
+    except Exception as e:
+        print(f"Error in deformed visualization: {str(e)}, falling back to reference mode")
+        return prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
+                               preview_scale, interp_sample_step, 'reference',
+                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step)
+
+
+def update_displacement_plot(ax_u, ax_v, data, colormap, alpha, vmin_u, vmax_u, vmin_v, vmax_v):
+    """Update existing axes with new data"""
+    if data.get('error'):
+        return
+
+    # Clear axes but keep them alive
+    ax_u.clear()
+    ax_v.clear()
+    
+    img_crop = data['img_crop']
+    if img_crop is not None:
+        ax_u.imshow(img_crop, cmap='gray')
+        ax_v.imshow(img_crop, cmap='gray')
+
+    u_masked = data['u_masked']
+    v_masked = data['v_masked']
+
+    if u_masked is not None:
+        im_u = ax_u.imshow(u_masked, cmap=colormap, alpha=alpha, vmin=vmin_u, vmax=vmax_u)
+        # Note: Colorbar is tricky to update if it's already there. 
+        # For robustness, we assume the caller handles colorbar or we just don't update it if it's fixed.
+        # But to be safe, we can let the caller handle colorbar creation/update or just re-create it.
+        # However, re-creating colorbar every time might shrink the axis.
+        # Ideally, we should update the mappable of the existing colorbar.
+        pass
+
+    if v_masked is not None:
+        im_v = ax_v.imshow(v_masked, cmap=colormap, alpha=alpha, vmin=vmin_v, vmax=vmax_v)
+
+    ax_u.set_title("U Component")
+    ax_v.set_title("V Component")
+
+    boundary = data.get('boundary_points')
+    if boundary:
+        xb, yb = boundary
+        ax_u.plot(xb, yb, color='white', linewidth=1.0, alpha=0.8)
+        ax_v.plot(xb, yb, color='white', linewidth=1.0, alpha=0.8)
+
+    quiver = data.get('quiver_data')
+    if quiver:
+        xq, yq, uq, vq = quiver
+        ax_u.quiver(xq, yq, uq, vq, color='white', angles='xy', scale_units='xy', scale=1, width=0.002, alpha=0.9)
+        ax_v.quiver(xq, yq, uq, vq, color='white', angles='xy', scale_units='xy', scale=1, width=0.002, alpha=0.9)
+
+    ax_u.set_axis_off()
+    ax_v.set_axis_off()
+    ax_u.set_aspect('equal')
+    ax_v.set_aspect('equal')
+    
+    return im_u, im_v
 
