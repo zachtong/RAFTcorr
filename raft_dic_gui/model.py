@@ -57,15 +57,23 @@ class ModelMetadata:
     full_resolution: bool = False
 
     def summary(self) -> str:
-        arch = "small" if self.small else "large"
-        mp = "on" if self.mixed_precision else "off"
-        alt = "on" if self.alternate_corr else "off"
-        if self.corr_levels is None or self.corr_radius is None:
-            corr = "corr unknown"
+        # Determine Model Type based on resolution strategy
+        # RAFT-Fine = Full Resolution (for fine details)
+        # RAFT-Large = Standard 1/8 Resolution (for large displacements)
+        if self.full_resolution:
+            model_type = "RAFT-Fine"
+            res_str = "Full resolution"
         else:
-            corr = f"corr {self.corr_levels}A-r{self.corr_radius}"
-        variant_label = "full-res" if self.full_resolution else "pyramid"
-        return f"Arch {arch} | {corr} | {variant_label} | mixed precision {mp} | alternate corr {alt}"
+            model_type = "RAFT-Large"
+            res_str = "1/8 resolution"
+
+        # Determine Pyramid Levels
+        if self.corr_levels is not None:
+            levels_str = f"{self.corr_levels}-level pyramid"
+        else:
+            levels_str = "Unknown levels"
+
+        return f"{model_type} | {res_str} | {levels_str}"
 
 
 DEFAULT_DEVICE = "cuda"
@@ -403,6 +411,11 @@ def metadata_summary(metadata: ModelMetadata) -> str:
 def discover_models(models_dir: Optional[str] = None,
                     recursive: bool = True) -> List[ModelEntry]:
     root = Path(models_dir or _models_path)
+    # Only look into the 'active' subdirectory by default
+    active_dir = root / "active"
+    if active_dir.exists() and active_dir.is_dir():
+        root = active_dir
+    
     if not root.exists():
         return []
 
@@ -562,6 +575,55 @@ def inference(model, frame1, frame2, device: str, pad_mode: str = 'sintel',
                                    upsample=upsample,
                                    test_mode=test_mode)
                 return flow_iters
+
+
+def estimate_safe_pmax(metadata: ModelMetadata, device: str = "cuda", safety_factor: float = 0.55) -> int:
+    """
+    Estimate the maximum safe pixel count (N_max) for a single RAFT inference pass
+    based on available VRAM and model architecture.
+    
+    Formula: N_max = sqrt( Available_VRAM * Safety / Alpha )
+    
+    Coefficients (Alpha) - Bytes per pixel squared:
+    - RAFT-Fine (Full Res): ~5.0
+    - RAFT-Large (1/8 Res): ~0.0013
+    """
+    if not torch.cuda.is_available() or device == "cpu":
+        # Fallback for CPU: conservative default
+        return 400 * 400
+
+    try:
+        # Get free memory in bytes
+        free_mem, total_mem = torch.cuda.mem_get_info(0)
+        
+        # Reserve some baseline memory for weights and context (e.g., 2GB to be safe)
+        reserved_baseline = 2 * 1024 * 1024 * 1024
+        available_for_corr = max(0, free_mem - reserved_baseline)
+        
+        if metadata.full_resolution:
+            # RAFT-Fine is extremely memory hungry
+            # Reduce safety factor further for Fine models
+            safe_mem = available_for_corr * (safety_factor * 0.5)
+            alpha = 5.0
+        else:
+            # RAFT-Large
+            safe_mem = available_for_corr * safety_factor
+            alpha = 0.0013
+            
+        # N_squared = safe_mem / alpha
+        # N = sqrt(N_squared)
+        max_pixels = int((safe_mem / alpha) ** 0.5)
+        
+        # Clamp to reasonable bounds
+        # Lower bound: 64x64 (4096)
+        # Upper bound: 2000x2000 (4M) - usually enough for Large
+        max_pixels = max(4096, min(max_pixels, 4000000))
+        
+        return max_pixels
+    except Exception as e:
+        print(f"Warning: Failed to estimate VRAM ({e}), using default.")
+        return 500 * 500
+
 
 
 

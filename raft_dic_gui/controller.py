@@ -95,11 +95,9 @@ class DICProcessor:
                 roi_mask,
                 model,
                 device,
-                D_global=config.D_global,
-                g_tile=config.g_tile,
-                overlap_ratio=config.overlap_ratio,
+                context_padding=config.context_padding,
+                tile_overlap=config.tile_overlap,
                 p_max_pixels=config.p_max_pixels,
-                prefer_square=config.prefer_square,
                 use_smooth=config.use_smooth,
                 sigma=config.sigma
             )

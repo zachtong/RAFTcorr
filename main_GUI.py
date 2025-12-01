@@ -37,6 +37,10 @@ import io
 import scipy.io as sio
 from scipy.interpolate import griddata
 from scipy.ndimage import gaussian_filter
+import torch
+import raft_dic_gui.model as mdl
+import math
+import gc
 
 # ---------------------------------------------------------------------------
 # CustomTkinter integration shims (visual-only refactor, logic unchanged)
@@ -202,6 +206,9 @@ class RAFTDICGUI:
         self.control_panel.callbacks['on_preview_scale_change'] = lambda v: self.preview_panel.update_displacement_preview()
         self.control_panel.callbacks['update_roi_label'] = self.preview_panel.update_roi_label
         self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
+        self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
+        self.control_panel.callbacks['on_model_selected'] = self._update_roi_status_text
+        self.control_panel.callbacks['on_safety_factor_change'] = self._update_roi_status_text
         
         # Preview Panel callbacks
         self.preview_panel.control_panel = self.control_panel
@@ -210,6 +217,105 @@ class RAFTDICGUI:
     def _on_roi_confirmed(self, mask, rect):
         self.roi_mask = mask
         self.roi_rect = rect
+        self._update_roi_status_text()
+
+    def _update_roi_status_text(self):
+        """Update the status text in PreviewPanel with VRAM and Tiling info."""
+        # Force cleanup to get accurate free memory reading
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            gc.collect()
+            
+        try:
+            # 1. Get GPU Info
+            if torch.cuda.is_available():
+                gpu_name = torch.cuda.get_device_name(0)
+                free_mem, total_mem = torch.cuda.mem_get_info(0)
+                free_gb = free_mem / (1024**3)
+                total_gb = total_mem / (1024**3)
+                gpu_str = f"GPU: {gpu_name} ({total_gb:.1f} GB)\nAvailable: {free_gb:.1f} GB"
+            else:
+                gpu_str = "GPU: Not available (CPU mode)"
+                free_mem = 0
+
+            # 2. Get Model Info
+            model_label = self.control_panel.selected_model.get()
+            model_entry = self.control_panel.model_lookup.get(model_label)
+            if model_entry:
+                try:
+                    metadata = mdl.describe_checkpoint(model_entry.path)
+                    model_type = "RAFT-Fine (Full Res)" if metadata.full_resolution else "RAFT-Large (Standard)"
+                    
+                    # 3. Calculate Safe Tile
+                    # Get safety factor from UI
+                    try:
+                        sf = float(self.control_panel.safety_factor.get())
+                    except Exception:
+                        sf = 0.55
+                        
+                    safe_pmax = mdl.estimate_safe_pmax(metadata, safety_factor=sf)
+                    
+                    # CRITICAL FIX: Update BOTH config and UI entry so it persists!
+                    self.config.p_max_pixels = safe_pmax
+                    self.control_panel.p_max_pixels.set(f"{safe_pmax}")
+                    
+                    safe_tile_dim = int(math.sqrt(safe_pmax))
+                    tile_str = f"Max Safe Tile: {safe_tile_dim} x {safe_tile_dim} px"
+                except Exception:
+                    model_type = "Unknown Model"
+                    tile_str = "Max Safe Tile: N/A"
+                    safe_pmax = 500*500
+                    self.config.p_max_pixels = safe_pmax
+                    self.control_panel.p_max_pixels.set(f"{safe_pmax}")
+            else:
+                model_type = "None"
+                tile_str = "Max Safe Tile: N/A"
+                safe_pmax = 500*500
+                self.config.p_max_pixels = safe_pmax
+                self.control_panel.p_max_pixels.set(f"{safe_pmax}")
+
+            # 4. Get Image Info & Strategy
+            if self.current_image is not None:
+                h, w = self.current_image.shape[:2]
+                img_str = f"Input: {w} x {h}"
+                
+                # Use ROI size if available, otherwise full image
+                calc_w, calc_h = w, h
+                if self.roi_rect:
+                    x0, y0, x1, y1 = self.roi_rect
+                    rw, rh = x1 - x0, y1 - y0
+                    if rw > 0 and rh > 0:
+                        calc_w, calc_h = rw, rh
+
+                if (calc_w * calc_h) > safe_pmax:
+                    # Tiling needed
+                    # Estimate tiles with overlap
+                    try:
+                        overlap = int(self.control_panel.tile_overlap.get())
+                    except Exception:
+                        overlap = 32
+                        
+                    stride = max(1, safe_tile_dim - overlap)
+                    nx = math.ceil((calc_w - overlap) / stride)
+                    ny = math.ceil((calc_h - overlap) / stride)
+                    # Ensure at least 1 tile
+                    nx = max(1, nx)
+                    ny = max(1, ny)
+                    
+                    strategy_str = f"-> Auto-tiling Active ({nx}x{ny} tiles)"
+                else:
+                    strategy_str = "-> Direct Processing (Optimal)"
+            else:
+                img_str = "Input: None"
+                strategy_str = ""
+
+            # Combine
+            full_text = f"{gpu_str}\nModel: {model_type}\n{tile_str}\n{img_str} {strategy_str}"
+            
+            self.preview_panel.update_info_text(full_text)
+            
+        except Exception as e:
+            print(f"Error updating status text: {e}")
         
     def apply_theme(self):
         """Apply a modern theme to ttk widgets"""
@@ -289,6 +395,9 @@ class RAFTDICGUI:
         h, w = img.shape[:2]
         self.control_panel.crop_size_w.set(str(w))
         self.control_panel.crop_size_h.set(str(h))
+        
+        # Update Status Text
+        self._update_roi_status_text()
 
     def validate_inputs(self):
         """Validate run parameters."""

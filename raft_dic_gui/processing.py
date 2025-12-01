@@ -287,7 +287,7 @@ def _compute_min_bounding_box(roi_mask_full: np.ndarray):
     return x0, y0, m, n
 
 
-def _expand_and_clamp(bbox, pad, width, height):
+def _expand_bbox(bbox, pad, width, height):
     x0, y0, m, n = bbox
     xC = max(0, x0 - pad)
     yC = max(0, y0 - pad)
@@ -298,80 +298,28 @@ def _expand_and_clamp(bbox, pad, width, height):
     return xC, yC, wC, hC
 
 
-def _choose_tile_size(wC, hC, p_max_pixels=1100*1100, prefer_square=False):
-    """Choose tile size for context C.
-
-    If the entire expanded region fits within the pixel budget, return a single-tile
-    size equal to the region itself (wC, hC) so processing can run in one shot.
-    Otherwise, choose a tile size under the pixel budget with optional square preference.
-    """
-    # One-shot if area fits budget
-    if max(1, wC) * max(1, hC) <= int(p_max_pixels):
-        return max(1, int(wC)), max(1, int(hC))
-
-    if prefer_square:
-        # Choose the largest square up to per-axis cap and area budget
-        T = min(1100, wC, hC)
-        Tx = Ty = max(1, int(T))
-    else:
-        # Aspect-ratio aware under per-axis cap and area budget
-        if wC >= hC:
-            Tx = min(1100, int(wC))
-            Ty = min(1100, max(1, int(p_max_pixels) // max(1, Tx)))
-        else:
-            Ty = min(1100, int(hC))
-            Tx = min(1100, max(1, int(p_max_pixels) // max(1, Ty)))
-    # Ensure product within budget
-    while Tx * Ty > int(p_max_pixels):
-        if Tx >= Ty:
-            Tx -= 1
-        else:
-            Ty -= 1
-        if Tx <= 1 and Ty <= 1:
-            break
-    return max(1, int(Tx)), max(1, int(Ty))
-
-
-def _make_starts_with_tail_snap(total, tile, stride):
-    starts = [0]
-    pos = 0
-    if tile >= total:
+def _generate_tile_starts(total_len, tile_len, overlap):
+    """Generate start positions for sliding window with fixed overlap."""
+    if total_len <= tile_len:
         return [0]
-    while pos + tile < total:
-        pos = min(pos + stride, total - tile)
-        if not starts or starts[-1] != pos:
-            starts.append(pos)
-        if pos == total - tile:
-            break
-    # unique sorted
-    return sorted(set(starts))
-
-
-def _build_weight_window(Tx, Ty, g_tile):
-    if g_tile <= 0:
-        return np.ones((Ty, Tx), dtype=np.float64)
-    wx = np.ones(Tx, dtype=np.float64)
-    wy = np.ones(Ty, dtype=np.float64)
-    # cosine ramps in guard bands
-    for x in range(Tx):
-        if x < g_tile:
-            t = (x + 0.5) / max(1, g_tile)
-            wx[x] = 0.5 * (1 - np.cos(np.pi * t))
-        elif x >= Tx - g_tile:
-            t = (Tx - 0.5 - x) / max(1, g_tile)
-            wx[x] = 0.5 * (1 - np.cos(np.pi * t))
-        else:
-            wx[x] = 1.0
-    for y in range(Ty):
-        if y < g_tile:
-            t = (y + 0.5) / max(1, g_tile)
-            wy[y] = 0.5 * (1 - np.cos(np.pi * t))
-        elif y >= Ty - g_tile:
-            t = (Ty - 0.5 - y) / max(1, g_tile)
-            wy[y] = 0.5 * (1 - np.cos(np.pi * t))
-        else:
-            wy[y] = 1.0
-    return np.outer(wy, wx).astype(np.float64)
+    
+    stride = tile_len - overlap
+    if stride <= 0:
+        stride = 1 # Fallback to avoid infinite loop
+        
+    starts = []
+    pos = 0
+    while pos + tile_len < total_len:
+        starts.append(pos)
+        pos += stride
+        
+    # Ensure the last tile covers the end
+    if starts[-1] + tile_len < total_len:
+        starts.append(total_len - tile_len)
+        
+    # If the last step was too small (huge overlap), we might want to merge?
+    # But for simplicity, just keeping it is fine, fusion handles it.
+    return sorted(list(set(starts)))
 
 
 def dic_over_roi_with_tiling(ref_img: np.ndarray,
@@ -379,14 +327,20 @@ def dic_over_roi_with_tiling(ref_img: np.ndarray,
                              roi_mask_full: np.ndarray,
                              model,
                              device: str,
-                             D_global: int,
-                             g_tile: int,
-                             overlap_ratio: float = 0.10,
+                             context_padding: int = 32,
+                             tile_overlap: int = 32,
                              p_max_pixels: int = 1100*1100,
-                             prefer_square: bool = False,
                              use_smooth: bool = True,
                              sigma: float = 2.0,
                              iters: int = 12):
+    """
+    Perform DIC over the ROI using an adaptive tiling strategy with weighted fusion.
+    
+    Args:
+        context_padding: Extra pixels around the ROI bounding box to include (default 32).
+        tile_overlap: Overlap between tiles in pixels (default 32).
+        p_max_pixels: Maximum pixels allowed per inference pass (VRAM limit).
+    """
     H, W, _ = ref_img.shape
     if roi_mask_full is None or roi_mask_full.shape[:2] != (H, W):
         raise ValueError("roi_mask_full must be provided and match image size")
@@ -395,100 +349,109 @@ def dic_over_roi_with_tiling(ref_img: np.ndarray,
     if bbox is None:
         raise ValueError("ROI mask is empty")
 
-    # Expand bounding box by D_global on all sides (clamped)
-    xC, yC, wC, hC = _expand_and_clamp(bbox, int(D_global), W, H)
+    # 1. Define Work Area (ROI + Padding)
+    xC, yC, wC, hC = _expand_bbox(bbox, int(context_padding), W, H)
 
-    # Prepare accumulation buffers over C
+    # 2. Prepare Accumulators
     accum = np.zeros((hC, wC, 2), dtype=np.float64)
     wsum = np.zeros((hC, wC), dtype=np.float64)
-
-    # ROI mask cropped to C
+    
+    # ROI mask cropped to Work Area
     roiC = roi_mask_full[yC:yC+hC, xC:xC+wC]
-    roiC = roiC.astype(np.float64)
 
-    # Choose tile size under pixel budget
-    Tx, Ty = _choose_tile_size(wC, hC, p_max_pixels=p_max_pixels, prefer_square=prefer_square)
-    # Single-shot if the tile equals the expanded region
-    single_shot = (int(Tx) == int(wC) and int(Ty) == int(hC))
-
-    if single_shot:
-        # No guard-band constraints or overlaps needed
-        starts_x = [0]
-        starts_y = [0]
-        W2D = np.ones((Ty, Tx), dtype=np.float64)
+    # 3. Determine Tiling Strategy
+    # Max safe square tile dimension
+    max_T = int(np.sqrt(p_max_pixels))
+    
+    # Check if single shot is possible
+    if wC * hC <= p_max_pixels:
+        tiles = [(0, 0, wC, hC)]
+        is_tiled = False
     else:
-        # Ensure effective interior positive
-        Ex = Tx - 2*int(g_tile)
-        Ey = Ty - 2*int(g_tile)
-        if Ex <= 0 or Ey <= 0:
-            raise ValueError("g_tile too large for tile size under pixel limit; reduce g_tile or increase pixel budget")
+        is_tiled = True
+        # Ensure tile size is at least larger than overlap
+        T = max(max_T, tile_overlap * 2 + 16)
+        # But must not exceed budget (if possible, otherwise we clamp T to max_T)
+        T = min(T, max_T)
+        
+        # If T is too small relative to overlap, reduce overlap
+        if T <= tile_overlap:
+             tile_overlap = T // 4
+        
+        starts_x = _generate_tile_starts(wC, T, int(tile_overlap))
+        starts_y = _generate_tile_starts(hC, T, int(tile_overlap))
+        
+        tiles = []
+        for sy in starts_y:
+            for sx in starts_x:
+                # Clip tile size if at edges (though _generate_tile_starts usually handles this by shifting start)
+                # But here we use fixed size T unless total size is smaller
+                tw = min(T, wC - sx)
+                th = min(T, hC - sy)
+                tiles.append((sx, sy, tw, th))
 
-        # Overlap in effective interior
-        Ex_olap = max(1, int(round(overlap_ratio * Ex)))
-        Ey_olap = max(1, int(round(overlap_ratio * Ey)))
-        stride_x = max(1, Ex - Ex_olap)
-        stride_y = max(1, Ey - Ey_olap)
-
-        starts_x = _make_starts_with_tail_snap(wC, Tx, stride_x)
-        starts_y = _make_starts_with_tail_snap(hC, Ty, stride_y)
-
-        W2D = _build_weight_window(Tx, Ty, int(g_tile))
-
+    # 4. Execute Inference
     inference_time = 0.0
-    for sy in starts_y:
-        for sx in starts_x:
-            # Tile size is constrained by context region C (wC, hC), not full image bounds
-            tile_w = min(Tx, wC - sx)
-            tile_h = min(Ty, hC - sy)
-            if tile_w <= 0 or tile_h <= 0:
-                continue
-            x0 = xC + sx
-            y0 = yC + sy
-            x1 = x0 + tile_w
-            y1 = y0 + tile_h
+    
+    # Pre-compute Hanning window cache
+    window_cache = {}
 
-            ref_tile = ref_img[y0:y1, x0:x1, :]
-            def_tile = def_img[y0:y1, x0:x1, :]
-
-            t0 = time.time()
+    for (sx, sy, tw, th) in tiles:
+        x0, y0 = xC + sx, yC + sy
+        x1, y1 = x0 + tw, y0 + th
+        
+        ref_tile = ref_img[y0:y1, x0:x1, :]
+        def_tile = def_img[y0:y1, x0:x1, :]
+        
+        t0 = time.time()
+        try:
+            _, flow_up = inference(model, ref_tile, def_tile, device, test_mode=True, iters=iters)
+        except torch.cuda.OutOfMemoryError:
             try:
-                _, flow_up = inference(model, ref_tile, def_tile, device, test_mode=True, iters=iters)
-            except torch.cuda.OutOfMemoryError:
-                try:
-                    torch.cuda.empty_cache()
-                except Exception:
-                    pass
-                _, flow_up = inference(model, ref_tile, def_tile, device, test_mode=True, iters=max(4, iters // 2))
-            flow_up = flow_up.squeeze(0)
-            inference_time += (time.time() - t0)
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+            # Simple retry with fewer iterations
+            _, flow_up = inference(model, ref_tile, def_tile, device, test_mode=True, iters=max(4, iters // 2))
+        
+        flow_up = flow_up.squeeze(0)
+        inference_time += (time.time() - t0)
+        
+        u = flow_up[0].cpu().numpy()
+        v = flow_up[1].cpu().numpy()
+        flow = np.stack((u, v), axis=-1)
+        
+        # 5. Weighted Fusion
+        # Generate or retrieve window
+        k = (tw, th)
+        if k not in window_cache:
+            # Hanning window for smooth blending
+            # If single shot, window is all 1s (or we can still use Hanning to suppress edge artifacts if we wanted, but usually 1s)
+            if not is_tiled:
+                window_cache[k] = np.ones((th, tw), dtype=np.float64)
+            else:
+                wy = np.hanning(max(th, 4))
+                wx = np.hanning(max(tw, 4))
+                window_cache[k] = np.outer(wy, wx).astype(np.float64)
+        
+        weight = window_cache[k]
+        
+        accum[sy:sy+th, sx:sx+tw, :] += flow * weight[..., None]
+        wsum[sy:sy+th, sx:sx+tw] += weight
 
-            u = flow_up[0].cpu().numpy()
-            v = flow_up[1].cpu().numpy()
-            flow = np.stack((u, v), axis=-1)
-
-            # Match window to actual tile size (edge tiles may be smaller)
-            Wtile = W2D[:tile_h, :tile_w]
-
-            # Apply ROI mask within C for this tile region
-            roi_local = roiC[sy:sy+tile_h, sx:sx+tile_w]
-            weight_local = Wtile * roi_local
-
-            accum[sy:sy+tile_h, sx:sx+tile_w, :] += flow * weight_local[..., None]
-            wsum[sy:sy+tile_h, sx:sx+tile_w] += weight_local
-
-    # Normalize within C
+    # 6. Normalize
     with np.errstate(divide='ignore', invalid='ignore'):
         result_C = np.where(wsum[..., None] > 0, accum / wsum[..., None], np.nan)
 
-    # Optional smoothing after fusion, only inside ROI
+    # 7. Post-processing (Smoothing & Masking)
+    # Mask out non-ROI areas in the work rectangle
+    invalid_mask = ~roiC.astype(bool)
+    result_C[invalid_mask] = np.nan
+    
     if use_smooth:
-        # Mask outside ROI to NaN before smoothing; then smooth and keep NaNs where no data
-        masked = result_C.copy()
-        invalid = ~roiC.astype(bool)
-        masked[invalid] = np.nan
-        result_C = smooth_displacement_field(masked, sigma=sigma)
+        result_C = smooth_displacement_field(result_C, sigma=sigma)
 
-    # Paste back to full image coordinates
+    # 8. Paste back to full image
     disp_full = np.full((H, W, 2), np.nan, dtype=np.float64)
     disp_full[yC:yC+hC, xC:xC+wC, :] = result_C
 

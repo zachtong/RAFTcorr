@@ -6,4 +6,5 @@ __pycache__/
 
 # Legacy and Large Files
 legacy_archive/
-models/
+models/*
+!models/active/

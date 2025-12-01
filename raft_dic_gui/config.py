@@ -27,11 +27,11 @@ class DICConfig:
     sigma: float = 2.0
     
     # Tiling / ROI Settings
-    D_global: int = 100      # Context padding
-    g_tile: int = 100        # Guard band
-    overlap_ratio: float = 0.10
+    context_padding: int = 32    # Context padding (px)
+    tile_overlap: int = 32       # Tile overlap (px)
     p_max_pixels: int = 1100 * 1100
-    prefer_square: bool = False
+    safety_factor: float = 0.55
+    allow_shared_memory: bool = False
     
     # Runtime / Hardware
     device: str = "cuda"

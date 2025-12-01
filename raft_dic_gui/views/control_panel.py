@@ -40,18 +40,15 @@ class ControlPanel(ttk.Frame):
         
         # Performance
         self.fast_preview = tk.BooleanVar(value=True)
-        self.show_colorbars = tk.BooleanVar(value=False)
+        self.show_colorbars = tk.BooleanVar(value=True)  # Default to True
         self.preview_scale = tk.StringVar(value="0.5")
         self.interp_sample_step = tk.StringVar(value="2")
         
         # Tiling
-        self.D_global = tk.StringVar(value="100")
-        self.g_tile = tk.StringVar(value="100")
-        self.overlap_ratio = tk.StringVar(value="0.10")
-        self.disp_preset = tk.StringVar(value="small")
-        self.disp_custom = tk.StringVar(value="100")
+        self.context_padding = tk.StringVar(value="32")
+        self.tile_overlap = tk.StringVar(value="32")
+        self.safety_factor = tk.StringVar(value="0.55")
         self.p_max_pixels = tk.StringVar(value="1100*1100")
-        self.prefer_square = tk.BooleanVar(value=False)
         self.show_tiles_overlay = tk.BooleanVar(value=False)
         
         # Background Image Mode
@@ -73,9 +70,9 @@ class ControlPanel(ttk.Frame):
             "smooth": "Gaussian smoothing (sigma in pixels). Larger sigma = smoother, less detail. Typical 0.5-5.0.",
             "vis": "Visualization settings including colorbar range and colormap",
             "run": "Start processing the image sequence",
-            "tiling": "Tiled ROI DIC: D_global = context padding (px) around ROI bbox; g_tile = per-tile guard band to avoid edge artifacts; overlap_ratio = fraction of valid interior overlap for feathered fusion (default 0.10).",
-            "pmax": "Pixel budget per RAFT call (tile area). Default ~1100x1100. Lower to reduce VRAM usage; higher risks OOM.",
-            "prefer_square": "If enabled, use square tiles up to the pixel budget; otherwise match context aspect ratio to reduce tile count.",
+            "tiling": "Tiling Settings:\nContext Padding: Extra pixels around ROI for context (default 32).\nTile Overlap: Overlap between tiles for smooth fusion (default 32).",
+            "safety": "Safety Factor: Controls VRAM usage aggressiveness.\n0.2: Very Safe (Slow)\n0.4: Default\n0.55: Aggressive (Fast)\n0.7: Extreme (Risk of OOM)",
+            "pmax": "Pixel budget per RAFT call (tile area). This is a limit on Total Pixels (W*H). E.g., 140*140 (~20k px) allows 200x100. Lower to reduce VRAM usage; higher risks OOM.",
             "tiles_overlay": "Draw tiles and their valid interiors over ROI preview for debugging."
         }
         
@@ -233,51 +230,39 @@ class ControlPanel(ttk.Frame):
         except Exception:
             pass
 
-        # Tiled ROI processing parameters
-        tile_frame = ttk.Frame(adv_content)
+        # Tiling Settings
+        tile_frame = ttk.LabelFrame(adv_content, text="Tiling Settings", padding=5)
         tile_frame.grid(row=0, column=0, columnspan=3, sticky="ew", pady=4)
         tile_frame.grid_columnconfigure(1, weight=1)
 
-        # Max estimated displacement dropdown with custom
-        ttk.Label(tile_frame, text="Max estimated displacement:").grid(row=0, column=0, sticky="w", padx=5)
-        self.disp_preset_display = tk.StringVar(value="Small (~100 px)")
-        disp_combo = ttk.Combobox(tile_frame, textvariable=self.disp_preset_display,
-                                  values=("Small (~100 px)", "Large (~300 px)", "Customized"), width=20)
-        disp_combo.grid(row=0, column=1, sticky="w")
-        # Custom value entry (only when Customized)
-        self.disp_custom_entry = ttk.Entry(tile_frame, textvariable=self.disp_custom, width=10)
-        self.disp_custom_entry.grid(row=0, column=2, sticky="w", padx=(6,0))
-        try:
-            self.disp_custom_entry.grid_remove()
-        except Exception:
-            pass
-            
-        try:
-            disp_combo.bind('<<ComboboxSelected>>', lambda e: self._map_disp_selection())
-        except Exception:
-            pass
+        # Context Padding
+        ttk.Label(tile_frame, text="Context Padding (px):").grid(row=0, column=0, sticky="w", padx=5)
+        pad_combo = ttk.Combobox(tile_frame, textvariable=self.context_padding, 
+                                values=("16", "32", "64", "128"), width=10)
+        pad_combo.grid(row=0, column=1, sticky="w")
+        
+        # Tile Overlap
+        ttk.Label(tile_frame, text="Tile Overlap (px):").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        overlap_combo = ttk.Combobox(tile_frame, textvariable=self.tile_overlap,
+                                    values=("16", "32", "64"), width=10)
+        overlap_combo.grid(row=1, column=1, sticky="w", pady=2)
 
-        # Place overlap ratio under Pixel Budget to avoid overlap in the grid
-        ttk.Label(tile_frame, text="Overlap Ratio:").grid(row=3, column=0, sticky="w", padx=(5,5))
-        self.overlap_entry = ttk.Entry(tile_frame, textvariable=self.overlap_ratio, width=8)
-        self.overlap_entry.grid(row=3, column=1, sticky="w")
+        # Safety Factor
+        ttk.Label(tile_frame, text="Safety Factor:").grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        self.safety_combo = ttk.Combobox(tile_frame, textvariable=self.safety_factor,
+                                    values=("0.2", "0.4", "0.55", "0.7", "1.0"), width=10)
+        self.safety_combo.grid(row=2, column=1, sticky="w", pady=2)
+        self.safety_combo.bind('<<ComboboxSelected>>', lambda e: self._trigger('on_safety_factor_change'))
         
-        # Pixel budget and options
-        ttk.Label(tile_frame, text="Pixel Budget (e.g., 1100*1100):").grid(row=1, column=0, sticky="w", padx=5, pady=(4,0))
-        self.pmax_entry = ttk.Entry(tile_frame, textvariable=self.p_max_pixels, width=14)
-        self.pmax_entry.grid(row=1, column=1, sticky="w", pady=(4,0))
+        # Help button for safety
+        hp_safe = self.create_help_button(tile_frame, "safety")
+        hp_safe.grid(row=2, column=2, padx=6)
+
+
         
-        # Help button for pixel budget
-        try:
-            hp = self.create_help_button(tile_frame, "pmax")
-            hp.grid(row=2, column=4, padx=6, pady=(4,0))
-        except Exception:
-            pass
-        ttk.Checkbutton(tile_frame, text="Show Tiles Overlay", variable=self.show_tiles_overlay,
-                        command=lambda: self.callbacks.get('update_roi_label', lambda: None)()).grid(row=4, column=0, sticky="w", padx=(5,5), pady=(2,0))
         # Help button for tiling
         help_btn = self.create_help_button(tile_frame, "tiling")
-        help_btn.grid(row=2, column=4, padx=6, pady=(4,0))
+        help_btn.grid(row=0, column=2, padx=6)
 
         # Smoothing options
         smooth_frame = ttk.Frame(adv_content)
@@ -331,10 +316,14 @@ class ControlPanel(ttk.Frame):
         vmax_entry.grid(row=1, column=3, padx=2)
         
         # Bind range entries to update preview
+        def _on_range_edit(event=None):
+            self.use_fixed_colorbar.set(True)
+            self._trigger('on_param_change')
+
         for ent in (umin_entry, umax_entry, vmin_entry, vmax_entry):
             try:
-                ent.bind('<FocusOut>', lambda e: self.callbacks.get('on_param_change', lambda: None)())
-                ent.bind('<Return>', lambda e: self.callbacks.get('on_param_change', lambda: None)())
+                ent.bind('<FocusOut>', _on_range_edit)
+                ent.bind('<Return>', _on_range_edit)
             except Exception:
                 pass
         
@@ -518,6 +507,8 @@ class ControlPanel(ttk.Frame):
         """Update sigma entry when scale moves"""
         self.sigma.set(f"{float(value):.2f}")
 
+
+
     def on_sigma_entry_change(self, event=None):
         """Update sigma scale when entry changes"""
         try:
@@ -544,53 +535,7 @@ class ControlPanel(ttk.Frame):
             self.model_combobox.current(0)
             self.on_model_selected()
 
-    def _map_disp_selection(self):
-        try:
-            sel = (self.disp_preset_display.get() or "").lower()
-            if sel.startswith("small"):
-                self.disp_preset.set("small")
-                try: self.disp_custom_entry.grid_remove()
-                except Exception: pass
-            elif sel.startswith("large"):
-                self.disp_preset.set("large")
-                try: self.disp_custom_entry.grid_remove()
-                except Exception: pass
-            else:
-                self.disp_preset.set("custom")
-                try: self.disp_custom_entry.grid()
-                except Exception: pass
-            
-            self.on_disp_preset_change()
-            
-            # Callback to update ROI preview
-            if self.callbacks.get('update_roi_label'):
-                self.callbacks['update_roi_label']()
-        except Exception:
-            pass
-
-    def on_disp_preset_change(self):
-        """Map user-facing displacement preset to internal D_global and g_tile."""
-        try:
-            mode = self.disp_preset.get()
-        except Exception:
-            mode = "small"
-        if mode == "small":
-            val = 100
-            self.disp_custom_entry.configure(state="disabled")
-        elif mode == "large":
-            val = 300
-            self.disp_custom_entry.configure(state="disabled")
-        else:
-            # Customized: use user entry
-            self.disp_custom_entry.configure(state="normal")
-            try:
-                val = int(float(self.disp_custom.get()))
-            except Exception:
-                val = 100
-                self.disp_custom.set(str(val))
-        # Set both D_global and g_tile internally
-        self.D_global.set(str(val))
-        self.g_tile.set(str(val))
+    # Obsolete methods removed: _map_disp_selection, on_disp_preset_change
 
     def update_config(self, config):
         """Update the configuration object with current UI values."""
@@ -603,22 +548,23 @@ class ControlPanel(ttk.Frame):
         config.use_smooth = self.use_smooth.get()
         config.sigma = float(self.sigma.get())
         
-        self.on_disp_preset_change()
-        try:
-            config.D_global = int(float(self.D_global.get()))
-        except Exception:
-            config.D_global = 100
+        config.use_smooth = self.use_smooth.get()
+        config.sigma = float(self.sigma.get())
         
         try:
-            config.g_tile = int(float(self.g_tile.get()))
+            config.context_padding = int(self.context_padding.get())
         except Exception:
-            config.g_tile = 100
+            config.context_padding = 32
             
         try:
-            r = float(self.overlap_ratio.get())
-            config.overlap_ratio = max(0.0, min(0.9, r))
+            config.tile_overlap = int(self.tile_overlap.get())
         except Exception:
-            config.overlap_ratio = 0.10
+            config.tile_overlap = 32
+            
+        try:
+            config.safety_factor = float(self.safety_factor.get())
+        except Exception:
+            config.safety_factor = 0.55
 
         # Parse pixel budget input
         try:
@@ -633,8 +579,6 @@ class ControlPanel(ttk.Frame):
                 config.p_max_pixels = int(float(s))
         except Exception:
             config.p_max_pixels = 1100 * 1100
-            
-        config.prefer_square = bool(self.prefer_square.get())
         
         # Device
         # Device
@@ -668,6 +612,11 @@ class ControlPanel(ttk.Frame):
             metadata = mdl.describe_checkpoint(entry.path)
             summary = mdl.metadata_summary(metadata)
             self.model_summary_text.set(summary)
+            
+            # Auto-estimate safe pixel budget (Calculation only, display in ROI panel)
+            # safe_pmax = mdl.estimate_safe_pmax(metadata)
+            # self.p_max_pixels.set(f"{safe_pmax}*{safe_pmax}")
+            
             # Notify controller if needed
             if self.callbacks.get('on_model_selected'):
                 self.callbacks['on_model_selected']()

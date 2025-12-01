@@ -13,6 +13,7 @@ from scipy.interpolate import griddata, Rbf
 
 import raft_dic_gui.processing as proc
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class PreviewPanel(ttk.Frame):
     def __init__(self, parent, control_panel=None, root=None, callbacks=None, config=None):
@@ -172,8 +173,6 @@ class PreviewPanel(ttk.Frame):
         self.canvas_frame = ttk.Frame(disp_frame)
         self.canvas_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         self.canvas_frame.grid_rowconfigure(0, weight=1)
-        self.canvas_frame.grid_columnconfigure(0, weight=1)
-        
         self.canvas_frame.grid_rowconfigure(0, weight=1)
         self.canvas_frame.grid_columnconfigure(0, weight=1)
         
@@ -182,6 +181,15 @@ class PreviewPanel(ttk.Frame):
         self.fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.2)
         self.ax_u.set_axis_off()
         self.ax_v.set_axis_off()
+        
+        self.ax_u.set_title("U Component")
+        self.ax_v.set_title("V Component")
+        
+        # Create dividers for stable colorbar layout
+        self.div_u = make_axes_locatable(self.ax_u)
+        self.div_v = make_axes_locatable(self.ax_v)
+        self.cax_u = None
+        self.cax_v = None
         
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.canvas_frame)
         self.canvas.draw()
@@ -555,10 +563,13 @@ class PreviewPanel(ttk.Frame):
         if image is None: return
         h, w = image.shape[:2]
         self.image_info.configure(text=f"Image Size: {w} x {h}")
-        # Update metrics text (simplified)
+        # Metrics text is now updated via update_info_text from main controller
+        
+    def update_info_text(self, text: str):
+        """Update the detailed info text area below ROI selection."""
         self.roi_metrics_text.configure(state='normal')
         self.roi_metrics_text.delete(1.0, tk.END)
-        self.roi_metrics_text.insert(tk.END, f"Width: {w}\nHeight: {h}")
+        self.roi_metrics_text.insert(tk.END, text)
         self.roi_metrics_text.configure(state='disabled')
 
     # --- Visualization Methods ---
@@ -747,19 +758,30 @@ class PreviewPanel(ttk.Frame):
             
             # Update colorbars
             if cp.show_colorbars.get():
-                if self.cb_u: self.cb_u.remove()
-                if self.cb_v: self.cb_v.remove()
-                
+                # U Component
                 if im_u:
-                    self.cb_u = self.fig.colorbar(im_u, ax=self.ax_u, fraction=0.046, pad=0.04)
+                    if self.cax_u is None:
+                        self.cax_u = self.div_u.append_axes("right", size="5%", pad=0.05)
+                    else:
+                        self.cax_u.clear()
+                    self.cb_u = self.fig.colorbar(im_u, cax=self.cax_u)
+                
+                # V Component
                 if im_v:
-                    self.cb_v = self.fig.colorbar(im_v, ax=self.ax_v, fraction=0.046, pad=0.04)
+                    if self.cax_v is None:
+                        self.cax_v = self.div_v.append_axes("right", size="5%", pad=0.05)
+                    else:
+                        self.cax_v.clear()
+                    self.cb_v = self.fig.colorbar(im_v, cax=self.cax_v)
             else:
-                if self.cb_u: 
-                    self.cb_u.remove()
+                # Hide colorbars if they exist
+                if self.cax_u is not None:
+                    self.cax_u.remove()
+                    self.cax_u = None
                     self.cb_u = None
-                if self.cb_v: 
-                    self.cb_v.remove()
+                if self.cax_v is not None:
+                    self.cax_v.remove()
+                    self.cax_v = None
                     self.cb_v = None
 
             self.canvas.draw()
