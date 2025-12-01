@@ -297,7 +297,76 @@ class PreviewPanel(ttk.Frame):
             self.mask_photo = ImageTk.PhotoImage(pil_mask)
             self.roi_canvas.create_image(0, 0, image=self.mask_photo, anchor=tk.NW)
 
+        self.draw_tiles_overlay()
         self.draw_rulers(new_w, new_h)
+
+    def draw_tiles_overlay(self):
+        """Draw tile grid overlay if enabled."""
+        if not self.control_panel or not self.control_panel.show_tiles.get():
+            return
+            
+        if self.current_image is None:
+            return
+
+        try:
+            # Get parameters
+            p_max = self.config.p_max_pixels
+            if isinstance(p_max, str):
+                if '*' in p_max:
+                    w, h = map(int, p_max.split('*'))
+                    p_max = w * h
+                else:
+                    p_max = int(p_max)
+            
+            tile_size = int(np.sqrt(p_max))
+            overlap = int(self.control_panel.tile_overlap.get())
+            stride = max(1, tile_size - overlap)
+            
+            # Determine ROI bounds
+            h, w = self.current_image.shape[:2]
+            x0, y0, x1, y1 = 0, 0, w, h
+            if self.roi_rect:
+                x0, y0, x1, y1 = self.roi_rect
+                
+            rw, rh = x1 - x0, y1 - y0
+            if rw <= 0 or rh <= 0:
+                return
+
+            # Calculate positions
+            xs = proc.calculate_window_positions(rw, tile_size, stride)
+            ys = proc.calculate_window_positions(rh, tile_size, stride)
+            
+            # Draw tiles
+            for i, y in enumerate(ys):
+                for j, x in enumerate(xs):
+                    # Tile bounds in ROI coords
+                    tx0 = x0 + x
+                    ty0 = y0 + y
+                    tx1 = min(tx0 + tile_size, x0 + rw)
+                    ty1 = min(ty0 + tile_size, y0 + rh)
+                    
+                    # Convert to canvas coords
+                    cx0 = tx0 * self.zoom_factor
+                    cy0 = ty0 * self.zoom_factor
+                    cx1 = tx1 * self.zoom_factor
+                    cy1 = ty1 * self.zoom_factor
+                    
+                    # Draw tile (Blue)
+                    self.roi_canvas.create_rectangle(cx0, cy0, cx1, cy1, 
+                                                   outline='#00BFFF', width=1, tags='tile_overlay')
+                    
+                    # Draw valid core (Orange) - approximate visualization
+                    # Core is roughly the center area. 
+                    # For visualization, just showing the tile boundary is often enough to see overlap.
+                    # But let's add a small inner box to indicate the "core" if requested?
+                    # User asked for "how they overlap", so the dense grid of blue boxes is perfect.
+                    # Let's add a text label for tile index to help order
+                    if len(xs) * len(ys) < 100: # Only if not too many tiles
+                         self.roi_canvas.create_text((cx0+cx1)/2, (cy0+cy1)/2, 
+                                                   text=f"{i},{j}", fill='#00BFFF', font=("Arial", 8), tags='tile_overlay')
+
+        except Exception as e:
+            print(f"Error drawing tiles: {e}")
 
     def draw_rulers(self, w, h):
         """Draw simple rulers/ticks around the image."""

@@ -8,3 +8,8 @@ __pycache__/
 legacy_archive/
 models/*
 !models/active/
+
+# Documentation and Examples
+docs/
+assets/demo/
+examples/

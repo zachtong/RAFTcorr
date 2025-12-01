@@ -9,7 +9,7 @@ It provides tools for:
 - Interactive parameter adjustment
 
 Author: Zixiang Tong @ UT-Austin, Lehu Bu @ UT-Austin
-Date: 2025-06-10
+Date: 2025-12-01
 Version: 1.0
 
 Dependencies:
@@ -79,10 +79,14 @@ class RAFTDICGUI:
 
         def _wrapper():
             try:
+                print(f"[DEBUG] Executing _ui_call wrapper for {func.__name__}", flush=True) 
                 result['value'] = func(*args, **kwargs)
+            except Exception as e:
+                print(f"[ERROR] Exception in _ui_call wrapper: {e}", flush=True)
             finally:
                 event.set()
 
+        print(f"[DEBUG] Scheduling _ui_call for {func.__name__}", flush=True)
         self.root.after(0, _wrapper)
         if wait:
             event.wait()
@@ -97,25 +101,29 @@ class RAFTDICGUI:
                 pass
 
             state = 'disabled' if running else 'normal'
-            for child in self.root.winfo_children():
-                for widget in child.winfo_children():
-                    if isinstance(widget, (ttk.Button, ttk.Entry, ttk.Radiobutton)):
-                        try:
-                            if widget is self.stop_button:
-                                widget.configure(state='normal' if running else 'disabled')
-                            else:
-                                widget.configure(state=state)
-                        except Exception:
-                            pass
+            print(f"[DEBUG] Setting running state to {running} (state={state})", flush=True)
+            
+            # Recursively disable/enable all buttons/entries
+            def _set_state_recursive(widget):
+                try:
+                    if isinstance(widget, (ttk.Button, ttk.Entry, ttk.Radiobutton, ctk.CTkButton, ctk.CTkEntry)):
+                        # Skip run/stop buttons here, handle them explicitly below
+                        if widget is not self.control_panel.run_button and widget is not self.control_panel.stop_button:
+                            widget.configure(state=state)
+                except Exception:
+                    pass
+                
+                for child in widget.winfo_children():
+                    _set_state_recursive(child)
 
+            _set_state_recursive(self.root)
+            
+            # Explicitly handle Run/Stop buttons
             try:
-                self.run_button.configure(state='disabled' if running else 'normal')
-            except Exception:
-                pass
-            try:
-                self.stop_button.configure(state='normal' if running else 'disabled')
-            except Exception:
-                pass
+                self.control_panel.run_button.configure(state='disabled' if running else 'normal')
+                self.control_panel.stop_button.configure(state='normal' if running else 'disabled')
+            except Exception as e:
+                print(f"[ERROR] Failed to set Run/Stop button state: {e}", flush=True)
 
         self._ui_call(_toggle, wait=True)
 
@@ -124,14 +132,14 @@ class RAFTDICGUI:
         def _apply():
             if percent is not None:
                 try:
-                    self.progress.configure(value=percent)
-                except Exception:
-                    pass
+                    self.control_panel.progress.configure(value=percent)
+                except Exception as e:
+                    print(f"[ERROR] Failed to update progress bar: {e}", flush=True)
             if current is not None and total is not None:
                 try:
-                    self.progress_text.configure(text=f"{current}/{total}")
-                except Exception:
-                    pass
+                    self.control_panel.progress_text.configure(text=f"{current}/{total}")
+                except Exception as e:
+                    print(f"[ERROR] Failed to update progress text: {e}", flush=True)
 
         self._ui_call(_apply)
 
@@ -208,7 +216,9 @@ class RAFTDICGUI:
         self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
         self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
         self.control_panel.callbacks['on_model_selected'] = self._update_roi_status_text
-        self.control_panel.callbacks['on_safety_factor_change'] = self._update_roi_status_text
+        self.control_panel.callbacks['on_safety_factor_change'] = lambda: (self._update_roi_status_text(), self.preview_panel.draw_roi())
+        self.control_panel.callbacks['on_overlap_change'] = self.preview_panel.draw_roi
+        self.control_panel.callbacks['on_show_tiles_change'] = self.preview_panel.draw_roi
         
         # Preview Panel callbacks
         self.preview_panel.control_panel = self.control_panel
@@ -277,15 +287,17 @@ class RAFTDICGUI:
             # 4. Get Image Info & Strategy
             if self.current_image is not None:
                 h, w = self.current_image.shape[:2]
-                img_str = f"Input: {w} x {h}"
                 
                 # Use ROI size if available, otherwise full image
                 calc_w, calc_h = w, h
+                img_str = f"Input: {w} x {h}" # Default
+                
                 if self.roi_rect:
                     x0, y0, x1, y1 = self.roi_rect
                     rw, rh = x1 - x0, y1 - y0
                     if rw > 0 and rh > 0:
                         calc_w, calc_h = rw, rh
+                        img_str = f"ROI: {rw} x {rh}"
 
                 if (calc_w * calc_h) > safe_pmax:
                     # Tiling needed
@@ -437,7 +449,7 @@ class RAFTDICGUI:
     def request_stop(self):
         """Signal the processor to stop."""
         self._stop_requested = True
-        self.stop_button.configure(state='disabled')
+        self.control_panel.stop_button.configure(state='disabled')
 
     def _run_process(self):
         """Background processing task."""
