@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-2D-RAFT-DIC-GUI Setup Script
+RAFTcorr Setup Script
 ============================
-A clean, efficient setup for RAFT-DIC with automatic CUDA detection.
+A clean, efficient setup for RAFTcorr with automatic CUDA detection.
 
 Authors: Zixiang (Zach) Tong @ UT-Austin, Lehu Bu @ UT-Austin
-License: MIT
 """
 
 import subprocess
@@ -176,46 +175,12 @@ class CustomInstallCommand(install):
         install_pytorch_with_cuda()
         install.run(self)
 
-class CustomDevelopCommand(develop):
-    """Custom development installation command."""
-    def run(self):
-        install_pytorch_with_cuda()
-        develop.run(self)
-
-# Core dependencies (excluding PyTorch which is handled separately)
-REQUIREMENTS = [
-    "numpy>=1.21.0",
-    "scipy>=1.7.0", 
-    "matplotlib>=3.5.0",
-    "opencv-python>=4.5.0",
-    "Pillow>=8.0.0",
-    "tifffile>=2021.7.2",
-]
-
-# Get CUDA extensions
-cuda_extensions = get_cuda_extensions()
-
-setup(
-    name="raft-dic-gui",
-    version="1.0.0",
-    author="Zixiang (Zach) Tong, Lehu Bu",
-    author_email="zachtong@utexas.edu",
-    description="Digital Image Correlation using RAFT neural network with GPU acceleration",
-    long_description=read_readme(),
-    long_description_content_type="text/markdown",
-    url="https://github.com/zachtong/2D-RAFT-DIC-GUI",
-    
-    packages=find_packages(),
-    include_package_data=True,
-    install_requires=REQUIREMENTS,
-    python_requires=">=3.8",
-    
     # CUDA extensions
     ext_modules=cuda_extensions,
     
     entry_points={
         "console_scripts": [
-            "raft-dic-gui=main_GUI:main",
+            "raftcorr=main_GUI:main",
         ],
     },
     

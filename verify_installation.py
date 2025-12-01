@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Installation Verification Script for RAFT-DIC-GUI
-================================================
+Installation Verification Script for RAFTcorr
+=============================================
 Quick verification that all components are properly installed.
 """
 
@@ -57,7 +57,7 @@ def check_cuda_extension():
 
 def main():
     """Run all verification checks."""
-    print("RAFT-DIC-GUI Installation Verification")
+    print("RAFTcorr Installation Verification")
     print("=" * 50)
     
     # Core dependencies
@@ -70,6 +70,7 @@ def main():
         ("tifffile", "TiffFile"),
         ("torch", "PyTorch"),
         ("torchvision", "TorchVision"),
+        ("customtkinter", "CustomTkinter"),
     ]
     
     failed = 0
@@ -99,7 +100,7 @@ def main():
         return 1
     
     print(f"\n[SUCCESS] All dependencies installed and GPU verified!")
-    print("[READY] RAFT-DIC is ready to run with GPU acceleration!")
+    print("[READY] RAFTcorr is ready to run with GPU acceleration!")
     
     return 0
 

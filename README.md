@@ -1,4 +1,4 @@
-# 2D RAFT‑DIC GUI
+# RAFTcorr
 
 An interactive desktop GUI for Digital Image Correlation powered by a RAFT neural network (CUDA‑accelerated).
 
@@ -13,8 +13,8 @@ An interactive desktop GUI for Digital Image Correlation powered by a RAFT neura
 ## Install
 
 ```bash
-git clone https://github.com/zachtong/2D-RAFT-DIC-GUI.git
-cd 2D-RAFT-DIC-GUI
+git clone https://github.com/zachtong/RAFTcorr.git
+cd RAFTcorr
 pip install -e .
 ```
 
@@ -29,14 +29,12 @@ python verify_installation.py
 python main_GUI.py
 ```
 
-Place the model checkpoint at `models/raft-dic_v1.pth`.
-
 ## Quick Usage
 
 1. Select input folder (images) and output folder.
 2. Draw and confirm ROI on the first image.
 3. Choose processing mode (Accumulative / Incremental).
-4. Optionally adjust Advanced parameters (tiling, budget, overlap, smoothing).
+4. Optionally adjust Advanced parameters (Safety Factor, Overlap, Smoothing).
 5. Click Run. The progress bar and counter update as frames process.
 
 For a complete walkthrough and parameter explanations, see `USER_MANUAL.md`.
@@ -47,7 +45,7 @@ Customize branding, theme, and icons via `assets/app_config.json` (created in th
 
 ```json
 {
-  "app_title": "2D RAFT-DIC GUI",
+  "app_title": "RAFTcorr",
   "appearance_mode": "system",
   "color_theme": "blue",
   "icon_png": "assets/icons/app_icon.png",
@@ -83,12 +81,7 @@ Scaffolded assets:
 If this software assists your work, please cite RAFT and this repository. Example:
 
 ```bibtex
-@software{raft_dic_gui,
-  title = {2D RAFT-DIC GUI},
-  author = {Tong, Zixiang and Bu, Lehu},
-  year = {2025},
-  url = {https://github.com/zachtong/2D-RAFT-DIC-GUI}
-}
+TBD.
 ```
 
 ## License

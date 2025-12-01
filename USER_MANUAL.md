@@ -1,6 +1,6 @@
-# RAFT‑DIC GUI — User Manual
+# RAFTcorr — User Manual
 
-This manual explains how to install, configure, and use the 2D RAFT‑DIC GUI for displacement field analysis with a RAFT neural network.
+This manual explains how to install, configure, and use RAFTcorr for displacement field analysis with a RAFT neural network.
 
 ## 1. Requirements
 
@@ -17,13 +17,11 @@ python verify_installation.py
 ## 2. Install and Launch
 
 ```bash
-git clone https://github.com/zachtong/2D-RAFT-DIC-GUI.git
-cd 2D-RAFT-DIC-GUI
+git clone https://github.com/zachtong/RAFTcorr.git
+cd RAFTcorr
 pip install -e .
 python main_GUI.py
 ```
-
-Place the model checkpoint at `models/raft-dic_v1.pth`.
 
 ## 3. First Run — Basic Workflow
 
@@ -31,7 +29,7 @@ Place the model checkpoint at `models/raft-dic_v1.pth`.
 2. Select Output: choose a folder where results will be saved.
 3. Draw ROI: use the ROI tools to draw a polygon and Confirm ROI.
 4. Choose Mode: Accumulative (to first frame) or Incremental (to previous frame).
-5. Advanced (optional): set tiling parameters — presets, Pixel Budget, Overlap Ratio, Show Tiles Overlay.
+5. Advanced (optional): set tiling parameters — Safety Factor, Overlap Ratio.
 6. Run: click Run to process the sequence. The progress bar and counter update per frame.
 
 ## 4. ROI Metrics Panel
@@ -40,26 +38,24 @@ A text panel under the ROI canvas shows, in real time:
 - ROI size and pixel count
 - Expanded region (D) size and pixel count
 - Tile size and number of tiles
-- Budget check — single‑shot vs tiled
+- ROI size and pixel count
+- Expanded region (D) size and pixel count
+- Tile size and number of tiles
+- Processing Mode: Single-shot vs Tiled (based on Safety Factor)
 
-Tip: If expanded area ≤ Pixel Budget, processing runs in a single shot. Otherwise, tiles are used with feathered fusion.
+Tip: If expanded area ≤ Safe Pixel Limit (calculated from Safety Factor), processing runs in a single shot. Otherwise, tiles are used with feathered fusion.
 
 ## 5. Tiling Parameters
 
-- Displacement Preset
-  - Small (~100 px): sets `D_global=g_tile=100`
-  - Large (~300 px): sets `D_global=g_tile=300`
-  - Customized: you enter a value; both D and g are set to it
+- **Safety Factor** (0.2 - 1.0)
+  - Controls how aggressively VRAM is used.
+  - **0.2 - 0.55**: Conservative. Good for stability.
+  - **0.7 - 1.0**: Aggressive. Uses more VRAM, fewer tiles, faster speed.
+  - **Note**: If VRAM is insufficient even at 1.0, the system automatically enables tiling.
 
-- Pixel Budget (`p_max_pixels`)
-  - The maximum tile area (e.g., `1100*1100`, `1100x1100`, or integer)
-  - If expanded area ≤ budget → single‑shot
-
-- Overlap Ratio
-  - Fraction of the tile interior used as overlap for blending (default 0.10)
-
-- Show Tiles Overlay
-  - Draws tiles (light blue) and valid interiors (orange) over the ROI preview
+- **Overlap Ratio**
+  - Fraction of the tile interior used as overlap for blending (default 0.10).
+  - Ensures smooth transitions between tiles.
 
 ## 6. Smoothing & Visualization
 
@@ -97,8 +93,8 @@ Place your icons in `assets/icons/`. The GUI reads this file at startup.
 
 ## 10. Tips & Limits
 
-- Choose Pixel Budget per your GPU VRAM; lower it for OOM safety
-- For tiled runs, ensure `g_tile < min(tile)/2` to preserve interior
+- **Safety Factor**: Start with 0.55. If you encounter OOM errors, lower it to 0.4 or 0.2.
+- **Tiling**: Tiling is automatic based on your Safety Factor and ROI size. You don't need to manually calculate tile sizes.
 - Overlap Ratio around 0.10 is a good default for smooth blending
 
 ## 11. Troubleshooting
@@ -110,12 +106,12 @@ Place your icons in `assets/icons/`. The GUI reads this file at startup.
 
 ## 12. FAQ
 
-- Single‑shot vs tiled?
-  - If expanded ROI area ≤ Pixel Budget → single‑shot (no guard band)
-  - Else → tiled with overlap and feathered fusion
+- **Single‑shot vs tiled?**
+  - If expanded ROI area ≤ Safe Pixel Limit → single‑shot (no guard band).
+  - Else → tiled with overlap and feathered fusion.
 
-- Can I force tiling even when single‑shot fits?
-  - Not by default. Lower the Pixel Budget to force tiling if you need to debug fusion.
+- **Can I force tiling even when single‑shot fits?**
+  - Yes, by lowering the **Safety Factor**. This reduces the "Safe Pixel Limit", forcing the system to split the image into tiles.
 
 - How to change the app icon and name?
   - Use `assets/app_config.json` (see Section 9). No code edits required.
