@@ -66,7 +66,8 @@ class DICProcessor:
             "use_smooth": config.use_smooth,
             "sigma": config.sigma,
             "p_max_pixels": config.p_max_pixels,
-            "mode": config.mode
+            "mode": config.mode,
+            "roi_rect": list(roi_rect) # Add ROI to config check
         }
         
         force_rerun = False

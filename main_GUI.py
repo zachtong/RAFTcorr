@@ -223,6 +223,227 @@ class RAFTDICGUI:
         # Preview Panel callbacks
         self.preview_panel.control_panel = self.control_panel
         self.preview_panel.callbacks['on_roi_confirmed'] = self._on_roi_confirmed
+        self.preview_panel.callbacks['on_tab_changed'] = self._on_preview_tab_changed
+        
+        # Post-Processing callbacks
+        self.control_panel.post_processing_panel.callbacks['calculate_strain'] = self.calculate_strain
+        self.control_panel.post_processing_panel.callbacks['update_post_preview'] = self.update_post_preview
+
+    def calculate_strain(self):
+        """Handle strain calculation request."""
+        print("[DEBUG] Calculate Strain requested.")
+        
+        if not self.displacement_results:
+            messagebox.showwarning("Warning", "No displacement results available. Please run analysis first.")
+            return
+
+        # Get parameters
+        pp = self.control_panel.post_processing_panel
+        method = pp.strain_method.get()
+        try:
+            sigma = float(pp.strain_sigma.get())
+        except ValueError:
+            sigma = 0.0
+            
+        print(f"[DEBUG] Strain Params: Method={method}, Sigma={sigma}")
+        
+        # Check selected components
+        comps = {k: v.get() for k, v in pp.strain_components.items()}
+        if not any(comps.values()):
+            messagebox.showwarning("Warning", "Please select at least one strain component to calculate.")
+            return
+
+        # Run calculation (Batch)
+        self._set_running_state(True)
+        
+        # Use existing progress bar
+        progress = self.control_panel.progress
+        progress_text = self.control_panel.progress_text
+        total = len(self.displacement_results)
+        
+        def _run():
+            try:
+                count = 0
+                self.strain_results = [] # Clear previous results
+                
+                # Update available components in UI
+                active_comps = [k for k, v in comps.items() if v]
+                self._ui_call(pp.vis_comp_combo.configure, values=active_comps)
+                if active_comps:
+                    self._ui_call(pp.vis_component.set, active_comps[0])
+                
+                for i, item in enumerate(self.displacement_results):
+                    # Update progress
+                    perc = (i / total) * 100
+                    self._ui_call(progress.configure, value=perc)
+                    self._ui_call(progress_text.configure, text=f"Calculating Strain: {i+1}/{total}")
+                    
+                    # Load displacement
+                    if isinstance(item, str):
+                        disp = np.load(item)
+                    else:
+                        disp = item
+                        
+                    # Calculate
+                    strain = proc.calculate_strain_field(disp, method=method, sigma=sigma)
+                    self.strain_results.append(strain)
+                    count += 1
+                
+                self._ui_call(progress.configure, value=100)
+                self._ui_call(progress_text.configure, text="Strain Calculation Complete")
+                print(f"[DEBUG] Calculated strain for {count} frames.")
+                
+                self._ui_call(messagebox.showinfo, "Success", f"Strain calculation complete for {count} frames.")
+                
+                # Trigger visualization update
+                self._ui_call(self.update_post_preview)
+                
+            except Exception as e:
+                print(f"[ERROR] Strain calculation failed: {e}")
+                self._ui_call(messagebox.showerror, "Error", f"Strain calculation failed: {e}")
+            finally:
+                self._set_running_state(False)
+                
+        import threading
+        threading.Thread(target=_run, daemon=True).start()
+
+    def update_post_preview(self, *args):
+        """Update the post-processing visualization (Strain/Probes)."""
+        print("[DEBUG] update_post_preview called")
+        if not hasattr(self, 'strain_results') or not self.strain_results:
+            print("[DEBUG] No strain results found.")
+            return
+            
+        try:
+            # Get current frame index from Post-Processing slider
+            try:
+                if hasattr(self.preview_panel, 'post_frame_slider'):
+                    val = self.preview_panel.post_frame_slider.get()
+                    current_frame = int(float(val)) - 1
+                else:
+                    current_frame = 0
+            except Exception:
+                current_frame = 0
+            
+            # Ensure valid frame index
+            if current_frame < 0:
+                current_frame = 0
+            
+            print(f"[DEBUG] Current strain frame: {current_frame}")
+            
+            if current_frame < 0 or current_frame >= len(self.strain_results):
+                print(f"[DEBUG] Frame index out of range (0-{len(self.strain_results)-1})")
+                return
+                
+            strain_data = self.strain_results[current_frame]
+            if strain_data is None:
+                print("[DEBUG] Strain data is None for this frame")
+                return
+                
+            # Get display settings
+            pp = self.control_panel.post_processing_panel
+            comp_name = pp.vis_component.get()
+            cmap = pp.vis_colormap.get()
+            
+            try:
+                alpha = float(pp.vis_alpha.get())
+                alpha = max(0.0, min(1.0, alpha))
+            except ValueError:
+                alpha = 0.7
+            
+            if comp_name not in strain_data:
+                return
+                
+            data_map = strain_data[comp_name]
+            
+            # Color Range Logic
+            vmin, vmax = None, None
+            is_fixed = pp.post_fixed_range.get()
+            
+            if is_fixed:
+                # Try to get from entries
+                try:
+                    vmin = float(pp.post_vmin.get())
+                    vmax = float(pp.post_vmax.get())
+                    # Update stored range
+                    pp.component_ranges[comp_name] = (vmin, vmax)
+                except ValueError:
+                    # If invalid, fallback to auto or stored
+                    if comp_name in pp.component_ranges:
+                        vmin, vmax = pp.component_ranges[comp_name]
+                        pp.post_vmin.set(f"{vmin:.4f}")
+                        pp.post_vmax.set(f"{vmax:.4f}")
+            else:
+                # Auto range
+                vmin = np.nanmin(data_map)
+                vmax = np.nanmax(data_map)
+                # Update UI entries
+                pp.post_vmin.set(f"{vmin:.4f}")
+                pp.post_vmax.set(f"{vmax:.4f}")
+                # Clear stored range for this component if switching to auto? 
+                # Or keep it? Let's keep it but update it to current auto for convenience if they switch back?
+                # No, if they switch to fixed, they probably want the last fixed value or the current auto value.
+                # Let's just update the entries.
+            
+            # Load background image (Reference Image)
+            bg_img = None
+            if self.image_files:
+                # Cache reference image if not already cached
+                if not hasattr(self, '_cached_ref_img') or self._cached_ref_img is None:
+                    try:
+                        input_dir = self.control_panel.input_path.get()
+                        img_path = os.path.join(input_dir, self.image_files[0])
+                        self._cached_ref_img = proc.load_and_convert_image(img_path)
+                    except Exception as e:
+                        print(f"[ERROR] Failed to load reference image: {e}")
+                        self._cached_ref_img = None
+                bg_img = self._cached_ref_img
+            
+            # Update PreviewPanel
+            self.preview_panel.plot_post_data(data_map, comp_name, cmap, alpha, 
+                                            background_image=bg_img, 
+                                            roi_rect=self.roi_rect,
+                                            vmin=vmin, vmax=vmax)
+            
+            # Update Post-Processing Playback Controls
+            # Use a flag or check value to prevent recursion loop
+            total_frames = len(self.strain_results)
+            if hasattr(self.preview_panel, 'post_frame_slider'):
+                self.preview_panel.post_frame_slider.configure(to=total_frames)
+                # Only set if different to avoid recursion loop
+                current_val = float(self.preview_panel.post_frame_slider.get())
+                if int(current_val) != (current_frame + 1):
+                    self.preview_panel.post_frame_slider.set(current_frame + 1)
+                
+            if hasattr(self.preview_panel, 'post_frame_entry'):
+                self.preview_panel.post_frame_entry.delete(0, tk.END)
+                self.preview_panel.post_frame_entry.insert(0, str(current_frame + 1))
+                
+            if hasattr(self.preview_panel, 'post_total_frames_label'):
+                self.preview_panel.post_total_frames_label.configure(text=f"/{total_frames}")
+                
+            if hasattr(self.preview_panel, 'post_current_image_name'):
+                if current_frame < len(self.image_files):
+                    self.preview_panel.post_current_image_name.configure(text=self.image_files[current_frame])
+            
+        except Exception as e:
+            print(f"[ERROR] Update post preview failed: {e}")
+
+    def _on_preview_tab_changed(self, index):
+        """Synchronize Control Panel tabs with Preview Panel tabs."""
+        try:
+            # Map Preview Panel tabs to Control Panel tabs
+            # 0 (ROI) -> 0 (DIC Params)
+            # 1 (Displacement) -> 0 (DIC Params)
+            # 2 (Post-Processing) -> 1 (Post-Processing)
+            
+            target_index = 0
+            if index == 2:
+                target_index = 1
+                
+            self.control_panel.select_tab(target_index)
+        except Exception as e:
+            print(f"Error syncing tabs: {e}")
 
     def _on_roi_confirmed(self, mask, rect):
         self.roi_mask = mask
@@ -479,6 +700,12 @@ class RAFTDICGUI:
         # Pass results to preview panel
         self.preview_panel.set_results(self.displacement_results, self.image_files)
         self.preview_panel.show_results_tab()
+        
+        # Enable Post-Processing tab
+        try:
+            self.preview_panel.notebook.tab(2, state="normal")
+        except Exception:
+            pass
         
         self._update_results_ui(total_frames)
         # Auto-set ranges if enabled or first run

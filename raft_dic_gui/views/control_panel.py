@@ -4,6 +4,8 @@ import customtkinter as ctk
 from raft_dic_gui.ui_components import CTkCollapsibleFrame as CollapsibleFrame, Tooltip
 import raft_dic_gui.model as mdl
 
+from raft_dic_gui.views.post_processing_panel import PostProcessingPanel
+
 class ControlPanel(ttk.Frame):
     def __init__(self, parent, callbacks=None, config=None):
         super().__init__(parent)
@@ -83,22 +85,46 @@ class ControlPanel(ttk.Frame):
         if self.callbacks.get(key):
             self.callbacks[key](*args)
 
+    def select_tab(self, index):
+        """Programmatically switch tabs."""
+        try:
+            self.notebook.select(index)
+        except Exception:
+            pass
+
     def create_widgets(self):
-        # Main control frame with scrollbar
-        control_canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=control_canvas.yview)
+        # Create Notebook
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True)
+        
+        # Tab 1: DIC Parameters
+        self.dic_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.dic_tab, text="DIC Parameters")
+        
+        # Tab 2: Post-Processing
+        self.post_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.post_tab, text="Post-Processing")
+        
+        # Initialize PostProcessingPanel inside the tab
+        self.post_processing_panel = PostProcessingPanel(self.post_tab, config=self.config, callbacks=self.callbacks)
+        self.post_processing_panel.pack(fill="both", expand=True)
+        
+        # --- DIC Tab Content (Existing Scrollable Canvas) ---
+        # Main control frame with scrollbar, parented to dic_tab
+        control_canvas = tk.Canvas(self.dic_tab)
+        scrollbar = ttk.Scrollbar(self.dic_tab, orient="vertical", command=control_canvas.yview)
         control_frame = ttk.Frame(control_canvas)
         
         # Configure scrolling
         control_canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Grid layout for scrollbar and canvas
+        # Grid layout for scrollbar and canvas within dic_tab
         control_canvas.grid(row=0, column=0, sticky="nsew")
         scrollbar.grid(row=0, column=1, sticky="ns")
         
-        # Configure parent grid
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        # Configure parent grid (dic_tab)
+        self.dic_tab.grid_rowconfigure(0, weight=1)
+        self.dic_tab.grid_columnconfigure(0, weight=1)
         
         # Create window in canvas
         canvas_frame = control_canvas.create_window((0, 0), window=control_frame, anchor="nw")

@@ -693,6 +693,7 @@ def prepare_visualization_data(displacement, reference_image, deformed_image, ro
                                preview_scale, interp_sample_step, background_mode,
                                deform_display_mode, deform_interp, show_deformed_boundary, quiver_step):
     """Prepare data for visualization without creating a figure"""
+    print(f"[DEBUG] prepare_visualization_data: Mode={background_mode}, ROI={roi_rect}")
     data = {
         'background_mode': background_mode,
         'img_crop': None,
@@ -707,6 +708,7 @@ def prepare_visualization_data(displacement, reference_image, deformed_image, ro
         # Reference mode logic
         try:
             xmin, ymin, xmax, ymax = roi_rect
+            print(f"[DEBUG] Reference mode ROI: {xmin},{ymin},{xmax},{ymax}")
             u = displacement[:, :, 0]
             v = displacement[:, :, 1]
             h, w = reference_image.shape[:2]
@@ -718,8 +720,10 @@ def prepare_visualization_data(displacement, reference_image, deformed_image, ro
             data['img_crop'] = reference_image
             data['u_masked'] = np.ma.array(u_full, mask=np.isnan(u_full))
             data['v_masked'] = np.ma.array(v_full, mask=np.isnan(v_full))
+            print(f"[DEBUG] Reference mode prepared. Masked U valid count: {data['u_masked'].count()}")
             return data
         except Exception as e:
+            print(f"[DEBUG] Error in reference mode: {e}")
             data['error'] = str(e)
             return data
 
@@ -800,81 +804,167 @@ def prepare_visualization_data(displacement, reference_image, deformed_image, ro
             mask_grid = cv2.morphologyEx(mask_grid, cv2.MORPH_CLOSE, kernel, iterations=1)
         except Exception:
             pass
-
-        u_grid = np.where(mask_grid.astype(bool), u_grid, np.nan)
-        v_grid = np.where(mask_grid.astype(bool), v_grid, np.nan)
-
+        
+        # Prepare final data
         img_crop = deformed_image[y0:y1+1, x0:x1+1]
-        u_full = u_grid
-        v_full = v_grid
-        deformed_mask = ~np.isnan(u_full) & ~np.isnan(v_full)
+        u_full = np.full(img_crop.shape[:2], np.nan)
+        v_full = np.full(img_crop.shape[:2], np.nan)
         
-        # Downsampling
-        try:
-            pscale = float(preview_scale)
-        except Exception:
-            pscale = 0.5
-        base_w, base_h = 800, 400
-        max_w = int(base_w * max(0.25, min(1.0, pscale)))
-        max_h = int(base_h * max(0.25, min(1.0, pscale)))
-        target_w = max_w // 2
-        target_h = max_h
-        scale = min(target_w / (x1 - x0 + 1), target_h / (y1 - y0 + 1), 1.0)
-        if scale < 1.0:
-            try:
-                new_size = (max(1, int((x1 - x0 + 1) * scale)), max(1, int((y1 - y0 + 1) * scale)))
-                img_crop = cv2.resize(img_crop, new_size, interpolation=cv2.INTER_AREA)
-                u_full = cv2.resize(u_full.astype(np.float32), new_size, interpolation=cv2.INTER_AREA)
-                v_full = cv2.resize(v_full.astype(np.float32), new_size, interpolation=cv2.INTER_AREA)
-                deformed_mask = cv2.resize(deformed_mask.astype(np.uint8), new_size, interpolation=cv2.INTER_NEAREST).astype(bool)
-            except Exception:
-                pass
-
+        valid_mask = (mask_grid > 0)
+        u_full[valid_mask] = u_grid[valid_mask]
+        v_full[valid_mask] = v_grid[valid_mask]
+        
         data['img_crop'] = img_crop
-        data['u_masked'] = np.ma.array(u_full, mask=~deformed_mask)
-        data['v_masked'] = np.ma.array(v_full, mask=~deformed_mask)
-
-        if show_deformed_boundary:
-            try:
-                cnts, _ = cv2.findContours(roi_mask_crop.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-                if len(cnts) > 0:
-                    cnt = max(cnts, key=cv2.contourArea)
-                    pts_local = cnt[:, 0, :]
-                    xs = pts_local[:, 0]
-                    ys = pts_local[:, 1]
-                    xs_g = xs + xmin
-                    ys_g = ys + ymin
-                    xs_r = np.clip((xs).astype(int), 0, roi_w-1)
-                    ys_r = np.clip((ys).astype(int), 0, roi_h-1)
-                    u_b = u[ys_r, xs_r]
-                    v_b = v[ys_r, xs_r]
-                    x_def_b = xs_g + u_b
-                    y_def_b = ys_g + v_b
-                    x_def_b = (x_def_b - x0) * scale
-                    y_def_b = (y_def_b - y0) * scale
-                    data['boundary_points'] = (x_def_b, y_def_b)
-            except Exception:
-                pass
-
-        if deform_display_mode == 'quiver':
-            try:
-                step = max(2, int(quiver_step))
-            except Exception:
-                step = 20
-            xsq = ((Xg[::step, ::step] - x0) * scale)
-            ysq = ((Yg[::step, ::step] - y0) * scale)
-            uq = u[::step, ::step]
-            vq = v[::step, ::step]
-            maskq = roi_mask_crop[::step, ::step] & np.isfinite(uq) & np.isfinite(vq)
-            data['quiver_data'] = (xsq[maskq], ysq[maskq], uq[maskq], vq[maskq])
+        data['u_masked'] = np.ma.array(u_full, mask=~valid_mask)
+        data['v_masked'] = np.ma.array(v_full, mask=~valid_mask)
         
+        if show_deformed_boundary:
+             # Find contours
+             try:
+                 contours, _ = cv2.findContours(mask_grid, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                 if contours:
+                     # Just take the largest one or all?
+                     # Flatten points
+                     all_pts = []
+                     for cnt in contours:
+                         pts = cnt.reshape(-1, 2)
+                         # Add offset
+                         pts += np.array([x0, y0])
+                         all_pts.append(pts)
+                     data['boundary_points'] = all_pts
+             except Exception:
+                 pass
+                 
+        if deform_display_mode == 'quiver':
+             # Generate quiver data on grid
+             qstep = max(1, int(quiver_step))
+             # Create a grid of points
+             h_c, w_c = img_crop.shape[:2]
+             y_q, x_q = np.mgrid[0:h_c:qstep, 0:w_c:qstep]
+             
+             # Filter by valid mask
+             valid_q = valid_mask[y_q, x_q]
+             
+             if np.any(valid_q):
+                 x_q = x_q[valid_q] + x0
+                 y_q = y_q[valid_q] + y0
+                 u_q = u_grid[y_q-y0, x_q-x0]
+                 v_q = v_grid[y_q-y0, x_q-x0]
+                 data['quiver_data'] = (x_q, y_q, u_q, v_q)
+
         return data
         
     except Exception as e:
-        print(f"Error in deformed visualization: {str(e)}, falling back to reference mode")
-        return prepare_visualization_data(displacement, reference_image, deformed_image, roi_rect, roi_mask,
-                               preview_scale, interp_sample_step, 'reference',
-                               deform_display_mode, deform_interp, show_deformed_boundary, quiver_step)
+        data['error'] = str(e)
+        return data
+
+
+def calculate_strain_field(displacement_field: np.ndarray, method: str = 'green_lagrange', sigma: float = 0.0):
+    """
+    Calculate strain field from displacement.
+    
+    Args:
+        displacement_field: (H, W, 2) array with (u, v) displacements.
+        method: 'green_lagrange' (default) or 'engineering'.
+        sigma: Gaussian smoothing sigma for displacement before differentiation.
+        
+    Returns:
+        strain_dict: Dictionary containing strain components:
+                     'exx', 'eyy', 'exy' (Green-Lagrange or Engineering tensors).
+                     'e1', 'e2' (Principal strains), 'max_shear', 'von_mises'.
+    """
+    u = displacement_field[..., 0]
+    v = displacement_field[..., 1]
+    
+    # Mask invalid regions
+    mask = ~np.isnan(u) & ~np.isnan(v)
+    if not np.any(mask):
+        return None
+        
+    # Optional: Smooth displacement before differentiation
+    if sigma > 0:
+        # Fill NaNs for smoothing
+        u_filled = u.copy()
+        v_filled = v.copy()
+        u_filled[~mask] = 0
+        v_filled[~mask] = 0
+        
+        # Smooth
+        u_smooth = gaussian_filter(u_filled, sigma)
+        v_smooth = gaussian_filter(v_filled, sigma)
+        
+        # Re-apply mask (approximate, edges might be affected)
+        # Ideally we use normalized convolution like in smooth_displacement_field
+        # But for simplicity here:
+        u = np.where(mask, u_smooth, np.nan)
+        v = np.where(mask, v_smooth, np.nan)
+
+    # Compute Gradients (Central Difference)
+    # np.gradient returns [d/dy, d/dx]
+    # du/dy, du/dx
+    grad_u = np.gradient(u, edge_order=1)
+    du_dy = grad_u[0]
+    du_dx = grad_u[1]
+    
+    # dv/dy, dv/dx
+    grad_v = np.gradient(v, edge_order=1)
+    dv_dy = grad_v[0]
+    dv_dx = grad_v[1]
+    
+    # Strain Calculation
+    if method == 'green_lagrange':
+        # E_xx = du/dx + 0.5 * ((du/dx)^2 + (dv/dx)^2)
+        exx = du_dx + 0.5 * (du_dx**2 + dv_dx**2)
+        
+        # E_yy = dv/dy + 0.5 * ((du/dy)^2 + (dv/dy)^2)
+        eyy = dv_dy + 0.5 * (du_dy**2 + dv_dy**2)
+        
+        # E_xy = 0.5 * (du/dy + dv/dx + (du/dx)*(du/dy) + (dv/dx)*(dv/dy))
+        exy = 0.5 * (du_dy + dv_dx + du_dx*du_dy + dv_dx*dv_dy)
+        
+    elif method == 'engineering':
+        # Small strain assumption
+        exx = du_dx
+        eyy = dv_dy
+        exy = 0.5 * (du_dy + dv_dx) # Tensor shear strain (epsilon_xy)
+        # Note: Engineering shear gamma_xy = 2 * epsilon_xy
+        
+    else:
+        raise ValueError(f"Unknown strain method: {method}")
+        
+    # Principal Strains
+    # E1,2 = (exx + eyy)/2 +/- sqrt(((exx - eyy)/2)^2 + exy^2)
+    center = (exx + eyy) / 2.0
+    radius = np.sqrt(((exx - eyy) / 2.0)**2 + exy**2)
+    e1 = center + radius
+    e2 = center - radius
+    
+    # Max Shear Strain (Radius of Mohr's circle)
+    max_shear = radius # This is max tensor shear strain. Engineering max shear is 2*radius.
+    
+    # Von Mises Equivalent Strain
+    # e_vm = 2/3 * sqrt( (e1-e2)^2 + (e2-e3)^2 + (e3-e1)^2 ) / sqrt(2) ?
+    # For 2D Plane Strain (e3=0):
+    # e_vm = sqrt( e1^2 - e1*e2 + e2^2 ) ?
+    # Let's use the effective strain definition often used in DIC:
+    # e_eff = sqrt( 2/3 * (e1^2 + e2^2 + (e1+e2)^2) ) ? No.
+    # Standard Von Mises for 2D (Plane Stress):
+    # sigma_vm = sqrt( s1^2 - s1*s2 + s2^2 )
+    # Equivalent strain e_eq = 2/3 * sqrt( 3/2 * (e_dev : e_dev) )
+    # Simplified for 2D principal strains:
+    von_mises = np.sqrt(e1**2 - e1*e2 + e2**2) # Approximation for visualization
+    
+    return {
+        'exx': exx,
+        'eyy': eyy,
+        'exy': exy,
+        'e1': e1,
+        'e2': e2,
+        'max_shear': max_shear,
+        'von_mises': von_mises
+    }
+
+
 
 
 def update_displacement_plot(ax_u, ax_v, data, colormap, alpha, vmin_u, vmax_u, vmin_v, vmax_v):

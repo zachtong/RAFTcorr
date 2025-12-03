@@ -33,6 +33,11 @@ class PreviewPanel(ttk.Frame):
         self.notebook.add(self.roi_pane, text="ROI Selection")
         self.notebook.add(self.vis_pane, text="Displacement Result")
         
+        # Post-Processing Tab
+        self.post_pane = ttk.Frame(self.notebook)
+        self.notebook.add(self.post_pane, text="Post-Processing")
+        self.notebook.tab(2, state="disabled") # Enabled only after results exist
+        
         # State variables
         self.roi_points = []
         self.drawing_roi = False
@@ -61,13 +66,56 @@ class PreviewPanel(ttk.Frame):
         self.cb_u = None
         self.cb_v = None
         
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+        
         self.create_widgets()
+
+    def _on_tab_changed(self, event):
+        if self.callbacks.get('on_tab_changed'):
+            try:
+                self.callbacks['on_tab_changed'](self.notebook.index("current"))
+            except Exception:
+                pass
 
     def create_widgets(self):
         # ROI Selection Panel
         self._create_roi_panel()
         # Displacement Overlay Panel
         self._create_vis_panel()
+        # Post-Processing Panel
+        self._create_post_panel()
+
+    def _create_post_panel(self):
+        post_pane = self.post_pane
+        
+        # Split Post-Processing Area: Top (Canvas) / Bottom (Graph)
+        self.post_paned = tk.PanedWindow(post_pane, orient=tk.VERTICAL, sashrelief=tk.RAISED, sashwidth=4)
+        self.post_paned.pack(fill="both", expand=True)
+        
+        # Top: Matplotlib Canvas for Strain/Extensometer Map
+        self.post_canvas_frame = ttk.Frame(self.post_paned)
+        self.post_paned.add(self.post_canvas_frame, minsize=300, stretch="always")
+        
+        self.post_fig, self.post_ax = plt.subplots(figsize=(5, 4))
+        self.post_canvas = FigureCanvasTkAgg(self.post_fig, master=self.post_canvas_frame)
+        self.post_canvas.draw()
+        self.post_canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+        
+        self.post_toolbar = NavigationToolbar2Tk(self.post_canvas, self.post_canvas_frame)
+        self.post_toolbar.update()
+        self.post_toolbar.pack(side="top", fill="x")
+        
+        # Add Playback Controls for Post-Processing
+        self._create_playback_controls(self.post_canvas_frame, 'post', use_pack=True)
+        
+        # Bottom: Graph Area for Time-Series
+        self.post_graph_frame = ttk.Frame(self.post_paned)
+        self.post_paned.add(self.post_graph_frame, minsize=150, stretch="always")
+        
+        self.post_graph_fig, self.post_graph_ax = plt.subplots(figsize=(5, 2))
+        self.post_graph_canvas = FigureCanvasTkAgg(self.post_graph_fig, master=self.post_graph_frame)
+        self.post_graph_canvas.draw()
+        self.post_graph_canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def _create_roi_panel(self):
         roi_pane = self.roi_pane
@@ -193,47 +241,17 @@ class PreviewPanel(ttk.Frame):
         
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.canvas_frame)
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.canvas_frame)
         self.toolbar.update()
+        self.toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
-        control_frame = ttk.Frame(disp_frame)
-        control_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
-        self.disp_control_frame = control_frame
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
-        # Playback controls
-        play_control = ttk.Frame(control_frame)
-        play_control.grid(row=0, column=0, padx=5)
-        
-        self.play_button = ttk.Button(play_control, text="Play", width=5, command=self.toggle_play)
-        self.play_button.grid(row=0, column=0, padx=2)
-        
-        frame_control = ttk.Frame(control_frame)
-        frame_control.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
-        
-        ttk.Button(frame_control, text="<", width=3, command=self.previous_frame).grid(row=0, column=0, padx=2)
-        ttk.Label(frame_control, text="Frame:").grid(row=0, column=1, padx=5)
-        self.frame_entry = ttk.Entry(frame_control, width=5)
-        self.frame_entry.grid(row=0, column=2, padx=2)
-        self.total_frames_label = ttk.Label(frame_control, text="/1")
-        self.total_frames_label.grid(row=0, column=3, padx=2)
-        ttk.Button(frame_control, text="Go", command=self.jump_to_frame).grid(row=0, column=4, padx=5)
-        ttk.Button(frame_control, text=">", width=3, command=self.next_frame).grid(row=0, column=5, padx=2)
-        
-        self.current_image_name = ttk.Label(frame_control, text="")
-        self.current_image_name.grid(row=0, column=6, padx=5)
-        
-        speed_frame = ttk.Frame(play_control)
-        speed_frame.grid(row=0, column=1, padx=5)
-        ttk.Label(speed_frame, text="Speed:").grid(row=0, column=0)
-        self.speed_var = tk.StringVar(value="1x")
-        speed_menu = ttk.OptionMenu(speed_frame, self.speed_var, "1x", "0.25x", "0.5x", "1x", "2x", "4x", command=self.change_play_speed)
-        speed_menu.grid(row=0, column=1)
-        
-        self.frame_slider = ttk.Scale(disp_frame, from_=1, to=1, orient=tk.HORIZONTAL, command=self.update_displacement_preview)
-        self.frame_slider.grid(row=2, column=0, sticky=(tk.W, tk.E), padx=5, pady=5)
+        # Create Playback Controls
+        self._create_playback_controls(disp_frame, 'disp')
         
         # Refresh binding
         try:
@@ -251,6 +269,78 @@ class PreviewPanel(ttk.Frame):
             vis_pane.bind('<Configure>', _schedule_vis_refresh)
         except Exception:
             pass
+
+    def _create_playback_controls(self, parent, prefix, use_pack=False):
+        """Create reusable playback controls."""
+        control_frame = ttk.Frame(parent)
+        if use_pack:
+            control_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
+        else:
+            control_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=5)
+        
+        # Playback controls
+        play_control = ttk.Frame(control_frame)
+        play_control.grid(row=0, column=0, padx=5)
+        
+        play_btn = ttk.Button(play_control, text="Play", width=5, command=self.toggle_play)
+        play_btn.grid(row=0, column=0, padx=2)
+        setattr(self, f'{prefix}_play_button', play_btn)
+        
+        frame_control = ttk.Frame(control_frame)
+        frame_control.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
+        
+        ttk.Button(frame_control, text="<", width=3, command=self.previous_frame).grid(row=0, column=0, padx=2)
+        ttk.Label(frame_control, text="Frame:").grid(row=0, column=1, padx=5)
+        
+        frame_entry = ttk.Entry(frame_control, width=5)
+        frame_entry.grid(row=0, column=2, padx=2)
+        setattr(self, f'{prefix}_frame_entry', frame_entry)
+        
+        total_lbl = ttk.Label(frame_control, text="/1")
+        total_lbl.grid(row=0, column=3, padx=2)
+        setattr(self, f'{prefix}_total_frames_label', total_lbl)
+        
+        ttk.Button(frame_control, text="Go", command=self.jump_to_frame).grid(row=0, column=4, padx=5)
+        ttk.Button(frame_control, text=">", width=3, command=self.next_frame).grid(row=0, column=5, padx=2)
+        
+        img_name_lbl = ttk.Label(frame_control, text="")
+        img_name_lbl.grid(row=0, column=6, padx=5)
+        setattr(self, f'{prefix}_current_image_name', img_name_lbl)
+        
+        speed_frame = ttk.Frame(play_control)
+        speed_frame.grid(row=0, column=1, padx=5)
+        ttk.Label(speed_frame, text="Speed:").grid(row=0, column=0)
+        
+        if not hasattr(self, 'speed_var'):
+            self.speed_var = tk.StringVar(value="1x")
+            
+        speed_menu = ttk.OptionMenu(speed_frame, self.speed_var, "1x", "0.25x", "0.5x", "1x", "2x", "4x", command=self.change_play_speed)
+        speed_menu.grid(row=0, column=1)
+        
+        slider = ttk.Scale(parent, from_=1, to=1, orient=tk.HORIZONTAL, command=self._on_slider_change)
+        if use_pack:
+            slider.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        else:
+            slider.grid(row=2, column=0, sticky=(tk.W, tk.E), padx=5, pady=5)
+        setattr(self, f'{prefix}_frame_slider', slider)
+        
+        # Alias for backward compatibility if prefix is 'disp'
+        if prefix == 'disp':
+            self.play_button = play_btn
+            self.frame_entry = frame_entry
+            self.total_frames_label = total_lbl
+            self.current_image_name = img_name_lbl
+            self.frame_slider = slider
+
+    def _on_slider_change(self, val):
+        # Determine which tab is active and update accordingly
+        current_tab = self.notebook.index(self.notebook.select())
+        if current_tab == 1: # Displacement
+            self.update_displacement_preview()
+        elif current_tab == 2: # Post-Processing
+            if self.control_panel and hasattr(self.control_panel, 'post_processing_panel'):
+                 if self.control_panel.post_processing_panel.callbacks.get('update_post_preview'):
+                     self.control_panel.post_processing_panel.callbacks['update_post_preview']()
 
     # --- ROI Methods ---
     def set_image(self, image, image_path=None):
@@ -655,48 +745,87 @@ class PreviewPanel(ttk.Frame):
         return None
 
     # --- Playback Methods ---
+    def _get_active_controls(self):
+        """Get the controls for the currently active tab."""
+        current_tab = self.notebook.index(self.notebook.select())
+        if current_tab == 1:
+            return 'disp'
+        elif current_tab == 2:
+            return 'post'
+        return None
+
     def toggle_play(self):
+        prefix = self._get_active_controls()
+        if not prefix: return
+        
+        play_btn = getattr(self, f'{prefix}_play_button')
+        
         if self.is_playing:
             self.is_playing = False
-            self.play_button.configure(text="Play")
+            play_btn.configure(text="Play")
             if self.play_after_id:
                 self.root.after_cancel(self.play_after_id)
                 self.play_after_id = None
         else:
             self.is_playing = True
-            self.play_button.configure(text="Pause")
+            play_btn.configure(text="Pause")
             self.play_next_frame()
 
     def play_next_frame(self):
         if not self.is_playing: return
         
-        current = int(float(self.frame_slider.get()))
-        total = len(self.displacement_results)
+        prefix = self._get_active_controls()
+        if not prefix: return
+        
+        slider = getattr(self, f'{prefix}_frame_slider')
+        
+        # Determine total frames
+        total = 0
+        if prefix == 'disp':
+            total = len(self.displacement_results)
+        elif prefix == 'post':
+            # Need to check strain results length, but it's not stored here directly
+            # We can infer from slider range
+            total = int(slider.cget('to'))
+            
+        current = int(float(slider.get()))
         if current >= total:
             current = 0
         
-        self.frame_slider.set(current + 1)
-        self.update_displacement_preview()
+        slider.set(current + 1)
+        # Slider callback handles update
         
         self.play_after_id = self.root.after(self.play_interval, self.play_next_frame)
 
     def previous_frame(self):
-        val = int(float(self.frame_slider.get()))
-        self.frame_slider.set(max(1, val - 1))
-        self.update_displacement_preview()
+        prefix = self._get_active_controls()
+        if not prefix: return
+        
+        slider = getattr(self, f'{prefix}_frame_slider')
+        val = int(float(slider.get()))
+        slider.set(max(1, val - 1))
 
     def next_frame(self):
-        val = int(float(self.frame_slider.get()))
-        self.frame_slider.set(min(len(self.displacement_results), val + 1))
-        self.update_displacement_preview()
+        prefix = self._get_active_controls()
+        if not prefix: return
+        
+        slider = getattr(self, f'{prefix}_frame_slider')
+        total = int(slider.cget('to'))
+        val = int(float(slider.get()))
+        slider.set(min(total, val + 1))
 
     def jump_to_frame(self):
+        prefix = self._get_active_controls()
+        if not prefix: return
+        
+        entry = getattr(self, f'{prefix}_frame_entry')
+        slider = getattr(self, f'{prefix}_frame_slider')
+        
         try:
-            val = int(self.frame_entry.get())
-            total = len(self.displacement_results)
+            val = int(entry.get())
+            total = int(slider.cget('to'))
             if 1 <= val <= total:
-                self.frame_slider.set(val)
-                self.update_displacement_preview()
+                slider.set(val)
         except ValueError:
             pass
 
@@ -742,6 +871,7 @@ class PreviewPanel(ttk.Frame):
 
     def update_displacement_preview(self, *args):
         """Update displacement field preview with support for both reference and deformed image modes"""
+        print(f"[DEBUG] update_displacement_preview called. Results: {len(self.displacement_results)}, Image: {hasattr(self, 'current_image')}")
         if not self.displacement_results or not hasattr(self, 'current_image'):
             return
         
@@ -753,6 +883,7 @@ class PreviewPanel(ttk.Frame):
                 current_frame = 0
                 
             if current_frame < 0 or current_frame >= len(self.displacement_results):
+                print(f"[DEBUG] Invalid frame index: {current_frame}")
                 return
             
             # Update frame number input box
@@ -761,6 +892,7 @@ class PreviewPanel(ttk.Frame):
             
             # Get result for this frame
             result = self.displacement_results[current_frame]
+            print(f"[DEBUG] Processing frame {current_frame}. Result shape: {result.shape}")
             
             # Update current image name
             if current_frame < len(self.image_files):
@@ -780,6 +912,7 @@ class PreviewPanel(ttk.Frame):
                         pass
 
             # Prepare data
+            print("[DEBUG] Calling prepare_visualization_data...")
             data = proc.prepare_visualization_data(
                 result, 
                 self.current_image, 
@@ -857,4 +990,49 @@ class PreviewPanel(ttk.Frame):
             
         except Exception as e:
             print(f"Error updating preview: {e}")
+
+    def plot_post_data(self, data_map, title, colormap, alpha, background_image=None, roi_rect=None, vmin=None, vmax=None):
+        """Plot post-processing data (e.g., strain) on the post_canvas."""
+        if self.post_ax is None:
+            return
+            
+        self.post_ax.clear()
+        
+        # Plot background image if provided
+        if background_image is not None:
+            self.post_ax.imshow(background_image, cmap='gray')
+            
+        # Determine extent for overlay
+        extent = None
+        if roi_rect is not None:
+            # roi_rect is (xmin, ymin, xmax, ymax)
+            # imshow extent is (left, right, bottom, top) for origin='upper'
+            # In image coords, bottom is ymax, top is ymin
+            xmin, ymin, xmax, ymax = roi_rect
+            extent = [xmin, xmax, ymax, ymin]
+        
+        # Plot data
+        im = self.post_ax.imshow(data_map, cmap=colormap, alpha=alpha, extent=extent, vmin=vmin, vmax=vmax)
+        self.post_ax.set_title(title.upper())
+        self.post_ax.set_axis_off()
+        
+        # Force full image view if background is present
+        if background_image is not None:
+            h, w = background_image.shape[:2]
+            self.post_ax.set_xlim(0, w)
+            self.post_ax.set_ylim(h, 0)
+        
+        # Colorbar
+        if not hasattr(self, 'post_div'):
+            self.post_div = make_axes_locatable(self.post_ax)
+            self.post_cax = None
+            
+        if self.post_cax is None:
+            self.post_cax = self.post_div.append_axes("right", size="5%", pad=0.05)
+        else:
+            self.post_cax.clear()
+            
+        self.post_fig.colorbar(im, cax=self.post_cax)
+        
+        self.post_canvas.draw()
 
