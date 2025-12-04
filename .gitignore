@@ -11,6 +11,6 @@ models/*
 !models/active/
 
 # Documentation and Examples
-docs/
+# docs/
 assets/demo/
 examples/

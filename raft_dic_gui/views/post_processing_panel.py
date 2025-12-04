@@ -76,9 +76,33 @@ class PostProcessingPanel(ttk.Frame):
         ttk.Combobox(content, textvariable=self.strain_method, values=["green_lagrange", "engineering"]).grid(row=r, column=1, sticky="ew")
         r += 1
 
-        # Smoothing
-        ttk.Label(content, text="Smoothing Sigma (px):").grid(row=r, column=0, sticky="w")
-        ttk.Entry(content, textvariable=self.strain_sigma, width=6).grid(row=r, column=1, sticky="w")
+        # VSG Parameters
+        # VSG Size
+        ttk.Label(content, text="VSG Size (px):").grid(row=r, column=0, sticky="w")
+        self.vsg_size = tk.StringVar(value="31")
+        vsg_entry = ttk.Entry(content, textvariable=self.vsg_size, width=6)
+        vsg_entry.grid(row=r, column=1, sticky="w")
+        Tooltip(vsg_entry, "Odd integer between 9 and 101")
+        r += 1
+        
+        # Step
+        ttk.Label(content, text="Step (px):").grid(row=r, column=0, sticky="w")
+        self.strain_step = tk.StringVar(value="1")
+        step_entry = ttk.Entry(content, textvariable=self.strain_step, width=6)
+        step_entry.grid(row=r, column=1, sticky="w")
+        Tooltip(step_entry, "Calculation stride (integer >= 1)")
+        r += 1
+        
+        # Polynomial Order
+        ttk.Label(content, text="Poly Order:").grid(row=r, column=0, sticky="w")
+        self.poly_order = tk.StringVar(value="1")
+        ttk.Combobox(content, textvariable=self.poly_order, values=["1", "2"], state="readonly", width=4).grid(row=r, column=1, sticky="w")
+        r += 1
+        
+        # Weighting
+        ttk.Label(content, text="Weighting:").grid(row=r, column=0, sticky="w")
+        self.weighting = tk.StringVar(value="Gaussian")
+        ttk.Combobox(content, textvariable=self.weighting, values=["Uniform", "Gaussian"], state="readonly", width=8).grid(row=r, column=1, sticky="w")
         r += 1
         
         ttk.Separator(content, orient="horizontal").grid(row=r, column=0, columnspan=2, sticky="ew", pady=5)

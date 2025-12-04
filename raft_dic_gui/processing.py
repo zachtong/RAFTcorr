@@ -859,100 +859,221 @@ def prepare_visualization_data(displacement, reference_image, deformed_image, ro
         return data
 
 
-def calculate_strain_field(displacement_field: np.ndarray, method: str = 'green_lagrange', sigma: float = 0.0):
+from scipy.ndimage import correlate
+
+def calculate_strain_field(displacement_field: np.ndarray, method: str = 'green_lagrange', 
+                         vsg_size: int = 31, poly_order: int = 1, weighting: str = 'Gaussian', step: int = 1):
     """
-    Calculate strain field from displacement.
+    Calculate strain field from displacement using VSG method with robust boundary handling.
+    Implements "Vectorized Weighted Least Squares" to handle invalid pixels (Strategy 2).
     
     Args:
         displacement_field: (H, W, 2) array with (u, v) displacements.
         method: 'green_lagrange' (default) or 'engineering'.
-        sigma: Gaussian smoothing sigma for displacement before differentiation.
+        vsg_size: Size of the local window (odd int).
+        poly_order: Polynomial order (1 or 2).
+        weighting: 'Uniform' or 'Gaussian'.
+        step: Calculation stride (downsampling factor).
         
     Returns:
-        strain_dict: Dictionary containing strain components:
-                     'exx', 'eyy', 'exy' (Green-Lagrange or Engineering tensors).
-                     'e1', 'e2' (Principal strains), 'max_shear', 'von_mises'.
+        strain_dict: Dictionary containing strain components.
     """
     u = displacement_field[..., 0]
     v = displacement_field[..., 1]
     
-    # Mask invalid regions
-    mask = ~np.isnan(u) & ~np.isnan(v)
+    H, W = u.shape
+    
+    # 1. Create Validity Mask (1 for valid, 0 for invalid)
+    mask = (~np.isnan(u)) & (~np.isnan(v))
+    mask_float = mask.astype(np.float64)
+    
     if not np.any(mask):
         return None
         
-    # Optional: Smooth displacement before differentiation
-    if sigma > 0:
-        # Fill NaNs for smoothing
-        u_filled = u.copy()
-        v_filled = v.copy()
-        u_filled[~mask] = 0
-        v_filled[~mask] = 0
+    # Fill NaNs with 0 for correlation (they will be weighted by 0 via mask_float)
+    u_filled = np.nan_to_num(u)
+    v_filled = np.nan_to_num(v)
+    
+    # 2. Generate Basis Kernels for the Window
+    if vsg_size % 2 == 0:
+        raise ValueError("VSG Size must be odd.")
         
-        # Smooth
-        u_smooth = gaussian_filter(u_filled, sigma)
-        v_smooth = gaussian_filter(v_filled, sigma)
+    half = vsg_size // 2
+    x_range = np.arange(-half, half + 1)
+    y_range = np.arange(-half, half + 1)
+    X_grid, Y_grid = np.meshgrid(x_range, y_range) # Local coordinates
+    
+    # Weighting Kernel
+    if weighting == 'Gaussian':
+        sigma = vsg_size / 4.0
+        dist_sq = X_grid**2 + Y_grid**2
+        G = np.exp(-dist_sq / (2 * sigma**2))
+    else:
+        G = np.ones((vsg_size, vsg_size))
         
-        # Re-apply mask (approximate, edges might be affected)
-        # Ideally we use normalized convolution like in smooth_displacement_field
-        # But for simplicity here:
-        u = np.where(mask, u_smooth, np.nan)
-        v = np.where(mask, v_smooth, np.nan)
+    # Define Basis Functions
+    # Order 1: [1, x, y]
+    # Order 2: [1, x, y, x^2, xy, y^2]
+    basis_funcs = [np.ones_like(X_grid), X_grid, Y_grid]
+    if poly_order == 2:
+        basis_funcs.extend([X_grid**2, X_grid*Y_grid, Y_grid**2])
+        
+    num_params = len(basis_funcs)
+    
+    # 3. Construct Linear System M * a = b for each pixel
+    # M_kl = sum(w * phi_k * phi_l) -> Correlate(mask_float, G * phi_k * phi_l)
+    # b_k  = sum(w * u * phi_k)     -> Correlate(mask_float * u_filled, G * phi_k)
+    
+    # Pre-compute weighted basis kernels for M
+    # We need to compute upper triangular part of M (symmetric)
+    # M is (H, W, num_params, num_params)
+    
+    # To save memory, we can compute and downsample immediately if step > 1?
+    # No, correlation needs full grid. But we can slice result immediately.
+    
+    # Output grid coordinates
+    # If step > 1, we only solve for pixels on the grid
+    # But correlation must run on full image to capture neighbors correctly.
+    
+    # Initialize M and b containers (downsampled size)
+    # We use lists to store columns/elements to avoid huge 4D arrays
+    
+    # Slicing for downsampling
+    s_slice = slice(None, None, step)
+    
+    # Build M (Symmetric)
+    M_elements = [[None for _ in range(num_params)] for _ in range(num_params)]
+    
+    for i in range(num_params):
+        for j in range(i, num_params):
+            # Kernel for M_ij: G * phi_i * phi_j
+            kernel_M = G * basis_funcs[i] * basis_funcs[j]
+            # Convolve mask with kernel
+            # correlate computes sum(mask * kernel), which is exactly what we want
+            res = correlate(mask_float, kernel_M, mode='constant', cval=0.0)
+            
+            # Downsample
+            res_down = res[s_slice, s_slice]
+            M_elements[i][j] = res_down
+            if i != j:
+                M_elements[j][i] = res_down # Symmetry
+                
+    # Build b for u and v
+    # b_u_k = sum(w * u * phi_k)
+    b_u_elements = []
+    b_v_elements = []
+    
+    # Pre-multiply data by mask
+    u_masked = u_filled * mask_float
+    v_masked = v_filled * mask_float
+    
+    for k in range(num_params):
+        # Kernel for b_k: G * phi_k
+        kernel_b = G * basis_funcs[k]
+        
+        res_u = correlate(u_masked, kernel_b, mode='constant', cval=0.0)
+        res_v = correlate(v_masked, kernel_b, mode='constant', cval=0.0)
+        
+        b_u_elements.append(res_u[s_slice, s_slice])
+        b_v_elements.append(res_v[s_slice, s_slice])
+        
+    # 4. Solve Linear Systems
+    # Stack into arrays
+    # M_stack: (N_pixels, num_params, num_params)
+    # b_u_stack: (N_pixels, num_params)
+    
+    # Flatten spatial dimensions for batch solving
+    H_down, W_down = M_elements[0][0].shape
+    N_pixels = H_down * W_down
+    
+    M_stack = np.empty((N_pixels, num_params, num_params))
+    b_u_stack = np.empty((N_pixels, num_params))
+    b_v_stack = np.empty((N_pixels, num_params))
+    
+    for i in range(num_params):
+        b_u_stack[:, i] = b_u_elements[i].flatten()
+        b_v_stack[:, i] = b_v_elements[i].flatten()
+        for j in range(num_params):
+            M_stack[:, i, j] = M_elements[i][j].flatten()
+            
+    # Solve
+    # Check for singular matrices (too few points)
+    # We can check condition number or determinant, but simplest is to try solve and catch,
+    # or rely on pseudoinverse. Pinv is safer for ill-conditioned boundaries.
+    
+    # Using pinv is slower but robust.
+    # M_inv = np.linalg.pinv(M_stack)
+    # coeffs_u = M_inv @ b_u_stack[..., None]
+    
+    # Let's use solve for speed, but mask out bad pixels?
+    # A pixel is "bad" if sum of weights (M_00) is too small.
+    min_weight = 1e-6
+    valid_solve_mask = M_stack[:, 0, 0] > min_weight
+    
+    coeffs_u = np.full((N_pixels, num_params), np.nan)
+    coeffs_v = np.full((N_pixels, num_params), np.nan)
+    
+    # Only solve for valid pixels
+    if np.any(valid_solve_mask):
+        try:
+            # Standard solve
+            M_valid = M_stack[valid_solve_mask]
+            # Reshape b to (N, 3, 1) to ensure correct broadcasting
+            b_u_valid = b_u_stack[valid_solve_mask][..., None]
+            b_v_valid = b_v_stack[valid_solve_mask][..., None]
+            
+            # Result will be (N, 3, 1), squeeze back to (N, 3)
+            coeffs_u[valid_solve_mask] = np.linalg.solve(M_valid, b_u_valid).squeeze(-1)
+            coeffs_v[valid_solve_mask] = np.linalg.solve(M_valid, b_v_valid).squeeze(-1)
+        except np.linalg.LinAlgError:
+            # Fallback to lstsq or pinv if singular
+            # This is slow, maybe just iterate or use pinv on the batch
+            # For now, let's use pinv on the valid subset
+            M_valid = M_stack[valid_solve_mask]
+            b_u_valid = b_u_stack[valid_solve_mask][..., None]
+            b_v_valid = b_v_stack[valid_solve_mask][..., None]
+            
+            M_inv = np.linalg.pinv(M_valid)
+            coeffs_u[valid_solve_mask] = (M_inv @ b_u_valid).squeeze(-1)
+            coeffs_v[valid_solve_mask] = (M_inv @ b_v_valid).squeeze(-1)
 
-    # Compute Gradients (Central Difference)
-    # np.gradient returns [d/dy, d/dx]
-    # du/dy, du/dx
-    grad_u = np.gradient(u, edge_order=1)
-    du_dy = grad_u[0]
-    du_dx = grad_u[1]
+    # 5. Extract Gradients
+    # a0, a1(x), a2(y), ...
+    # du/dx = a1
+    # du/dy = a2
     
-    # dv/dy, dv/dx
-    grad_v = np.gradient(v, edge_order=1)
-    dv_dy = grad_v[0]
-    dv_dx = grad_v[1]
+    du_dx_flat = coeffs_u[:, 1]
+    du_dy_flat = coeffs_u[:, 2]
+    dv_dx_flat = coeffs_v[:, 1]
+    dv_dy_flat = coeffs_v[:, 2]
     
-    # Strain Calculation
+    # Reshape back to grid
+    du_dx = du_dx_flat.reshape(H_down, W_down)
+    du_dy = du_dy_flat.reshape(H_down, W_down)
+    dv_dx = dv_dx_flat.reshape(H_down, W_down)
+    dv_dy = dv_dy_flat.reshape(H_down, W_down)
+    
+    # 6. Strain Calculation
     if method == 'green_lagrange':
-        # E_xx = du/dx + 0.5 * ((du/dx)^2 + (dv/dx)^2)
         exx = du_dx + 0.5 * (du_dx**2 + dv_dx**2)
-        
-        # E_yy = dv/dy + 0.5 * ((du/dy)^2 + (dv/dy)^2)
         eyy = dv_dy + 0.5 * (du_dy**2 + dv_dy**2)
-        
-        # E_xy = 0.5 * (du/dy + dv/dx + (du/dx)*(du/dy) + (dv/dx)*(dv/dy))
         exy = 0.5 * (du_dy + dv_dx + du_dx*du_dy + dv_dx*dv_dy)
         
     elif method == 'engineering':
-        # Small strain assumption
         exx = du_dx
         eyy = dv_dy
-        exy = 0.5 * (du_dy + dv_dx) # Tensor shear strain (epsilon_xy)
-        # Note: Engineering shear gamma_xy = 2 * epsilon_xy
+        exy = 0.5 * (du_dy + dv_dx)
         
     else:
         raise ValueError(f"Unknown strain method: {method}")
         
     # Principal Strains
-    # E1,2 = (exx + eyy)/2 +/- sqrt(((exx - eyy)/2)^2 + exy^2)
     center = (exx + eyy) / 2.0
     radius = np.sqrt(((exx - eyy) / 2.0)**2 + exy**2)
     e1 = center + radius
     e2 = center - radius
-    
-    # Max Shear Strain (Radius of Mohr's circle)
-    max_shear = radius # This is max tensor shear strain. Engineering max shear is 2*radius.
-    
-    # Von Mises Equivalent Strain
-    # e_vm = 2/3 * sqrt( (e1-e2)^2 + (e2-e3)^2 + (e3-e1)^2 ) / sqrt(2) ?
-    # For 2D Plane Strain (e3=0):
-    # e_vm = sqrt( e1^2 - e1*e2 + e2^2 ) ?
-    # Let's use the effective strain definition often used in DIC:
-    # e_eff = sqrt( 2/3 * (e1^2 + e2^2 + (e1+e2)^2) ) ? No.
-    # Standard Von Mises for 2D (Plane Stress):
-    # sigma_vm = sqrt( s1^2 - s1*s2 + s2^2 )
-    # Equivalent strain e_eq = 2/3 * sqrt( 3/2 * (e_dev : e_dev) )
-    # Simplified for 2D principal strains:
-    von_mises = np.sqrt(e1**2 - e1*e2 + e2**2) # Approximation for visualization
+    max_shear = radius 
+    von_mises = np.sqrt(e1**2 - e1*e2 + e2**2)
     
     return {
         'exx': exx,

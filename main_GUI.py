@@ -240,12 +240,28 @@ class RAFTDICGUI:
         # Get parameters
         pp = self.control_panel.post_processing_panel
         method = pp.strain_method.get()
+        
+        # VSG Parameters
         try:
-            sigma = float(pp.strain_sigma.get())
+            vsg_size = int(pp.vsg_size.get())
+            if vsg_size < 9 or vsg_size > 101 or vsg_size % 2 == 0:
+                raise ValueError
         except ValueError:
-            sigma = 0.0
+            messagebox.showwarning("Invalid Parameter", "VSG Size must be an odd integer between 9 and 101.")
+            return
             
-        print(f"[DEBUG] Strain Params: Method={method}, Sigma={sigma}")
+        try:
+            step = int(pp.strain_step.get())
+            if step < 1:
+                raise ValueError
+        except ValueError:
+            messagebox.showwarning("Invalid Parameter", "Step must be an integer >= 1.")
+            return
+            
+        poly_order = int(pp.poly_order.get())
+        weighting = pp.weighting.get()
+            
+        print(f"[DEBUG] Strain Params: Method={method}, Size={vsg_size}, Order={poly_order}, Weight={weighting}, Step={step}")
         
         # Check selected components
         comps = {k: v.get() for k, v in pp.strain_components.items()}
@@ -285,7 +301,11 @@ class RAFTDICGUI:
                         disp = item
                         
                     # Calculate
-                    strain = proc.calculate_strain_field(disp, method=method, sigma=sigma)
+                    strain = proc.calculate_strain_field(disp, method=method, 
+                                                       vsg_size=vsg_size, 
+                                                       poly_order=poly_order, 
+                                                       weighting=weighting,
+                                                       step=step)
                     self.strain_results.append(strain)
                     count += 1
                 
