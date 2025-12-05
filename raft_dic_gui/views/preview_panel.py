@@ -64,11 +64,18 @@ class PreviewPanel(ttk.Frame):
         self.ax_u = None
         self.ax_v = None
         self.cb_u = None
+        self.cb_u = None
         self.cb_v = None
+        self.post_cid = None # For Matplotlib event connection
+        self.line_preview = None
         
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
         
         self.create_widgets()
+
+    def set_control_panel(self, control_panel):
+        """Set the control panel reference."""
+        self.control_panel = control_panel
 
     def _on_tab_changed(self, event):
         if self.callbacks.get('on_tab_changed'):
@@ -503,7 +510,95 @@ class PreviewPanel(ttk.Frame):
         self.zoom_factor = 1.0
         self.draw_roi()
 
+    def start_shape_tool(self, shape='rect', cut=False):
+        """Start ROI shape tool (rect/circle)."""
+        print(f"[DEBUG] start_shape_tool called. shape={shape}, cut={cut}")
+        self.drawing_roi = True
+        self.roi_points = []
+        self.current_shape = shape
+        self.is_cutting_mode = cut
+        self.shape_start = None
+        
+        self.roi_canvas.config(cursor='crosshair')
+        self.roi_canvas.bind("<Button-1>", self._on_shape_down)
+        self.roi_canvas.bind("<B1-Motion>", self._on_shape_drag)
+        self.roi_canvas.bind("<ButtonRelease-1>", self._on_shape_up)
+        self.confirm_roi_btn.grid()
+        
+    def _on_shape_down(self, event):
+        x = self.roi_canvas.canvasx(event.x) / self.zoom_factor
+        y = self.roi_canvas.canvasy(event.y) / self.zoom_factor
+        self.shape_start = (x, y)
+        
+    def _on_shape_drag(self, event):
+        if not self.shape_start: return
+        x0, y0 = self.shape_start
+        x1 = self.roi_canvas.canvasx(event.x) / self.zoom_factor
+        y1 = self.roi_canvas.canvasy(event.y) / self.zoom_factor
+        
+        self.roi_canvas.delete('preview_shape')
+        
+        cx0 = x0 * self.zoom_factor
+        cy0 = y0 * self.zoom_factor
+        cx1 = x1 * self.zoom_factor
+        cy1 = y1 * self.zoom_factor
+        
+        if self.current_shape == 'rect':
+            self.roi_canvas.create_rectangle(cx0, cy0, cx1, cy1, outline='yellow', tags='preview_shape')
+        elif self.current_shape == 'circle':
+            r = ((x1-x0)**2 + (y1-y0)**2)**0.5
+            cr = r * self.zoom_factor
+            self.roi_canvas.create_oval(cx0-cr, cy0-cr, cx0+cr, cy0+cr, outline='yellow', tags='preview_shape')
+            
+    def _on_shape_up(self, event):
+        if not self.shape_start: return
+        x0, y0 = self.shape_start
+        x1 = self.roi_canvas.canvasx(event.x) / self.zoom_factor
+        y1 = self.roi_canvas.canvasy(event.y) / self.zoom_factor
+        self.shape_start = None
+        self.roi_canvas.delete('preview_shape')
+        
+        # Create mask
+        h, w = self.current_image.shape[:2]
+        new_mask = np.zeros((h, w), dtype=np.uint8)
+        
+        if self.current_shape == 'rect':
+            tx0, tx1 = int(min(x0, x1)), int(max(x0, x1))
+            ty0, ty1 = int(min(y0, y1)), int(max(y0, y1))
+            cv2.rectangle(new_mask, (tx0, ty0), (tx1, ty1), 1, -1)
+            
+        elif self.current_shape == 'circle':
+            r = int(((x1-x0)**2 + (y1-y0)**2)**0.5)
+            cv2.circle(new_mask, (int(x0), int(y0)), r, 1, -1)
+            
+        new_mask_bool = new_mask.astype(bool)
+        
+        if self.roi_mask is None:
+            self.roi_mask = np.zeros((h, w), dtype=bool)
+            
+        if self.is_cutting_mode:
+            self.roi_mask = self.roi_mask & ~new_mask_bool
+        else:
+            self.roi_mask = self.roi_mask | new_mask_bool
+            
+        # Update rect
+        if self.roi_mask is not None:
+            y_indices, x_indices = np.where(self.roi_mask)
+            if len(x_indices) > 0:
+                xmin, xmax = x_indices.min(), x_indices.max()
+                ymin, ymax = y_indices.min(), y_indices.max()
+                self.roi_rect = (xmin, ymin, xmax+1, ymax+1)
+            else:
+                self.roi_rect = (0, 0, w, h)
+                
+        self.draw_roi()
+        
+        # Notify controller
+        if self.callbacks.get('on_roi_confirmed'):
+            self.callbacks['on_roi_confirmed'](self.roi_mask, self.roi_rect)
+
     def start_polygon_tool(self, cut=False):
+        print(f"[DEBUG] start_polygon_tool called. cut={cut}")
         self.drawing_roi = True
         self.roi_points = []
         self.is_cutting_mode = cut
@@ -521,104 +616,335 @@ class PreviewPanel(ttk.Frame):
         self.roi_canvas.bind("<Button-3>", lambda e: self.confirm_roi()) # Right click
         self.roi_canvas.bind("<Double-Button-1>", lambda e: self.confirm_roi()) # Double click
 
-    def start_shape_tool(self, shape, cut=False):
-        """Start a shape-drawing tool (rect/square/circle/triangle), with click-drag to define."""
-        if self.current_image is None:
-            tk.messagebox.showerror("Error", "Please select input images first")
+    def start_point_tool(self):
+        """Start the point probe tool."""
+        print("[DEBUG] start_point_tool called")
+        
+        # Check active tab
+        current_tab = self.notebook.index("current")
+        if current_tab == 2: # Post-Processing
+            print("[DEBUG] Starting point tool on Post-Processing Canvas")
+            self.post_canvas.get_tk_widget().config(cursor='crosshair')
+            if self.post_cid is None:
+                self.post_cid = self.post_canvas.mpl_connect('button_press_event', self._on_post_click)
+        else:
+            # ROI Canvas (fallback)
+            if self.current_image is None:
+                tk.messagebox.showerror("Error", "Please select input images first")
+                return
+            self.roi_canvas.config(cursor='crosshair')
+            self.roi_canvas.bind('<Button-1>', self._point_mouse_click)
+            self.roi_canvas.bind('<Button-3>', self._stop_point_tool)
+        
+    def _stop_point_tool(self, event=None):
+        # Unbind ROI canvas
+        self.roi_canvas.unbind('<Button-1>')
+        self.roi_canvas.unbind('<Button-3>')
+        self.roi_canvas.config(cursor='')
+        
+        # Unbind Post Canvas
+        if self.post_cid is not None:
+            self.post_canvas.mpl_disconnect(self.post_cid)
+            self.post_cid = None
+        self.post_canvas.get_tk_widget().config(cursor='')
+        
+        if self.callbacks.get('on_tool_finished'):
+            self.callbacks['on_tool_finished']()
+
+    def _on_post_click(self, event):
+        """Handle click on Matplotlib canvas."""
+        if event.inaxes != self.post_ax:
             return
-        if cut and self.roi_mask is None:
-            tk.messagebox.showerror("Error", "Please draw initial ROI first")
-            return
-        self.is_cutting_mode = bool(cut)
-        self.current_shape = shape
-        self.shape_start = None
-        self.roi_canvas.config(cursor='crosshair')
+        
+        # event.xdata, event.ydata are in image coordinates
+        x, y = event.xdata, event.ydata
+        print(f"[DEBUG] Post-Processing Click: {x}, {y}")
+        
+        if self.callbacks.get('on_add_point'):
+            self.callbacks['on_add_point'](x, y)
 
-        # Overlay existing ROI if any
-        self.draw_roi()
-
-        # Bind dragging events
-        self.roi_canvas.bind('<Button-1>', self._shape_mouse_down)
-        self.roi_canvas.bind('<B1-Motion>', self._shape_mouse_move)
-        self.roi_canvas.bind('<ButtonRelease-1>', self._shape_mouse_up)
-
-    def _shape_mouse_down(self, event):
-        self.roi_canvas.delete('shape_preview')
+    def _point_mouse_click(self, event):
         x = self.roi_canvas.canvasx(event.x) / self.zoom_factor
         y = self.roi_canvas.canvasy(event.y) / self.zoom_factor
-        self.shape_start = (x, y)
-
-    def _shape_mouse_move(self, event):
-        if not self.shape_start:
-            return
-        self.roi_canvas.delete('shape_preview')
-        x0, y0 = self.shape_start
-        x1 = self.roi_canvas.canvasx(event.x) / self.zoom_factor
-        y1 = self.roi_canvas.canvasy(event.y) / self.zoom_factor
-        # Convert to canvas coords for preview
-        cx0, cy0 = x0 * self.zoom_factor, y0 * self.zoom_factor
-        cx1, cy1 = x1 * self.zoom_factor, y1 * self.zoom_factor
-        if self.current_shape in ('rect',):
-            self.roi_canvas.create_rectangle(cx0, cy0, cx1, cy1, outline='yellow', width=2, tags='shape_preview')
-        elif self.current_shape == 'circle':
-            # Circle within bounding box (use min side)
-            dx, dy = cx1 - cx0, cy1 - cy0
-            r = min(abs(dx), abs(dy)) / 2
-            cx = cx0 + (dx/2)
-            cy = cy0 + (dy/2)
-            self.roi_canvas.create_oval(cx - r, cy - r, cx + r, cy + r, outline='yellow', width=2, tags='shape_preview')
-
-    def _shape_mouse_up(self, event):
-        if not self.shape_start:
-            return
-        x0, y0 = self.shape_start
-        x1 = self.roi_canvas.canvasx(event.x) / self.zoom_factor
-        y1 = self.roi_canvas.canvasy(event.y) / self.zoom_factor
-        self.shape_start = None
-        self.roi_canvas.delete('shape_preview')
-
-        # Apply shape to mask
-        self._apply_shape_to_mask(self.current_shape, x0, y0, x1, y1, cut=self.is_cutting_mode)
-
-        # Unbind shape events and reset cursor
-        self.roi_canvas.unbind('<Button-1>')
-        self.roi_canvas.unbind('<B1-Motion>')
-        self.roi_canvas.unbind('<ButtonRelease-1>')
-        self.roi_canvas.config(cursor='')
-
-        # Update display, show confirm
-        self.draw_roi()
-        self.confirm_roi_btn.grid()
-        self.confirm_roi_btn.configure(state='normal')
         
-        # Notify controller
-        if self.callbacks.get('on_roi_confirmed'):
-            self.callbacks['on_roi_confirmed'](self.roi_mask, self.roi_rect)
+        # Notify controller to add probe
+        if self.callbacks.get('on_add_point'):
+            self.callbacks['on_add_point'](x, y)
 
-    def _apply_shape_to_mask(self, shape: str, x0: float, y0: float, x1: float, y1: float, cut: bool):
-        h, w = self.current_image.shape[:2]
-        x0i, y0i = int(round(x0)), int(round(y0))
-        x1i, y1i = int(round(x1)), int(round(y1))
-        xmin, xmax = max(0, min(x0i, x1i)), min(w - 1, max(x0i, x1i))
-        ymin, ymax = max(0, min(y0i, y1i)), min(h - 1, max(y0i, y1i))
-
-        if self.roi_mask is None:
-            self.roi_mask = np.zeros((h, w), dtype=bool)
-
-        new_mask = np.zeros((h, w), dtype=np.uint8)
-        if shape in ('rect',):
-            cv2.rectangle(new_mask, (xmin, ymin), (xmax, ymax), color=1, thickness=-1)
-        elif shape == 'circle':
-            cx = int(round((xmin + xmax) / 2))
-            cy = int(round((ymin + ymax) / 2))
-            r = int(round(min(xmax - xmin, ymax - ymin) / 2))
-            cv2.circle(new_mask, (cx, cy), r, color=1, thickness=-1)
-
-        new_mask_bool = new_mask.astype(bool)
-        if cut:
-            self.roi_mask = self.roi_mask & ~new_mask_bool
+    def start_line_tool(self):
+        """Start the line probe tool."""
+        print("[DEBUG] start_line_tool called")
+        current_tab = self.notebook.index("current")
+        if current_tab == 2: # Post-Processing
+            self.post_canvas.get_tk_widget().config(cursor='crosshair')
+            # Disconnect point tool if active
+            if self.post_cid is not None:
+                self.post_canvas.mpl_disconnect(self.post_cid)
+            
+            # Connect line tool events
+            self.line_start = None
+            self.line_preview = None
+            self.post_cid_press = self.post_canvas.mpl_connect('button_press_event', self._on_post_line_click)
+            self.post_cid_move = self.post_canvas.mpl_connect('motion_notify_event', self._on_post_line_drag)
+            self.post_cid_release = self.post_canvas.mpl_connect('button_release_event', self._on_post_line_release)
         else:
-            self.roi_mask = self.roi_mask | new_mask_bool
+            tk.messagebox.showinfo("Info", "Line tool is only available in Post-Processing tab for now.")
+
+    def _stop_line_tool(self):
+        if hasattr(self, 'post_cid_press'):
+            self.post_canvas.mpl_disconnect(self.post_cid_press)
+            self.post_canvas.mpl_disconnect(self.post_cid_move)
+            self.post_canvas.mpl_disconnect(self.post_cid_release)
+            self.post_cid_press = None
+        
+        if self.line_preview:
+            try:
+                self.line_preview.remove()
+            except:
+                pass
+            self.line_preview = None
+        self.post_canvas.draw_idle()
+        self.post_canvas.get_tk_widget().config(cursor='')
+        
+        if self.callbacks.get('on_tool_finished'):
+            self.callbacks['on_tool_finished']()
+
+    def _on_post_line_click(self, event):
+        if event.inaxes != self.post_ax:
+            return
+        self.line_start = (event.xdata, event.ydata)
+        
+    def _on_post_line_drag(self, event):
+        if self.line_start is None or event.inaxes != self.post_ax:
+            return
+        
+        x0, y0 = self.line_start
+        x1, y1 = event.xdata, event.ydata
+        
+        if self.line_preview:
+            self.line_preview.set_data([x0, x1], [y0, y1])
+        else:
+            self.line_preview, = self.post_ax.plot([x0, x1], [y0, y1], 'r--', linewidth=2)
+        self.post_canvas.draw_idle()
+        
+    def _on_post_line_release(self, event):
+        if self.line_start is None or event.inaxes != self.post_ax:
+            self.line_start = None
+            return
+            
+        x0, y0 = self.line_start
+        x1, y1 = event.xdata, event.ydata
+        self.line_start = None
+        
+        # Remove preview
+        if self.line_preview:
+            try:
+                self.line_preview.remove()
+            except:
+                pass
+            self.line_preview = None
+            
+        # Add line probe
+        if self.callbacks.get('on_add_line'):
+            self.callbacks['on_add_line']((x0, y0), (x1, y1))
+
+    def draw_probes(self, probes, mode='point'):
+        """Draw probes on the canvas (ROI or Post)."""
+        # 1. Draw on ROI Canvas (Disabled as requested)
+        self.roi_canvas.delete('probe')
+
+        # 2. Draw on Post-Processing Canvas (Matplotlib)
+        # Clear previous probes from plot
+        if hasattr(self, 'probe_artists'):
+            for art in self.probe_artists:
+                try:
+                    art.remove()
+                except Exception:
+                    pass # Ignore if already removed or not supported
+        self.probe_artists = []
+        
+        current_tab = self.notebook.index("current")
+        
+        if current_tab == 2: # Only if visible
+            for p in probes:
+                # Filter by mode
+                if mode == 'point' and p.type != 'point':
+                    continue
+                if mode == 'line' and p.type != 'line':
+                    continue
+                if mode == 'area' and p.type != 'area':
+                    continue
+                    
+                if p.type == 'point':
+                    # Plot point
+                    pt, = self.post_ax.plot(p.coords[0], p.coords[1], marker='+', color=p.color, markersize=10, markeredgewidth=2)
+                    txt = self.post_ax.text(p.coords[0]+5, p.coords[1]-5, str(p.id), color=p.color, fontsize=10, fontweight='bold')
+                    self.probe_artists.extend([pt, txt])
+                elif p.type == 'line':
+                    # Plot line
+                    p1, p2 = p.coords
+                    ln, = self.post_ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=p.color, linewidth=2, marker='o', markersize=4)
+                    # Label at midpoint
+                    mx, my = (p1[0]+p2[0])/2, (p1[1]+p2[1])/2
+                    txt = self.post_ax.text(mx, my, str(p.id), color=p.color, fontsize=10, fontweight='bold')
+                    self.probe_artists.extend([ln, txt])
+                elif p.type == 'area':
+                    shape = p.coords['shape']
+                    data = p.coords['data']
+                    
+                    if shape == 'rect':
+                        x0, y0, x1, y1 = data
+                        w, h = abs(x1-x0), abs(y1-y0)
+                        rect = plt.Rectangle((min(x0, x1), min(y0, y1)), w, h, fill=False, edgecolor=p.color, linewidth=2)
+                        self.post_ax.add_patch(rect)
+                        self.probe_artists.append(rect)
+                        # Label
+                        txt = self.post_ax.text(min(x0,x1), min(y0,y1)-5, str(p.id), color=p.color, fontsize=10, fontweight='bold')
+                        self.probe_artists.append(txt)
+                        
+                    elif shape == 'circle':
+                        cx, cy, r = data
+                        circ = plt.Circle((cx, cy), r, fill=False, edgecolor=p.color, linewidth=2)
+                        self.post_ax.add_patch(circ)
+                        self.probe_artists.append(circ)
+                        txt = self.post_ax.text(cx, cy, str(p.id), color=p.color, fontsize=10, fontweight='bold', ha='center', va='center')
+                        self.probe_artists.append(txt)
+                        
+                    elif shape == 'poly':
+                        pts = np.array(data)
+                        poly = plt.Polygon(pts, fill=False, edgecolor=p.color, linewidth=2)
+                        self.post_ax.add_patch(poly)
+                        self.probe_artists.append(poly)
+                        # Label at centroid
+                        cx, cy = np.mean(pts, axis=0)
+                        txt = self.post_ax.text(cx, cy, str(p.id), color=p.color, fontsize=10, fontweight='bold', ha='center', va='center')
+                        self.probe_artists.append(txt)
+                    
+        self.post_canvas.draw_idle()
+
+    def _unbind_post_events(self):
+        widget = self.post_canvas.get_tk_widget()
+        widget.unbind('<Button-1>')
+        widget.unbind('<B1-Motion>')
+        widget.unbind('<ButtonRelease-1>')
+        widget.unbind('<Double-Button-1>')
+        widget.unbind('<Motion>')
+        widget.config(cursor='')
+
+    def start_area_tool(self, shape_type):
+        if self.current_image is None: return
+        self.current_shape = shape_type
+        self.shape_start = None
+        self.roi_points = []
+        if self.post_cid:
+            self.post_canvas.mpl_disconnect(self.post_cid)
+            
+        if shape_type == 'poly':
+            self.post_cid = self.post_canvas.mpl_connect('button_press_event', self._on_mpl_poly_click)
+            # We also need motion for preview line
+            self.post_cid_motion = self.post_canvas.mpl_connect('motion_notify_event', self._on_mpl_poly_move)
+        else:
+            self.post_cid = self.post_canvas.mpl_connect('button_press_event', self._on_mpl_area_down)
+            self.post_cid_release = self.post_canvas.mpl_connect('button_release_event', self._on_mpl_area_up)
+            self.post_cid_motion = self.post_canvas.mpl_connect('motion_notify_event', self._on_mpl_area_drag)
+            
+    def _on_mpl_area_down(self, event):
+        if event.inaxes != self.post_ax: return
+        self.shape_start = (event.xdata, event.ydata)
+        
+    def _on_mpl_area_drag(self, event):
+        if not self.shape_start or event.inaxes != self.post_ax: return
+        x0, y0 = self.shape_start
+        x1, y1 = event.xdata, event.ydata
+        
+        # Draw preview
+        # Remove previous preview
+        for art in getattr(self, 'preview_artists', []):
+            art.remove()
+        self.preview_artists = []
+        
+        if self.current_shape == 'rect':
+            rect = plt.Rectangle((min(x0, x1), min(y0, y1)), abs(x1-x0), abs(y1-y0), 
+                               fill=False, edgecolor='yellow', linewidth=2, linestyle='--')
+            self.post_ax.add_patch(rect)
+            self.preview_artists.append(rect)
+            
+        elif self.current_shape == 'circle':
+            r = ((x1-x0)**2 + (y1-y0)**2)**0.5
+            circ = plt.Circle((x0, y0), r, fill=False, edgecolor='yellow', linewidth=2, linestyle='--')
+            self.post_ax.add_patch(circ)
+            self.preview_artists.append(circ)
+            
+        self.post_canvas.draw_idle()
+        
+    def _on_mpl_area_up(self, event):
+        if not self.shape_start or event.inaxes != self.post_ax: return
+        x0, y0 = self.shape_start
+        x1, y1 = event.xdata, event.ydata
+        self.shape_start = None
+        
+        # Clear preview
+        for art in getattr(self, 'preview_artists', []):
+            art.remove()
+        self.preview_artists = []
+        self.post_canvas.draw_idle()
+        
+        # Disconnect events
+        self.post_canvas.mpl_disconnect(self.post_cid)
+        self.post_canvas.mpl_disconnect(self.post_cid_release)
+        self.post_canvas.mpl_disconnect(self.post_cid_motion)
+        
+        # Notify callback
+        if self.callbacks.get('on_area_added'):
+            if self.current_shape == 'rect':
+                coords = [x0, y0, x1, y1]
+            elif self.current_shape == 'circle':
+                r = ((x1-x0)**2 + (y1-y0)**2)**0.5
+                coords = [x0, y0, r]
+            self.callbacks['on_area_added'](self.current_shape, coords)
+
+    def _on_mpl_poly_click(self, event):
+        if event.inaxes != self.post_ax: return
+        if event.button == 1: # Left click
+            self.roi_points.append([event.xdata, event.ydata])
+            # Draw point
+            pt, = self.post_ax.plot(event.xdata, event.ydata, 'yo', markersize=4)
+            if not hasattr(self, 'preview_artists'): self.preview_artists = []
+            self.preview_artists.append(pt)
+            
+            if len(self.roi_points) > 1:
+                # Draw line from prev
+                p1 = self.roi_points[-2]
+                p2 = self.roi_points[-1]
+                ln, = self.post_ax.plot([p1[0], p2[0]], [p1[1], p2[1]], 'y--')
+                self.preview_artists.append(ln)
+                
+            self.post_canvas.draw_idle()
+            
+        elif event.button == 3 or (event.dblclick): # Right click or double click to finish
+            self._finish_poly()
+            
+    def _on_mpl_poly_move(self, event):
+        if not self.roi_points or event.inaxes != self.post_ax: return
+        # Draw rubber band
+        # (Implementation omitted for brevity, can be added if needed)
+        pass
+
+    def _finish_poly(self):
+        if len(self.roi_points) < 3: return
+        
+        # Clear preview
+        for art in getattr(self, 'preview_artists', []):
+            art.remove()
+        self.preview_artists = []
+        self.post_canvas.draw_idle()
+        
+        # Disconnect
+        self.post_canvas.mpl_disconnect(self.post_cid)
+        self.post_canvas.mpl_disconnect(self.post_cid_motion)
+        
+        if self.callbacks.get('on_area_added'):
+            self.callbacks['on_area_added']('poly', self.roi_points)
             
         # Update rect
         y_indices, x_indices = np.where(self.roi_mask)
@@ -656,16 +982,27 @@ class PreviewPanel(ttk.Frame):
         pass
 
     def confirm_roi(self):
+        print(f"[DEBUG] confirm_roi called. Points: {len(self.roi_points)}, Mask: {self.roi_mask is not None}")
         if not self.roi_points and self.roi_mask is None:
+            print("[DEBUG] confirm_roi returning early (no points, no mask)")
             return
         
         if self.roi_points:
             # Create mask from polygon
             h, w = self.current_image.shape[:2]
-            mask = np.zeros((h, w), dtype=np.uint8)
+            new_mask = np.zeros((h, w), dtype=np.uint8)
             pts = np.array(self.roi_points, np.int32)
-            cv2.fillPoly(mask, [pts], 1)
-            self.roi_mask = mask.astype(bool)
+            cv2.fillPoly(new_mask, [pts], 1)
+            new_mask_bool = new_mask.astype(bool)
+            
+            if self.roi_mask is None:
+                self.roi_mask = np.zeros((h, w), dtype=bool)
+                
+            if self.is_cutting_mode:
+                self.roi_mask = self.roi_mask & ~new_mask_bool
+            else:
+                self.roi_mask = self.roi_mask | new_mask_bool
+                
             self.roi_points = []
             self.drawing_roi = False
         
@@ -684,7 +1021,10 @@ class PreviewPanel(ttk.Frame):
         
         # Notify controller
         if self.callbacks.get('on_roi_confirmed'):
+            print("[DEBUG] Calling on_roi_confirmed callback")
             self.callbacks['on_roi_confirmed'](self.roi_mask, self.roi_rect)
+        else:
+            print("[DEBUG] No on_roi_confirmed callback found!")
 
     def import_roi_mask(self):
         path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.bmp;*.tif;*.tiff")])

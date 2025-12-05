@@ -189,6 +189,7 @@ class RAFTDICGUI:
         
         # Create Preview Panel (Right)
         self.preview_panel = PreviewPanel(self.main_paned, config=self.config, root=self.root)
+        self.preview_panel.set_control_panel(self.control_panel)
         self.main_paned.add(self.preview_panel, minsize=600)
         
         # Wire up callbacks
@@ -198,7 +199,12 @@ class RAFTDICGUI:
         self.current_image = None
         self.image_files = []
         self.roi_mask = None
+        
+        # Probe Manager
+        from raft_dic_gui.probe_manager import ProbeManager
+        self.probe_manager = ProbeManager()
         self.roi_rect = None
+        self.current_probe_mode = 'point'
         
         # Apply theme
         self.apply_theme()
@@ -214,20 +220,44 @@ class RAFTDICGUI:
         self.control_panel.callbacks['on_preview_scale_change'] = lambda v: self.preview_panel.update_displacement_preview()
         self.control_panel.callbacks['update_roi_label'] = self.preview_panel.update_roi_label
         self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
-        self.control_panel.callbacks['set_fixed_colorbar'] = self.set_fixed_colorbar_from_frame
         self.control_panel.callbacks['on_model_selected'] = self._update_roi_status_text
+        
         self.control_panel.callbacks['on_safety_factor_change'] = lambda: (self._update_roi_status_text(), self.preview_panel.draw_roi())
         self.control_panel.callbacks['on_overlap_change'] = self.preview_panel.draw_roi
         self.control_panel.callbacks['on_show_tiles_change'] = self.preview_panel.draw_roi
         
         # Preview Panel callbacks
-        self.preview_panel.control_panel = self.control_panel
         self.preview_panel.callbacks['on_roi_confirmed'] = self._on_roi_confirmed
         self.preview_panel.callbacks['on_tab_changed'] = self._on_preview_tab_changed
+        self.preview_panel.callbacks['on_add_point'] = self._on_add_point_click
+        self.preview_panel.callbacks['on_add_line'] = self._on_add_line
+        self.preview_panel.callbacks['on_tool_finished'] = lambda: print("[DEBUG] Tool finished")
+        self.preview_panel.callbacks['on_area_added'] = self._on_area_added
         
-        # Post-Processing callbacks
+        # Probe callbacks
+        self.control_panel.post_processing_panel.callbacks['add_point_probe'] = self._on_add_point_probe
+        self.control_panel.post_processing_panel.callbacks['add_line_probe'] = self._on_add_line_probe
+        self.control_panel.post_processing_panel.callbacks['add_area_probe'] = self._on_add_area_probe
+        self.control_panel.post_processing_panel.callbacks['remove_probe'] = self._on_remove_probe
+        self.control_panel.post_processing_panel.callbacks['clear_probes'] = self._on_clear_probes
+        self.control_panel.post_processing_panel.callbacks['select_probe'] = self._on_select_probe
+        self.control_panel.post_processing_panel.callbacks['probe_mode_changed'] = self._on_probe_mode_changed
         self.control_panel.post_processing_panel.callbacks['calculate_strain'] = self.calculate_strain
         self.control_panel.post_processing_panel.callbacks['update_post_preview'] = self.update_post_preview
+
+    def _on_probe_mode_changed(self, mode):
+        """Handle probe mode change (point/line/area)."""
+        print(f"[DEBUG] Probe mode changed to: {mode}")
+        self.current_probe_mode = mode
+        
+        # Stop any active tools from other modes
+        if mode != 'point':
+            self.preview_panel._stop_point_tool()
+        if mode != 'line':
+            self.preview_panel._stop_line_tool()
+            
+        self._update_probe_ui()
+        self.update_post_preview()
 
     def calculate_strain(self):
         """Handle strain calculation request."""
@@ -239,7 +269,14 @@ class RAFTDICGUI:
 
         # Get parameters
         pp = self.control_panel.post_processing_panel
-        method = pp.strain_method.get()
+        method_display = pp.strain_method.get()
+        # Map display string to internal key
+        if "Green-Lagrange" in method_display:
+            method = 'green_lagrange'
+        elif "Engineering" in method_display:
+            method = 'engineering'
+        else:
+            method = 'green_lagrange' # Default
         
         # VSG Parameters
         try:
@@ -315,6 +352,11 @@ class RAFTDICGUI:
                 
                 self._ui_call(messagebox.showinfo, "Success", f"Strain calculation complete for {count} frames.")
                 
+                # Update component list
+                if self.strain_results:
+                    keys = list(self.strain_results[0].keys())
+                    self._ui_call(pp.update_component_list, keys)
+                
                 # Trigger visualization update
                 self._ui_call(self.update_post_preview)
                 
@@ -329,86 +371,92 @@ class RAFTDICGUI:
 
     def update_post_preview(self, *args):
         """Update the post-processing visualization (Strain/Probes)."""
-        print("[DEBUG] update_post_preview called")
-        if not hasattr(self, 'strain_results') or not self.strain_results:
-            print("[DEBUG] No strain results found.")
+        # print("[DEBUG] update_post_preview called")
+        
+        has_strain = hasattr(self, 'strain_results') and self.strain_results
+        has_disp = hasattr(self, 'displacement_results') and self.displacement_results
+        
+        if not has_strain and not has_disp:
+            # print("[DEBUG] No results found.")
             return
             
+        # Determine total frames based on what's available
+        if has_strain:
+            total_frames = len(self.strain_results)
+        else:
+            total_frames = len(self.displacement_results)
+            
+        # Recursion guard
+        if getattr(self, '_updating_ui', False):
+            return
+        self._updating_ui = True
+        
         try:
-            # Get current frame index from Post-Processing slider
-            try:
-                if hasattr(self.preview_panel, 'post_frame_slider'):
-                    val = self.preview_panel.post_frame_slider.get()
-                    current_frame = int(float(val)) - 1
-                else:
-                    current_frame = 0
-            except Exception:
-                current_frame = 0
-            
-            # Ensure valid frame index
-            if current_frame < 0:
-                current_frame = 0
-            
-            print(f"[DEBUG] Current strain frame: {current_frame}")
-            
-            if current_frame < 0 or current_frame >= len(self.strain_results):
-                print(f"[DEBUG] Frame index out of range (0-{len(self.strain_results)-1})")
-                return
-                
-            strain_data = self.strain_results[current_frame]
-            if strain_data is None:
-                print("[DEBUG] Strain data is None for this frame")
-                return
-                
-            # Get display settings
+            # Get current settings
             pp = self.control_panel.post_processing_panel
             comp_name = pp.vis_component.get()
-            cmap = pp.vis_colormap.get()
             
-            try:
-                alpha = float(pp.vis_alpha.get())
-                alpha = max(0.0, min(1.0, alpha))
-            except ValueError:
-                alpha = 0.7
+            # Get current frame from slider or entry
+            if hasattr(self.preview_panel, 'post_frame_slider'):
+                current_frame = int(float(self.preview_panel.post_frame_slider.get())) - 1
+            else:
+                current_frame = 0
+                
+            # Bounds check
+            if current_frame < 0: current_frame = 0
+            if current_frame >= total_frames: current_frame = total_frames - 1
             
-            if comp_name not in strain_data:
+            # Get data for this frame
+            data_map = None
+            if comp_name in ['u', 'v']:
+                # Displacement
+                idx = 0 if comp_name == 'u' else 1
+                if current_frame < len(self.displacement_results):
+                    d = self.displacement_results[current_frame]
+                    if isinstance(d, str):
+                        d = np.load(d)
+                    data_map = d[..., idx]
+            else:
+                # Strain
+                if current_frame < len(self.strain_results):
+                    s = self.strain_results[current_frame]
+                    if comp_name in s:
+                        data_map = s[comp_name]
+                        
+            if data_map is None:
+                self._updating_ui = False
                 return
                 
-            data_map = strain_data[comp_name]
-            
-            # Color Range Logic
+            # Get visualization params
+            cmap = pp.vis_colormap.get()
+            try:
+                alpha = float(pp.vis_alpha.get())
+            except ValueError:
+                alpha = 0.7
+                
+            # Range handling
             vmin, vmax = None, None
             is_fixed = pp.post_fixed_range.get()
             
             if is_fixed:
-                # Try to get from entries
                 try:
                     vmin = float(pp.post_vmin.get())
                     vmax = float(pp.post_vmax.get())
-                    # Update stored range
                     pp.component_ranges[comp_name] = (vmin, vmax)
                 except ValueError:
-                    # If invalid, fallback to auto or stored
                     if comp_name in pp.component_ranges:
                         vmin, vmax = pp.component_ranges[comp_name]
                         pp.post_vmin.set(f"{vmin:.4f}")
                         pp.post_vmax.set(f"{vmax:.4f}")
             else:
-                # Auto range
                 vmin = np.nanmin(data_map)
                 vmax = np.nanmax(data_map)
-                # Update UI entries
                 pp.post_vmin.set(f"{vmin:.4f}")
                 pp.post_vmax.set(f"{vmax:.4f}")
-                # Clear stored range for this component if switching to auto? 
-                # Or keep it? Let's keep it but update it to current auto for convenience if they switch back?
-                # No, if they switch to fixed, they probably want the last fixed value or the current auto value.
-                # Let's just update the entries.
             
-            # Load background image (Reference Image)
+            # Load background image
             bg_img = None
             if self.image_files:
-                # Cache reference image if not already cached
                 if not hasattr(self, '_cached_ref_img') or self._cached_ref_img is None:
                     try:
                         input_dir = self.control_panel.input_path.get()
@@ -425,15 +473,10 @@ class RAFTDICGUI:
                                             roi_rect=self.roi_rect,
                                             vmin=vmin, vmax=vmax)
             
-            # Update Post-Processing Playback Controls
-            # Use a flag or check value to prevent recursion loop
-            total_frames = len(self.strain_results)
+            # Update Controls
             if hasattr(self.preview_panel, 'post_frame_slider'):
                 self.preview_panel.post_frame_slider.configure(to=total_frames)
-                # Only set if different to avoid recursion loop
-                current_val = float(self.preview_panel.post_frame_slider.get())
-                if int(current_val) != (current_frame + 1):
-                    self.preview_panel.post_frame_slider.set(current_frame + 1)
+                # Don't set slider value here to avoid recursion
                 
             if hasattr(self.preview_panel, 'post_frame_entry'):
                 self.preview_panel.post_frame_entry.delete(0, tk.END)
@@ -441,13 +484,261 @@ class RAFTDICGUI:
                 
             if hasattr(self.preview_panel, 'post_total_frames_label'):
                 self.preview_panel.post_total_frames_label.configure(text=f"/{total_frames}")
-                
+
+            # Update Plots
+            self._update_plots(comp_name)
+            
             if hasattr(self.preview_panel, 'post_current_image_name'):
                 if current_frame < len(self.image_files):
                     self.preview_panel.post_current_image_name.configure(text=self.image_files[current_frame])
             
+            # Redraw probes
+            self._update_probe_ui()
+            
         except Exception as e:
-            print(f"[ERROR] Update post preview failed: {e}")
+            print(f"[ERROR] Error in update_post_preview: {e}")
+        finally:
+            self._updating_ui = False
+
+    def _on_add_point_probe(self):
+        """Start point probe tool."""
+        self.preview_panel.start_point_tool()
+
+    def _on_add_point_click(self, x, y):
+        """Handle point added from canvas."""
+        self.probe_manager.add_point(x, y)
+        self._update_probe_ui()
+        self.update_post_preview() # Update graph
+        
+    def _on_remove_probe(self):
+        """Remove selected probe."""
+        pp = self.control_panel.post_processing_panel
+        # Check current mode to know which list to check
+        if self.current_probe_mode == 'point':
+            selection = pp.probe_list.selection()
+            if not selection: return
+            for item in selection:
+                vals = pp.probe_list.item(item)['values']
+                pid = vals[0]
+                self.probe_manager.remove_probe_by_id_type(pid, 'point')
+        elif self.current_probe_mode == 'line':
+            if hasattr(pp, 'line_list'):
+                selection = pp.line_list.selection()
+                if not selection: return
+                for item in selection:
+                    vals = pp.line_list.item(item)['values']
+                    pid = vals[0]
+                    self.probe_manager.remove_probe_by_id_type(pid, 'line')
+        elif self.current_probe_mode == 'area':
+            if hasattr(pp, 'area_list'):
+                selection = pp.area_list.selection()
+                if not selection: return
+                for item in selection:
+                    vals = pp.area_list.item(item)['values']
+                    pid = vals[0]
+                    self.probe_manager.remove_probe_by_id_type(pid, 'area')
+            
+        self._update_probe_ui()
+        self.update_post_preview()
+        
+    def _on_clear_probes(self):
+        """Clear probes of the current type."""
+        self.probe_manager.clear_by_type(self.current_probe_mode)
+        self._update_probe_ui()
+        self.update_post_preview()
+        
+    def _on_add_line_probe(self):
+        """Start line probe tool."""
+        self.preview_panel.start_line_tool()
+        
+    def _on_add_line(self, p1, p2):
+        """Handle line added from canvas."""
+        self.probe_manager.add_line(p1, p2)
+        self._update_probe_ui()
+        self.update_post_preview()
+        
+    def _on_select_probe(self):
+        """Handle probe selection in list."""
+        # Trigger update to switch between Point Graph and Kymograph
+        self.update_post_preview() # This calls _update_plots
+
+    def _update_probe_ui(self):
+        """Update probe list and canvas."""
+        pp = self.control_panel.post_processing_panel
+        pp.update_probe_list(self.probe_manager.probes)
+        self.preview_panel.draw_probes(self.probe_manager.probes, mode=self.current_probe_mode)
+
+    def _update_plots(self, comp_name):
+        """Update the time-series plot for probes."""
+        # The graph is in PreviewPanel, not PostProcessingPanel
+        if not hasattr(self.preview_panel, 'post_graph_ax'):
+            return
+            
+        ax = self.preview_panel.post_graph_ax
+        canvas = self.preview_panel.post_graph_canvas
+        
+        # Clear axes completely to prevent shrinking/overlay issues
+        ax.clear()
+        
+        # Remove existing colorbar if present
+        if hasattr(self, 'kymo_cb') and self.kymo_cb:
+            try:
+                self.kymo_cb.remove()
+            except Exception:
+                pass
+            self.kymo_cb = None
+        
+        # Get data source based on component
+        data_list = []
+        if comp_name in ['u', 'v']:
+            # Extract displacement component
+            idx = 0 if comp_name == 'u' else 1
+            for d in self.displacement_results:
+                if isinstance(d, str):
+                    d = np.load(d)
+                data_list.append(d[..., idx])
+        else:
+            # Extract strain component
+            for s in self.strain_results:
+                if comp_name in s:
+                    data_list.append(s[comp_name])
+                else:
+                    data_list.append(None)
+                    
+        # Calculate scale factors and offset
+        scale_factors = (1.0, 1.0)
+        offset = (0, 0)
+        
+        if data_list and data_list[0] is not None:
+            data_h, data_w = data_list[0].shape
+            
+            # Get ROI info
+            if hasattr(self, 'roi_rect') and self.roi_rect is not None:
+                xmin, ymin, xmax, ymax = self.roi_rect
+                roi_w = xmax - xmin
+                roi_h = ymax - ymin
+                offset = (xmin, ymin)
+            else:
+                # Fallback to full image if no ROI (shouldn't happen usually)
+                roi_w, roi_h = data_w, data_h
+                if hasattr(self, '_cached_ref_img') and self._cached_ref_img is not None:
+                    roi_h, roi_w = self._cached_ref_img.shape[:2]
+            
+            # Avoid division by zero
+            sy = data_h / roi_h if roi_h > 0 else 1.0
+            sx = data_w / roi_w if roi_w > 0 else 1.0
+            scale_factors = (sy, sx)
+
+        # Extract probe data based on mode
+        if self.current_probe_mode == 'point':
+            results = self.probe_manager.extract_time_series(data_list, scale_factors=scale_factors, offset=offset)
+            
+            # Plot Point Probes
+            frames = range(len(data_list))
+            for pid, values in results.items():
+                # Find probe color
+                color = next((p.color for p in self.probe_manager.probes if p.id == pid), 'black')
+                ax.plot(frames, values, label=f"P{pid}", color=color, marker='o', markersize=3)
+                
+            ax.set_xlabel("Frame")
+            ax.set_ylabel(comp_name.upper())
+            ax.grid(True, alpha=0.3)
+            if results:
+                ax.legend()
+                
+        elif self.current_probe_mode == 'line':
+            # Check if a Line Probe is selected
+            pp = self.control_panel.post_processing_panel
+            selected_line_id = None
+            if hasattr(pp, 'line_list'):
+                sel = pp.line_list.selection()
+                if sel:
+                    selected_line_id = pp.line_list.item(sel[0])['values'][0]
+            
+            # Get Metric
+            metric = 'avg'
+            if hasattr(pp, 'line_metric_var'):
+                val = pp.line_metric_var.get()
+                if val == 'Maximum': metric = 'max'
+                elif val == 'Minimum': metric = 'min'
+            
+            results = {}
+            for p in self.probe_manager.probes:
+                if p.type == 'line':
+                    # Extract series
+                    vals = self.probe_manager.extract_line_series(data_list, p.id, metric=metric, scale_factors=scale_factors, offset=offset)
+                    if vals is not None:
+                        results[p.id] = vals
+            
+            frames = range(len(data_list))
+            for pid, values in results.items():
+                # Find probe color
+                color = next((p.color for p in self.probe_manager.probes if p.id == pid), 'black')
+                # Highlight selected line
+                linewidth = 3 if pid == selected_line_id else 1.5
+                alpha = 1.0 if pid == selected_line_id else 0.7
+                
+                label = f"L{pid} ({metric.capitalize()})"
+                ax.plot(frames, values, label=label, color=color, linewidth=linewidth, alpha=alpha)
+                
+            ax.set_xlabel("Frame")
+            ax.set_ylabel(f"{metric.capitalize()} {comp_name.upper()}")
+            ax.grid(True, alpha=0.3)
+            if results:
+                ax.legend()
+                
+        elif self.current_probe_mode == 'area':
+            # Check if an Area Probe is selected
+            pp = self.control_panel.post_processing_panel
+            selected_area_id = None
+            if hasattr(pp, 'area_list'):
+                sel = pp.area_list.selection()
+                if sel:
+                    selected_area_id = pp.area_list.item(sel[0])['values'][0]
+            
+            # Get Metric
+            metric = 'avg'
+            if hasattr(pp, 'area_metric_var'):
+                val = pp.area_metric_var.get()
+                if val == 'Maximum': metric = 'max'
+                elif val == 'Minimum': metric = 'min'
+            
+            results = {}
+            for p in self.probe_manager.probes:
+                if p.type == 'area':
+                    # Extract series
+                    vals = self.probe_manager.extract_area_series(data_list, p.id, metric=metric, scale_factors=scale_factors, offset=offset)
+                    if vals is not None:
+                        results[p.id] = vals
+            
+            frames = range(len(data_list))
+            for pid, values in results.items():
+                # Find probe color
+                color = next((p.color for p in self.probe_manager.probes if p.id == pid), 'black')
+                # Highlight selected area
+                linewidth = 3 if pid == selected_area_id else 1.5
+                alpha = 1.0 if pid == selected_area_id else 0.7
+                
+                label = f"A{pid} ({metric.capitalize()})"
+                ax.plot(frames, values, label=label, color=color, linewidth=linewidth, alpha=alpha)
+                
+            ax.set_xlabel("Frame")
+            ax.set_ylabel(f"{metric.capitalize()} {comp_name.upper()}")
+            ax.grid(True, alpha=0.3)
+            if results:
+                ax.legend()
+                
+        canvas.draw()
+
+    def _on_add_area_probe(self, shape_type):
+        """Start area probe tool."""
+        self.preview_panel.start_area_tool(shape_type)
+        
+    def _on_area_added(self, shape_type, coords):
+        """Handle area added from canvas."""
+        self.probe_manager.add_area(shape_type, coords)
+        self._update_probe_ui()
+        self.update_post_preview()
 
     def _on_preview_tab_changed(self, index):
         """Synchronize Control Panel tabs with Preview Panel tabs."""
@@ -466,6 +757,7 @@ class RAFTDICGUI:
             print(f"Error syncing tabs: {e}")
 
     def _on_roi_confirmed(self, mask, rect):
+        print(f"[DEBUG] _on_roi_confirmed called. Mask shape: {mask.shape if mask is not None else 'None'}")
         self.roi_mask = mask
         self.roi_rect = rect
         self._update_roi_status_text()
@@ -657,7 +949,9 @@ class RAFTDICGUI:
         if not self.control_panel.input_path.get():
             messagebox.showwarning("Input Missing", "Please select an input directory.")
             return False
-        if not self.roi_mask is not None:
+        
+        print(f"[DEBUG] validate_inputs: roi_mask is {self.roi_mask is not None}")
+        if self.roi_mask is None:
             messagebox.showwarning("ROI Missing", "Please select and confirm an ROI.")
             return False
         return True

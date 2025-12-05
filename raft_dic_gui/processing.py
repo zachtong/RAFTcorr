@@ -1075,6 +1075,15 @@ def calculate_strain_field(displacement_field: np.ndarray, method: str = 'green_
     max_shear = radius 
     von_mises = np.sqrt(e1**2 - e1*e2 + e2**2)
     
+    # Mask out pixels that were originally invalid (to prevent ROI expansion)
+    # Downsample mask
+    mask_down = mask[s_slice, s_slice]
+    
+    # Apply mask to all components
+    for key, val in locals().items():
+        if key in ['exx', 'eyy', 'exy', 'e1', 'e2', 'max_shear', 'von_mises']:
+            val[~mask_down] = np.nan
+
     return {
         'exx': exx,
         'eyy': eyy,
