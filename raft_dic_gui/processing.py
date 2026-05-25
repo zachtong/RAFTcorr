@@ -764,198 +764,40 @@ import scipy.io
 import os
 
 def save_scientific_results(displacement_results, strain_results, roi_mask, roi_rect, metadata, file_path, image_files=None, upsample_strain=True, warped_masks=None):
-    """
-    Save full-field results (Displacement + Strain) to .npz or .mat format.
-    
+    """Save full-field results to .npz / .mat (v7.3) / .h5 via streaming writes.
+
+    Replaces the legacy in-memory implementation (12 simultaneous (T,H,W) float32
+    stacks, which OOM'd at ~2000 frames). Now streams one frame at a time with
+    peak RAM = O(H_roi * W_roi).
+
     Args:
         displacement_results: List of (H, W, 2) arrays or paths to .npy files.
         strain_results: List of dicts containing strain components.
         roi_mask: (H, W) boolean mask.
         roi_rect: (xmin, ymin, xmax, ymax).
         metadata: Dict containing analysis parameters.
-        file_path: Full path to the output file (including extension .npz or .mat).
+        file_path: Output path with extension .npz / .mat / .h5 / .hdf5.
         image_files: List of absolute paths to the images corresponding to each frame.
-        upsample_strain: If True, upsample strain to ROI resolution. If False, save native resolution.
-        warped_masks: Optional list of warped masks from incremental processing (for debugging).
+        upsample_strain: If True, upsample strain to ROI resolution.
+        warped_masks: Optional list of warped masks from incremental processing.
     """
+    from raft_dic_gui.scientific_export import save_scientific_results_streaming
     try:
-        # 1. Prepare Static Data (Coordinates)
-        xmin, ymin, xmax, ymax = roi_rect
-        h, w = roi_mask.shape
-        
-        # Create meshgrid for ROI
-        x_range = np.arange(xmin, xmax)
-        y_range = np.arange(ymin, ymax)
-        X_ref, Y_ref = np.meshgrid(x_range, y_range)
-        
-        # Ensure mask matches ROI size (it should be full image size usually, need to crop)
-        # roi_mask passed here is usually the full image mask. Crop it to ROI.
-        mask_crop = roi_mask[ymin:ymax, xmin:xmax]
-        
-        # 2. Prepare Dynamic Data (Time-Series)
-        T = len(displacement_results)
-        H_roi, W_roi = mask_crop.shape
-        
-        # Initialize arrays with NaNs
-        U_stack = np.full((T, H_roi, W_roi), np.nan, dtype=np.float32)
-        V_stack = np.full((T, H_roi, W_roi), np.nan, dtype=np.float32)
-        
-        # Strain stacks (must match keys returned by calculate_strain_field)
-        strain_keys = ['exx', 'eyy', 'exy', 'e1', 'e2', 'max_shear', 'von_mises', 'rotation']
-        strain_stacks = {k: np.full((T, H_roi, W_roi), np.nan, dtype=np.float32) for k in strain_keys}
-        
-        # Loop through frames
-        for t in range(T):
-            try:
-                # Load Displacement
-                d = displacement_results[t]
-                if isinstance(d, str):
-                    d = np.load(d)
-                
-                # Validation
-                if d is None or d.size == 0:
-                    print(f"[Warning] Frame {t} is empty or None. Skipping.")
-                    continue
-            
-                h_d, w_d = d.shape[:2]
-                
-                # Debug logging for first frame/mismatches
-                if t == 0:
-                    print(f"[DEBUG] Export Frame 0: shape={d.shape}, expected ROI={H_roi}x{W_roi}")
-
-                # Determine Crop Logic
-                if h_d == H_roi and w_d == W_roi:
-                    # Already cropped to ROI
-                    d_crop = d
-                elif h_d == h and w_d == w:
-                    # Full image, need crop
-                    d_crop = d[ymin:ymax, xmin:xmax]
-                else:
-                    print(f"[Warning] Frame {t} shape {d.shape} incompatible with ROI {H_roi}x{W_roi} or Full {h}x{w}. using raw.")
-                    d_crop = d
-
-                # Safety check before indexing
-                if d_crop.shape[0] != H_roi or d_crop.shape[1] != W_roi:
-                     print(f"[Error] Frame {t}: d_crop shape {d_crop.shape} != Mask shape {H_roi}x{W_roi}. Skipping.")
-                     continue
-
-            
-                # Apply mask (set invalid to NaN)
-                valid = mask_crop > 0
-                
-                u_frame = d_crop[..., 0]
-                v_frame = d_crop[..., 1]
-                
-                # Store
-                U_stack[t, valid] = u_frame[valid]
-                V_stack[t, valid] = v_frame[valid]
-                
-                # Load Strain
-                if t < len(strain_results):
-                    s = strain_results[t]
-                    if s:
-                        for k in strain_keys:
-                            if k in s:
-                                val = s[k]
-                                h_s, w_s = val.shape
-                                
-                                # Handle strain dimension mismatch (step > 1 case)
-                                if h_s == H_roi and w_s == W_roi:
-                                    # Already correct size
-                                    val_crop = val
-                                elif h_s == h and w_s == w:
-                                    # Full image size, crop to ROI
-                                    val_crop = val[ymin:ymax, xmin:xmax]
-                                elif upsample_strain:
-                                    # Different size (likely step > 1), upsample if requested
-                                    # Use INTER_NEAREST to preserve exact values (no interpolation)
-                                    val_upsampled = cv2.resize(val.astype(np.float32), 
-                                                               (W_roi, H_roi), 
-                                                               interpolation=cv2.INTER_NEAREST)
-                                    val_crop = val_upsampled
-                                else:
-                                    # Don't upsample - will be handled separately
-                                    continue
-
-                                strain_stacks[k][t, valid] = val_crop[valid]
-            
-            except Exception as e:
-                print(f"[Error] Failed processing frame {t}: {str(e)}")
-                continue
-
-        # If not upsampling strain, replace strain_stacks with native resolution data
-        if not upsample_strain and strain_results:
-            # Get native strain size from first valid frame
-            first_strain = next((s for s in strain_results if s), None)
-            if first_strain:
-                first_key = next(iter(first_strain))
-                native_h, native_w = first_strain[first_key].shape
-                metadata['strain_native_size'] = (native_h, native_w)
-                
-                # Reinitialize at native size
-                strain_stacks = {k: np.full((T, native_h, native_w), np.nan, dtype=np.float32) for k in strain_keys}
-                
-                for t, s in enumerate(strain_results):
-                    if s:
-                        for k in strain_keys:
-                            if k in s:
-                                strain_stacks[k][t] = s[k].astype(np.float32)
-
-        # 3. Compute derived quantities
-        # Magnitude = sqrt(U^2 + V^2)
-        Magnitude_stack = np.sqrt(U_stack**2 + V_stack**2)
-        
-        # Velocity = frame-to-frame displacement change magnitude
-        # Vel[t] = |D[t] - D[t-1]| / dt
-        Velocity_stack = np.zeros_like(U_stack)
-        dt = metadata.get('time_step', 1.0)
-        if dt <= 0:
-            dt = 1.0
-        for t in range(1, T):
-            du = U_stack[t] - U_stack[t-1]
-            dv = V_stack[t] - V_stack[t-1]
-            Velocity_stack[t] = np.sqrt(du**2 + dv**2) / dt
-        
-        # 4. Save based on extension
-        ext = os.path.splitext(file_path)[1].lower()
-        
-        save_dict = {
-            'U': U_stack,
-            'V': V_stack,
-            'Magnitude': Magnitude_stack,
-            'Velocity': Velocity_stack,
-            'X_ref': X_ref,
-            'Y_ref': Y_ref,
-            'ROI_mask': mask_crop,
-            **strain_stacks,
-            **metadata
-        }
-        
-        if image_files is not None:
-             save_dict['image_files'] = image_files
-        
-        # Save warped masks from incremental processing (for debugging)
-        if warped_masks is not None and len(warped_masks) > 0:
-            for i, wm in enumerate(warped_masks):
-                save_dict[f'warped_mask_{i}'] = wm.astype(np.uint8)
-            save_dict['num_warped_masks'] = len(warped_masks)
-
-        if ext == '.npz':
-            np.savez_compressed(file_path, **save_dict)
-            return file_path
-        elif ext == '.mat':
-            scipy.io.savemat(file_path, save_dict)
-            return file_path
-        else:
-            # Default to npz if unknown
-            new_path = file_path + ".npz"
-            np.savez_compressed(new_path, **save_dict)
-            return new_path
-        
+        return save_scientific_results_streaming(
+            displacement_results=displacement_results,
+            strain_results=strain_results,
+            roi_mask=roi_mask,
+            roi_rect=roi_rect,
+            metadata=metadata or {},
+            file_path=file_path,
+            image_files=image_files,
+            upsample_strain=upsample_strain,
+            warped_masks=warped_masks,
+        )
     except Exception as e:
         print(f"Error saving scientific results: {e}")
         import traceback
         traceback.print_exc()
-        raise e
+        raise
 
 

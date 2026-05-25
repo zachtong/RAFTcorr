@@ -20,9 +20,18 @@ def _active_rect():
     return session.envelope_rect or session.roi_rect
 
 
+_SCIENTIFIC_EXTS = (".npz", ".mat", ".h5", ".hdf5")
+
+
 @export_bp.route("/scientific", methods=["POST"])
 def export_scientific():
-    """Export displacement + strain data to .mat or .npz."""
+    """Export displacement + strain data via streaming writes.
+
+    Supported extensions:
+      .npz                  numpy-native, Python-friendly
+      .mat                  MATLAB v7.3 (HDF5-based), MATLAB R2011a+ required
+      .h5 / .hdf5           plain HDF5, language-agnostic
+    """
     if not session.displacement_results:
         return jsonify({"error": "No displacement results"}), 400
 
@@ -33,6 +42,13 @@ def export_scientific():
 
     if not file_path:
         return jsonify({"error": "Missing file_path"}), 400
+
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext and ext not in _SCIENTIFIC_EXTS:
+        return jsonify({
+            "error": f"Unsupported extension '{ext}'. "
+                     f"Use one of: {', '.join(_SCIENTIFIC_EXTS)}",
+        }), 400
 
     # Validate directory exists
     export_dir = os.path.dirname(file_path)

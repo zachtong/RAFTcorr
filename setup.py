@@ -198,6 +198,7 @@ INSTALL_REQUIRES = [
     "flask-socketio>=5.0.0",
     "jinja2>=3.0.0",
     "weasyprint>=60.0",
+    "h5py>=3.0.0",
 ]
 
 setup(
