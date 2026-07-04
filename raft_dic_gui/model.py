@@ -294,9 +294,50 @@ def _find_override_for_path(path: str) -> Dict[str, Any]:
     return {}
 
 
+def unwrap_checkpoint(obj: Any) -> Tuple[Any, Optional[Dict[str, Any]]]:
+    """Return ``(state_dict, model_cfg_or_None)``.
+
+    Supports both on-disk formats:
+      * the training wrapper ``{"model": <state_dict>, "model_cfg": {...}, "epoch": N}``
+        produced by ``raftcorr/train.py``, and
+      * a bare ``state_dict`` (the legacy format).
+
+    Detecting the wrapper by an inner ``model`` dict lets the GUI load new-format
+    checkpoints without treating ``model``/``model_cfg``/``epoch`` as weight tensors.
+    """
+    if isinstance(obj, dict) and isinstance(obj.get("model"), dict):
+        return obj["model"], obj.get("model_cfg")
+    return obj, None
+
+
+def _apply_model_cfg(info: Dict[str, Any], cfg: Dict[str, Any]) -> None:
+    """Overlay the authoritative training ``model_cfg`` onto inspected ``info``.
+
+    This is preferred over the weight-shape heuristics because the checkpoint states the
+    architecture directly (e.g. a 2-level *pyramid* model would otherwise be mis-tagged as
+    full-resolution by the ``levels <= 2`` rule).
+    """
+    if cfg.get('small') is not None:
+        info['small'] = bool(cfg['small'])
+    if cfg.get('corr_levels'):
+        info['corr_levels'] = int(cfg['corr_levels'])
+    if cfg.get('corr_radius'):
+        info['corr_radius'] = int(cfg['corr_radius'])
+    if cfg.get('dropout') is not None:
+        info['dropout'] = float(cfg['dropout'])
+    if cfg.get('mixed_precision') is not None:
+        info['mixed_precision'] = bool(cfg['mixed_precision'])
+    downsample = cfg.get('downsample_factor')
+    if downsample is not None:
+        full_res = (int(downsample) == 1)   # stride-1 encoder == full resolution; 8 == pyramid
+        info['full_resolution'] = full_res
+        info['variant'] = VARIANT_FULL_RES if full_res else VARIANT_PYRAMID
+
+
 @lru_cache(maxsize=32)
 def _inspect_checkpoint(abs_path: str) -> Dict[str, Any]:
-    state_dict = torch.load(abs_path, map_location=torch.device("cpu"))
+    raw = torch.load(abs_path, map_location=torch.device("cpu"))
+    state_dict, model_cfg = unwrap_checkpoint(raw)
     info: Dict[str, Any] = {}
     try:
         keys = list(state_dict.keys())
@@ -329,9 +370,13 @@ def _inspect_checkpoint(abs_path: str) -> Dict[str, Any]:
                     info['variant'] = VARIANT_FULL_RES if levels <= 2 else VARIANT_PYRAMID
                 if 'full_resolution' not in info:
                     info['full_resolution'] = bool(levels <= 2)
+
+        # The training checkpoint carries an authoritative model_cfg; let it win.
+        if isinstance(model_cfg, dict):
+            _apply_model_cfg(info, model_cfg)
     finally:
         # Free references eagerly
-        del state_dict
+        del raw, state_dict
     return info
 
 
@@ -499,7 +544,11 @@ def load_model(weights_path: str,
     args = build_args_from_metadata(metadata, base_args=args)
     model = RAFT(args)
 
-    pretrained_weights = torch.load(metadata.path, map_location=torch.device("cpu"))
+    # Unwrap the training wrapper ({"model": state_dict, "model_cfg", "epoch"}); a bare
+    # state_dict passes through unchanged. Without this the wrapper's top-level keys
+    # (model/model_cfg/epoch) match no parameters and every weight stays random-initialised.
+    raw_ckpt = torch.load(metadata.path, map_location=torch.device("cpu"))
+    pretrained_weights, _ = unwrap_checkpoint(raw_ckpt)
 
     keys = list(pretrained_weights.keys())
     is_data_parallel = metadata.data_parallel
