@@ -207,6 +207,7 @@ class MainWindow(QMainWindow):
         if self._task is not None:
             return
         dlg = QProgressDialog(title + "…", self.tr("Cancel"), 0, 1000, self)
+        dlg.setWindowTitle(title)
         dlg.setWindowModality(Qt.WindowModality.WindowModal)
         dlg.setMinimumDuration(300)
         task = _Task(fn)
@@ -226,6 +227,9 @@ class MainWindow(QMainWindow):
     def _on_save_project(self, ask: bool) -> None:
         state = self._state
         if not state.image_files:
+            QMessageBox.information(self, self.tr("Save Project"), self.tr(
+                "Load the images first: a project keeps the images, the regions of interest, the "
+                "settings and the results together."))
             return
         path = state.project_path
         if ask or path is None:
@@ -237,7 +241,10 @@ class MainWindow(QMainWindow):
         from raftcorr.gui.project_bridge import project_from_state
         from raftcorr.io.project import save_project
 
-        project = project_from_state(state)
+        include_results = self._ask_include_results()
+        if include_results is None:
+            return
+        project = project_from_state(state, include_results=include_results)
 
         def done(p) -> None:
             state.project_path = Path(p)
@@ -245,6 +252,32 @@ class MainWindow(QMainWindow):
             state.log_message.emit(tr_args(self.tr("Project saved: %1"), p), "success")
 
         self._run_task(self.tr("Saving the project"), lambda cb: save_project(path, project, cb), done)
+
+    def _ask_include_results(self) -> bool | None:
+        """pyALDIC's question before saving: keep the results (size given) or settings only.
+
+        True / False, or None when the user cancels; True without asking when there are none.
+        """
+        if self._state.results is None:
+            return True
+        from raftcorr.gui.project_bridge import estimated_result_bytes
+        from raftcorr.gui.support.locale_format import format_bytes
+
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle(self.tr("Include Results?"))
+        box.setText(self.tr("Include the computed results in this project?"))
+        box.setInformativeText(tr_args(self.tr(
+            "Including results (about %1 uncompressed) lets you reopen the project without "
+            "recomputing. Choose No to save a small settings-only file for sharing."),
+            format_bytes(estimated_result_bytes(self._state))))
+        box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                               | QMessageBox.StandardButton.Cancel)
+        box.setDefaultButton(QMessageBox.StandardButton.Yes)
+        choice = box.exec()
+        if choice == QMessageBox.StandardButton.Cancel:
+            return None
+        return choice == QMessageBox.StandardButton.Yes
 
     def _on_open_project(self) -> None:
         name, _ = QFileDialog.getOpenFileName(self, self.tr("Open Project"), "", PROJECT_FILTER)
@@ -847,7 +880,7 @@ def _report_crash_dialog(exc_type, exc_value, tb_str: str) -> None:
         QCoreApplication.translate(
             "Application",
             "An unexpected error occurred. The application may not behave "
-            "correctly from here on, so saving your session and restarting "
+            "correctly from here on, so saving your project and restarting "
             "is recommended.",
         ),
     )
@@ -873,7 +906,7 @@ def _global_exception_hook(exc_type, exc_value, exc_tb):
     print(f"{'='*60}\n", flush=True)
 
     # The log file is the only channel that survives a windowed build.
-    logging.getLogger("al_dic").critical("Unhandled exception: %s", tb_str)
+    logging.getLogger("raftcorr").critical("Unhandled exception: %s", tb_str)
 
     # Also try to log to GUI console if available
     try:

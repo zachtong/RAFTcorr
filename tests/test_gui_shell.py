@@ -553,3 +553,50 @@ def test_roi_banner_and_colorbar_names(win):
     assert win._canvas_area._roi_banner.text() == "EDITING REGION OF INTEREST FOR FRAME 12"
     assert VizController._label("disp_magnitude", "px") == "Magnitude (px)"
     assert VizController._label("residual", "-") == "Residual (-)"
+
+
+def test_project_keeps_the_frame_and_can_leave_the_results_out(win, tmp_path):
+    from raftcorr.gui.app_state import AppState
+    from raftcorr.gui.controllers.image_controller import ImageController
+    from raftcorr.gui.project_bridge import apply_project, estimated_result_bytes, project_from_state
+    from raftcorr.io.project import load_project, save_project
+
+    d = _folder(tmp_path)
+    win._image_ctrl.load_folder(str(d))
+    st = win._state
+    st.set_frame_roi(0, np.ones((H, W), bool))
+    st.set_results(_series())
+    st.set_current_frame(2)
+    assert estimated_result_bytes(st) == 2 * st.results.u.nbytes + st.results.residual.size * 2
+    light = project_from_state(st, include_results=False)
+    assert light.series is None and light.strain is None
+    path = tmp_path / "p.raftcorr"
+    save_project(path, project_from_state(st))
+    AppState._instance = None
+    st2 = AppState.instance()
+    apply_project(st2, ImageController(st2), load_project(path), d, path)
+    assert st2.current_frame == 2
+
+
+def test_include_results_question(win, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    st = win._state
+    assert win._ask_include_results() is True            # nothing to include: no question
+    st.set_results(_series())
+    for answer, expected in ((QMessageBox.StandardButton.Yes, True), (QMessageBox.StandardButton.No, False),
+                             (QMessageBox.StandardButton.Cancel, None)):
+        monkeypatch.setattr(QMessageBox, "exec", lambda self, _a=answer: _a)
+        assert win._ask_include_results() is expected
+
+
+def test_saving_without_images_explains_why(win, no_modal_boxes):
+    win._on_save_project(ask=True)
+    assert no_modal_boxes and no_modal_boxes[-1][0] == "information"
+
+
+def test_the_residual_colormap_is_offered():
+    from raftcorr.gui.app_state import _default_colormap
+    from raftcorr.gui.support.colormaps import COLORMAP_NAMES
+
+    assert _default_colormap("residual") in COLORMAP_NAMES

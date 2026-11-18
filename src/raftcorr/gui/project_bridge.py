@@ -12,8 +12,26 @@ _VIEW_KEYS = ("display_field", "show_deformed", "show_background", "hidden_bg_co
               "overlay_alpha")
 
 
-def project_from_state(state: AppState) -> Project:
+def estimated_result_bytes(state: AppState) -> int:
+    """Uncompressed size of the results a project would hold (displacement, residual, strain)."""
+    total = 0
+    series = state.results
+    if series is not None:
+        total += int(series.u.nbytes) + int(series.v.nbytes)
+        if series.residual is not None:
+            total += int(series.residual.size) * 2       # stored in half precision
+    strain = state.strain_results
+    if strain is not None:
+        total += sum(int(a.nbytes) for a in strain.components.values())
+        if strain.trimmed is not None:
+            total += int(strain.trimmed.nbytes)
+    return total
+
+
+def project_from_state(state: AppState, include_results: bool = True) -> Project:
+    """The session as a project; without *include_results* a small settings-only file."""
     view = {k: getattr(state, k) for k in _VIEW_KEYS}
+    view["current_frame"] = int(state.current_frame)
     view["field_states"] = {k: dict(v.__dict__) for k, v in state._field_states.items()}
     view["use_physical_units"] = state.use_physical_units
     view["model_advice"] = state.model_advice
@@ -36,8 +54,8 @@ def project_from_state(state: AppState) -> Project:
         probes=probes,
         units=PhysicalUnits(scale=state.pixel_size, unit=state.pixel_unit,
                             frame_rate=state.frame_rate if state.frame_rate > 0 else None),
-        series=state.results,
-        strain=state.strain_results,
+        series=state.results if include_results else None,
+        strain=state.strain_results if include_results else None,
     )
 
 
@@ -91,6 +109,8 @@ def apply_project(state: AppState, image_ctrl, prj: Project, folder: Path, path:
     if prj.series is not None:
         state.set_results(prj.series, prj.strain)
         state.set_run_state(RunState.DONE)
+    if "current_frame" in v and state.image_files:
+        state.set_current_frame(max(0, min(int(v["current_frame"]), len(state.image_files) - 1)))
     state.project_path = path
     state.params_changed.emit()
     state.display_changed.emit()

@@ -108,6 +108,7 @@ COLORMAP_NAMES: tuple[str, ...] = (
     "coolwarm",
     "plasma",
     "inferno",
+    "magma",              # the residual field's default
     "RdBu_r",
     "seismic",
     BLACK_RAINBOW_NAME,
