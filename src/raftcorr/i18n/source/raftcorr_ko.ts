@@ -1041,593 +1041,761 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
         <translation>잔차</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="66"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="194"/>
         <source>Open this tab to render a preview.</source>
         <translation>이 탭을 열면 미리보기가 렌더링됩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="73"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="201"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Field</source>
         <translation>필드</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="80"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="208"/>
         <source>Frame</source>
         <translation>프레임</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="101"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="239"/>
         <source>FIELD APPEARANCE</source>
         <translation>필드 모양</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="106"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="244"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Colormap</source>
         <translation>색상 맵</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="110"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="248"/>
         <source>Range</source>
         <translation>범위</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="114"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="252"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Min</source>
         <translation>최소</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="118"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="256"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Max</source>
         <translation>최대</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="125"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="176"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="263"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="179"/>
         <source>Opacity</source>
-        <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Older names that share a field&apos;s colour state.</extracomment>
+        <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Long-edge presets (pixels) of the &quot;Resolution (long edge)&quot; combos, in pyALDIC&apos;s order; the last entry, &quot;Full resolution&quot;, is 0 (no cap). Older names that share a field&apos;s colour state.</extracomment>
         <translation>불투명도</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="127"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="265"/>
         <source>Apply to all fields</source>
         <translation>모든 필드에 적용</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="128"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="266"/>
         <source>Apply this field&apos;s colormap, opacity and auto-range to every enabled field (each field keeps its own min/max).</source>
         <translation>이 필드의 색상 맵, 불투명도, 자동 범위를 활성화된 모든 필드에 적용합니다(각 필드의 최소/최대는 유지).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="133"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="222"/>
         <source>Refresh preview</source>
         <translation>미리보기 새로고침</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="160"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="66"/>
+        <source>COLORBAR STYLE</source>
+        <translation>컬러바 스타일</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="71"/>
+        <source>Right</source>
+        <translation>오른쪽</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="72"/>
+        <source>Left</source>
+        <translation>왼쪽</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="73"/>
+        <source>Top</source>
+        <translation>위</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="74"/>
+        <source>Bottom</source>
+        <translation>아래</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="77"/>
+        <source>Position</source>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="82"/>
+        <source>Font size</source>
+        <translation>글꼴 크기</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="88"/>
+        <source>Font family</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="91"/>
+        <source>Bar thickness as a fraction of the picture&apos;s width (bar on the left or right) or height (bar on top or at the bottom).</source>
+        <translation>컬러바 두께. 그림 너비(왼쪽이나 오른쪽에 둘 때) 또는 높이(위나 아래에 둘 때)에 대한 비율입니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="94"/>
+        <source>Bar thickness</source>
+        <translation>막대 두께</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="97"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="114"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="120"/>
+        <source>Black</source>
+        <translation>검정</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="98"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="113"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="119"/>
+        <source>White</source>
+        <translation>흰색</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="101"/>
+        <source>Colour behind the colorbar and around the picture; text and ticks are drawn in the opposite colour.</source>
+        <translation>컬러바 뒤와 그림 주변의 색입니다. 글자와 눈금은 반대 색으로 그립니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="104"/>
+        <source>Background</source>
+        <translation>배경</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="107"/>
+        <source>Add a blank border around the exported content, as a fraction of the long edge (0 = none).</source>
+        <translation>내보내는 콘텐츠 주위에 여백 테두리를 추가합니다. 너비는 긴 변에 대한 비율입니다(0 = 없음).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="110"/>
+        <source>Margin</source>
+        <translation>여백</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="116"/>
+        <source>Margin color</source>
+        <translation>여백 색상</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="121"/>
+        <source>Transparent</source>
+        <translation>투명</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="124"/>
+        <source>Fill used where the background image would have been, when &apos;Show background image&apos; is off.
+Transparency is kept for PNG and TIFF; the other formats get white instead.</source>
+        <translation>&apos;배경 이미지 표시&apos;가 꺼져 있을 때 배경 이미지 자리를 채우는 색입니다.
+PNG와 TIFF는 투명을 유지하고, 다른 형식은 흰색이 됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="128"/>
+        <source>Hidden background</source>
+        <translation>숨김 시 배경</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_preview.py" line="290"/>
         <source>Preview failed: </source>
         <translation>미리보기 실패: </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="194"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="324"/>
         <source>Enable a field on the Images tab to preview.</source>
         <translation>미리보려면 &apos;이미지&apos; 탭에서 필드를 활성화하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="198"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="328"/>
         <source>No data for this field/frame.</source>
         <translation>이 필드/프레임에 데이터가 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="177"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="180"/>
         <source>Field opacity (0 = transparent, 1 = fully opaque)</source>
         <translation>필드 불투명도 (0 = 투명, 1 = 완전 불투명)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="284"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="290"/>
+        <source>Full resolution</source>
+        <translation>전체 해상도</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_widgets.py" line="297"/>
         <source>All</source>
         <translation>모두 선택</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="286"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="299"/>
         <source>None</source>
         <translation>모두 해제</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="357"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Select:</source>
         <translation>선택:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Export</source>
         <translation>내보내기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Auto</source>
         <translation>자동</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="387"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="400"/>
         <source>PHYSICAL UNITS</source>
         <translation>물리 단위</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="391"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="404"/>
         <source>Enable physical units</source>
         <translation>물리 단위 활성화</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="393"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="406"/>
         <source>Scale displacement values by pixel size and show physical units on colorbar labels. Strain is dimensionless and unaffected.</source>
         <translation>변위 값을 픽셀 크기로 스케일링하고 컬러바 레이블에 물리 단위를 표시합니다. 변형률은 무차원이므로 영향받지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="410"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="423"/>
         <source>/ pixel</source>
         <translation>/ 픽셀</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="412"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="425"/>
         <source>Pixel size</source>
         <translation>픽셀 크기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="421"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="434"/>
         <source>fps</source>
         <translation>fps</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="423"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="436"/>
         <source>Frame rate</source>
         <translation>프레임 속도</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="449"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="462"/>
         <source>FRAME RANGE</source>
         <translation>프레임 범위</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="451"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="464"/>
         <source>All frames</source>
         <translation>모든 프레임</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="456"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="469"/>
         <source>Numbered like the frame slider: frame 1 is the reference image.
 File names use the same numbers: frame 1 is written as _0001.</source>
         <translation>프레임 슬라이더와 같은 번호입니다. 프레임 1은 참조 이미지입니다.
 파일 이름도 같은 번호를 사용하며, 프레임 1은 _0001로 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="459"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="472"/>
         <source>From</source>
         <comment>Frame range: starting frame</comment>
         <translation>시작</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="464"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="477"/>
         <source>to</source>
         <comment>Frame range: ending frame</comment>
         <translation>끝</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="161"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="174"/>
         <source>Export Results</source>
-        <extracomment>GUI field name -&gt; variable name in the data files (raftcorr.export.scientific).</extracomment>
+        <extracomment>GUI field name -&gt; variable name in the data files (raftcorr.export.scientific). Long-edge caps the tabs start from (pixels, 0 = full resolution): pictures keep the size their DPI gives, animations start at pyALDIC&apos;s 1024 px.</extracomment>
         <translation>결과 내보내기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="188"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="201"/>
         <source>OUTPUT FOLDER</source>
         <translation>출력 폴더</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="194"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="207"/>
         <source>Select output folder…</source>
         <translation>출력 폴더 선택…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="200"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="213"/>
         <source>Browse…</source>
         <translation>찾아보기…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="205"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="218"/>
         <source>Open Folder</source>
         <translation>폴더 열기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="219"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="232"/>
         <source>Data</source>
         <translation>데이터</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="220"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="233"/>
         <source>Images</source>
         <translation>이미지</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="221"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="234"/>
         <source>Animation</source>
         <translation>애니메이션</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="222"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="235"/>
         <source>Report</source>
         <translation>보고서</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="304"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="320"/>
         <source>FORMAT</source>
         <translation>형식</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="306"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="322"/>
         <source>NumPy Archive (.npz)</source>
         <translation>NumPy 아카이브 (.npz)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="313"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="329"/>
         <source>CSV (per frame)</source>
         <translation>CSV(프레임별)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="323"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="345"/>
         <source>DISPLACEMENT</source>
         <translation>변위</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="326"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="348"/>
         <source>STRAIN</source>
         <translation>변형률</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="271"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="329"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="287"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="351"/>
         <source>Run Compute Strain first.</source>
         <translation>먼저 「변형률 계산」을 실행하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="223"/>
-        <source>Preview</source>
-        <translation>미리보기</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="252"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="268"/>
         <source>Export: images not readable (%1); pictures go on white.</source>
         <translation>내보내기: 이미지를 읽을 수 없습니다(%1). 그림은 흰색 배경으로 출력됩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="256"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="272"/>
         <source>Export: the images do not match the results&apos; image size; pictures go on white.</source>
         <translation>내보내기: 이미지 크기가 결과의 이미지 크기와 일치하지 않습니다. 그림은 흰색 배경으로 출력됩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="270"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="286"/>
         <source>This run has no intensity residual.</source>
         <translation>이번 실행에는 밝기 잔차가 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="308"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="324"/>
         <source>MATLAB v7.3 (.mat)</source>
         <translation>MATLAB v7.3 (.mat)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="310"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="326"/>
         <source>An HDF5-based MAT file: load it in MATLAB with load().</source>
         <translation>HDF5 기반 MAT 파일입니다. MATLAB에서 load()로 불러오세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="311"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="327"/>
         <source>HDF5 (.h5)</source>
         <translation>HDF5 (.h5)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="316"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="332"/>
         <source>One table per computed frame, one row per point of the region of interest.
 Dense fields make large files: a 1000 x 1000 px region is a million rows per frame.</source>
         <translation>계산된 프레임마다 표 하나, 관심 영역의 점마다 한 행입니다.
 조밀한 필드는 파일이 커집니다: 1000 x 1000 px 영역은 프레임당 백만 행입니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="333"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="355"/>
         <source>✓ Parameters file (JSON) always exported</source>
         <translation>✓ 매개변수 파일(JSON)은 항상 내보내집니다</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="334"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="356"/>
         <source>✓ Grid coordinates (X, Y), ROI and computed-frame flags always included</source>
         <translation>✓ 격자 좌표(X, Y), ROI 및 계산된 프레임 플래그는 항상 포함됩니다</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="335"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="357"/>
         <source>Displacements are written in pixels (+u right, +v down); the pixel size and frame rate above are recorded with them.</source>
         <translation>변위는 픽셀 단위로 기록됩니다(+u 오른쪽, +v 아래쪽). 위의 픽셀 크기와 프레임 속도도 함께 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="341"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="363"/>
         <source>Export Data</source>
         <translation>데이터 내보내기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="377"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="412"/>
         <source>IMAGE SETTINGS</source>
         <translation>이미지 설정</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="387"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="464"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="423"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="530"/>
         <source>Format</source>
         <translation>형식</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="351"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="376"/>
         <source>Deformed frame</source>
         <translation>변형된 프레임</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="352"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="239"/>
+        <source>Preview &amp; Colorbar</source>
+        <translation>미리보기 및 컬러바</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="334"/>
+        <source>NPZ: one file per frame (default: single merged file)</source>
+        <translation>NPZ: 프레임별 1 파일(기본값: 통합 단일 파일)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="337"/>
+        <source>One .npz per computed frame, in a folder of its own: that frame&apos;s variables, the grid coordinates, the ROI and the metadata.</source>
+        <translation>계산된 프레임마다 .npz 파일 하나를 별도 폴더에 저장합니다. 해당 프레임의 변수, 격자 좌표, ROI, 메타데이터가 들어 있습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="377"/>
         <source>Reference frame</source>
         <translation>참조 프레임</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="358"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="383"/>
         <source>Show background image</source>
         <translation>배경 이미지 표시</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="398"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="394"/>
+        <source>Hide untracked regions</source>
+        <translation>추적되지 않은 영역 숨기기</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="397"/>
+        <source>Leave points without a result transparent in the pictures, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest. Data files always keep NaN there.</source>
+        <translation>결과가 없는 점(시야 밖으로 나간 재료 등)을 그림에서 관심 영역 안의 가장 가까운 값으로 채우지 않고 투명하게 둡니다. 데이터 파일에서는 항상 NaN입니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="430"/>
+        <source>Cap the long edge of each written image (the larger of width/height, in pixels; the aspect ratio and layout are kept).
+Lower = faster and much smaller on disk; for PDF and SVG it caps the embedded picture. &apos;Full resolution&apos; writes the size set by DPI.</source>
+        <translation>내보내는 각 이미지의 긴 변(너비와 높이 중 큰 값, 픽셀 단위. 가로세로 비율과 배치는 유지)을 제한합니다.
+작을수록 빠르고 파일도 훨씬 작아집니다. PDF와 SVG에서는 포함된 그림을 제한합니다. &apos;전체 해상도&apos;는 DPI로 정한 크기로 저장합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="435"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="543"/>
+        <source>Resolution (long edge)</source>
+        <translation>해상도(긴 변)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="443"/>
+        <source>JPEG quality (higher = larger file). Ignored for the other formats.</source>
+        <translation>JPEG 품질(높을수록 파일이 커집니다). 다른 형식에서는 무시됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="446"/>
+        <source>JPEG quality</source>
+        <translation>JPEG 품질</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="454"/>
+        <source>Resolution of the written figure: about 8.6 x 7 inches at this many dots per inch.
+A resolution cap (long edge) lowers it.</source>
+        <translation>저장되는 그림의 해상도: 약 8.6 x 7인치를 이 DPI로 저장합니다.
+해상도 상한(긴 변)을 정하면 낮아집니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="469"/>
         <source>DPI</source>
         <translation>DPI</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="412"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="490"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="471"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="569"/>
         <source>Include colorbar</source>
         <translation>컬러바 포함</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="421"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="496"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="474"/>
+        <source>Add a colorbar to each image; its position and style are set on the Preview &amp; Colorbar tab.</source>
+        <translation>각 이미지에 컬러바를 추가합니다. 위치와 스타일은 &apos;미리보기 및 컬러바&apos; 탭에서 정합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="479"/>
+        <source>Uncheck to export the field on its own, with no speckle image behind it. Pick the fill on the Preview &amp; Colorbar tab.</source>
+        <translation>선택을 해제하면 뒤에 스페클 이미지 없이 필드만 내보냅니다. 채우기는 &apos;미리보기 및 컬러바&apos; 탭에서 선택합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="487"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="582"/>
         <source>Render as</source>
         <translation>렌더링 방식</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="431"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="497"/>
         <source>Export Images</source>
         <translation>이미지 내보내기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="445"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="511"/>
         <source>ANIMATION SETTINGS</source>
         <translation>애니메이션 설정</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="473"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="537"/>
+        <source>Cap the animation&apos;s long edge (the larger of width/height).
+Lower = faster and much smaller. Strongly recommended for GIF, whose size explodes at native resolution. &apos;Full resolution&apos; draws the images at their own pixel size.</source>
+        <translation>애니메이션의 긴 변(너비와 높이 중 큰 값)을 제한합니다.
+작을수록 빠르고 훨씬 작아집니다. GIF에는 강력히 권장합니다(원래 해상도에서는 크기가 급격히 커집니다). &apos;전체 해상도&apos;는 이미지를 원래 픽셀 크기로 그립니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="552"/>
         <source>FPS</source>
         <translation>FPS</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="483"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="562"/>
         <source>Export every Nth frame (1 = every frame). Higher is faster and smaller
 but looks choppier. Playback duration is preserved (the FPS above is the pre-decimation rate).</source>
         <translation>N 프레임마다 하나씩 내보냅니다(1 = 모든 프레임). 클수록 빠르고 작지만,
 더 끊겨 보입니다. 재생 시간은 유지됩니다(위의 FPS는 추출 전 프레임 속도).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="488"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="567"/>
         <source>Frame step</source>
         <translation>프레임 간격</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="511"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="572"/>
+        <source>Add a colorbar to each frame; its position and style are set on the Preview &amp; Colorbar tab.</source>
+        <translation>각 프레임에 컬러바를 추가합니다. 위치와 스타일은 &apos;미리보기 및 컬러바&apos; 탭에서 정합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="576"/>
+        <source>Uncheck to export the field on its own, with no speckle image behind it. GIF and MP4 cannot store transparency, so a transparent fill is written as white.</source>
+        <translation>선택을 해제하면 뒤에 스페클 이미지 없이 필드만 내보냅니다. GIF와 MP4는 투명도를 저장할 수 없으므로 투명 채우기는 흰색으로 기록됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/export_dialog.py" line="595"/>
         <source>Export Animation</source>
         <translation>애니메이션 내보내기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="521"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="605"/>
         <source>CONTENT</source>
         <translation>내용</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="523"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="607"/>
         <source>Parameter summary table</source>
         <translation>매개변수 요약 표</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="525"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="609"/>
         <source>Field statistics (min/max/mean/std per frame)</source>
         <translation>필드 통계 (프레임별 최소/최대/평균/표준편차)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="527"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="611"/>
         <source>Sample field images</source>
         <translation>필드 이미지 샘플</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="535"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="619"/>
         <source>Sample every</source>
         <translation>샘플 간격</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="541"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="625"/>
         <source>frames</source>
         <comment>Report: sample every N frames</comment>
         <translation>프레임</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="547"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="631"/>
         <source>FIELDS</source>
         <translation>필드</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="549"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="633"/>
         <source>Displacement:</source>
         <translation>변위:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="550"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="634"/>
         <source>Strain:</source>
         <translation>변형률:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="559"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="643"/>
         <source>Format: HTML (self-contained, view in any browser)</source>
         <translation>형식: HTML (자체 포함, 모든 브라우저에서 볼 수 있음)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="563"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="647"/>
         <source>Generate Report</source>
         <translation>보고서 생성</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="707"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="808"/>
         <source>Select Output Folder</source>
         <translation>출력 폴더 선택</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="808"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="909"/>
         <source>Writing %1 (%2%)</source>
         <translation>%1 쓰는 중 (%2%)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="841"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="942"/>
         <source>Error: %1</source>
         <translation>오류: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="783"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="884"/>
         <source>Starting…</source>
         <translation>시작 중…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="355"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="380"/>
         <source>Deformed: the field is drawn where each point is in that frame, over the frame&apos;s own photo.
 Reference: drawn at the points&apos; positions in frame 1, over frame 1.</source>
         <translation>변형된 프레임: 각 점이 해당 프레임에서 있는 위치에 필드를 그려 그 프레임 자체의 사진 위에 겹칩니다.
 참조 프레임: 프레임 1에서의 점 위치에 그려 프레임 1 위에 겹칩니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="362"/>
-        <source>Uncheck to export the field on its own, on white, with no speckle image behind it.</source>
-        <translation>선택을 해제하면 뒤에 스페클 이미지 없이 흰색 배경에 필드만 내보냅니다.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="363"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="387"/>
         <source>The images of this run are not available.</source>
         <translation>이번 실행의 이미지를 사용할 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="395"/>
-        <source>Resolution of the written figure: about 8.6 x 7 inches at this many dots per inch.</source>
-        <translation>출력할 그림의 해상도: 약 8.6 x 7인치 크기를 인치당 이 도트 수로 출력합니다.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="402"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="461"/>
         <source>Each frame</source>
         <translation>프레임별</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="403"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="462"/>
         <source>Whole sequence</source>
         <translation>전체 시퀀스</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="405"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="464"/>
         <source>How Auto picks the colour range: from each frame&apos;s own values (like the main window),
 or one range from every exported frame, so a colour means the same value in every image.</source>
         <translation>자동 범위를 정하는 방식: 각 프레임 자체의 값으로 정하거나(메인 창과 동일),
 내보내는 모든 프레임에서 하나의 범위를 정해 모든 이미지에서 같은 색이 같은 값을 뜻하도록 합니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="410"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="459"/>
         <source>Auto range</source>
         <translation>자동 범위</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="414"/>
-        <source>Add a vertical colorbar to the right of each image.</source>
-        <translation>각 이미지 오른쪽에 수직 컬러바를 추가합니다.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="423"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="498"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="483"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="579"/>
         <source>Crop to ROI</source>
         <translation>ROI로 자르기</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="424"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="484"/>
         <source>Cut the picture to the region of interest plus a small margin.</source>
         <translation>그림을 관심 영역에 약간의 여백을 더한 범위로 자릅니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="457"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="523"/>
         <source>MP4 needs the imageio and imageio-ffmpeg packages (pip install imageio imageio-ffmpeg). Save as GIF instead.</source>
         <translation>MP4에는 imageio 및 imageio-ffmpeg 패키지가 필요합니다(pip install imageio imageio-ffmpeg). 대신 GIF로 저장하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="492"/>
-        <source>Add a vertical colorbar to the right of each frame.</source>
-        <translation>각 프레임 오른쪽에 수직 컬러바를 추가합니다.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="499"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="580"/>
         <source>Cut the frames to the region of interest plus a small margin.</source>
         <translation>각 프레임을 관심 영역에 약간의 여백을 더한 범위로 자릅니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="503"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="587"/>
         <source>Auto range: one range for the whole animation, so a colour means the same value in every frame.</source>
         <translation>자동 범위: 애니메이션 전체에 하나의 범위를 사용하므로 모든 프레임에서 같은 색이 같은 값을 뜻합니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="530"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="614"/>
         <source>Drawn like the Images tab: same colormap, range, opacity and configuration.</source>
         <translation>&apos;이미지&apos; 탭과 같은 방식으로 그립니다: 색상 맵, 범위, 불투명도, 구성이 같습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="640"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="688"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="737"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="789"/>
         <source>Min must be below Max for %1.</source>
         <translation>%1의 최솟값은 최댓값보다 작아야 합니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="646"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="743"/>
         <source>Nothing to export: enable at least one field with computed frames in the frame range.</source>
         <translation>내보낼 항목이 없습니다: 프레임 범위 안에 계산된 프레임이 있는 필드를 하나 이상 활성화하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="654"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="751"/>
         <source>Select at least one format.</source>
         <translation>형식을 하나 이상 선택하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="658"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="755"/>
         <source>Select at least one variable to export.</source>
         <translation>내보낼 변수를 하나 이상 선택하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="691"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="792"/>
         <source>Nothing to export: select a field or the parameter table.</source>
         <translation>내보낼 항목이 없습니다: 필드 또는 매개변수 표를 선택하세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="744"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="845"/>
         <source>… and %1 more</source>
         <translation>… 외 %1개</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="746"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="847"/>
         <source>Replace Existing Files?</source>
         <translation>기존 파일을 바꾸시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="747"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="848"/>
         <source>These already exist in the output folder and will be replaced:
 
 %1</source>
@@ -1636,65 +1804,65 @@ or one range from every exported frame, so a colour means the same value in ever
 %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="766"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="867"/>
         <source>The results changed after this dialog was opened (a new run, strain or project). Close it and open Export again to export them.</source>
         <translation>이 대화 상자를 연 뒤 결과가 바뀌었습니다(새 실행, 변형률 또는 프로젝트). 대화 상자를 닫고 &apos;내보내기&apos;를 다시 열어 내보내세요.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="770"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="871"/>
         <source>Nothing exported: the existing files were kept.</source>
         <translation>아무것도 내보내지 않았습니다: 기존 파일을 유지했습니다.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="795"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="896"/>
         <source>Stopping…</source>
         <translation>중지 중…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="806"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="907"/>
         <source>Rendering %1 (%2/%3)</source>
         <translation>%1 렌더링 중 (%2/%3)</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="824"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="925"/>
         <source>Exported %n file(s) → %1</source>
         <translation>
             <numerusform>%n 개 파일 내보냄 → %1</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="826"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="927"/>
         <source>Exported %n image(s) → %1</source>
         <translation>
             <numerusform>%n 개 이미지 내보냄 → %1</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="842"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="943"/>
         <source>Export failed: %1</source>
         <translation>내보내기 실패: %1</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="850"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="951"/>
         <source>Export cancelled: %n file(s) written before stopping.</source>
         <translation>
             <numerusform>내보내기가 취소되었습니다: 중지 전에 파일 %n개를 기록했습니다.</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="830"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="931"/>
         <source>No animation was written. See the log for details.</source>
         <translation>애니메이션이 기록되지 않았습니다. 자세한 내용은 로그를 확인하세요.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="832"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="933"/>
         <source>Exported %n animation(s) → %1</source>
         <translation>
             <numerusform>%n 개 애니메이션 내보냄 → %1</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="834"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="935"/>
         <source>Report saved → %1</source>
         <translation>보고서 저장됨 → %1</translation>
     </message>
@@ -4008,7 +4176,7 @@ or Browse</source>
 <context>
     <name>dialog</name>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="309"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="322"/>
         <source>Cancel Export</source>
         <translation>내보내기 취소</translation>
     </message>
