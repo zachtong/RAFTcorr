@@ -35,7 +35,9 @@ A rewrite. One Python process replaces the Flask server and the React front end.
 - One definition of velocity everywhere.
 - Strain: Green-Lagrange, infinitesimal or Euler-Almansi; uniform or Gaussian gauges; plane or
   quadratic fits; crack-aware; principal strains and angle, von Mises equivalent strain, rotation,
-  area change.
+  area change. As in pyALDIC, points whose gauge an edge (region of interest, hole, crack) cuts
+  within 0.7 of its half-width are left empty ("Trim low-confidence edges", 0 to 1); pictures can
+  fill that band from the reliable points, data files keep it empty.
 - Exports: HDF5, MAT v7.3 and NPZ written frame by frame; figures; GIF / MP4; CSV; project files.
 - Command line (`raftcorr run | suggest | models | selftest | info`) and Python API
   (`raftcorr.track`, `raftcorr.compute_strain`).

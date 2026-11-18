@@ -39,9 +39,11 @@ def _parser() -> argparse.ArgumentParser:
     r.add_argument("--device", default="auto")
     r.add_argument("--smooth", type=float, default=0.0, help="Gaussian smoothing of the displacement (px)")
     r.add_argument("--plain-sort", action="store_true", help="sort file names plainly instead of naturally")
-    r.add_argument("--strain", action="store_true", help="also compute strain (paper settings unless changed)")
+    r.add_argument("--strain", action="store_true", help="also compute strain (default settings unless changed)")
     r.add_argument("--gauge", type=int, default=41, help="virtual strain gauge size (px, odd)")
     r.add_argument("--measure", default="green_lagrange", choices=["green_lagrange", "infinitesimal", "euler_almansi"])
+    r.add_argument("--edge-trim", type=float, default=0.7, metavar="ALPHA",
+                   help="leave strain empty within ALPHA x (gauge - 1) / 2 px of an edge (0 to 1; 0 = off)")
     r.add_argument("--out", help="results file: .h5, .mat or .npz")
     r.add_argument("--project", help="also save a .raftcorr project")
     r.add_argument("--overwrite", action="store_true")
@@ -97,6 +99,18 @@ def _run(args) -> int:
         cb.log("--out must end in .h5, .mat or .npz", "error")
         return 2
     seq, mask = _load(args.folder, args.roi, natural=not args.plain_sort)
+    scfg = None
+    if args.strain:  # strain settings are checked before the tracking, too
+        import numpy as np
+
+        from ..post.strain import check_edge_trim
+
+        try:
+            scfg = StrainConfig(measure=args.measure, gauge_px=args.gauge, edge_trim_alpha=args.edge_trim)
+            check_edge_trim(mask if mask is not None else np.ones(seq.shape, dtype=bool), scfg)
+        except ValueError as exc:
+            cb.log(f"strain: {exc}", "error")
+            return 2
     if args.config:
         cfg = RunConfig.load(args.config)
     else:
@@ -106,10 +120,9 @@ def _run(args) -> int:
     cb.log(f"{len(seq)} frames, {seq.shape[1]} x {seq.shape[0]} px ({seq.scale.description})", "info")
     series = Pipeline(cfg, cb).run(seq, mask)
     strain = None
-    if args.strain:
+    if scfg is not None:
         from ..post.strain import compute_strain
 
-        scfg = StrainConfig(measure=args.measure, gauge_px=args.gauge)
         strain = compute_strain(series, scfg, callbacks=cb)
     if args.out:
         from ..export.scientific import export_results

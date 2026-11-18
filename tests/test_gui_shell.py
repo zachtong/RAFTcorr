@@ -464,3 +464,46 @@ def test_a_frame_lost_entirely_draws_nothing_and_reads_nothing(qtbot):
     viz = VizController()
     viz.render_field(st)
     assert viz.value_at(60.0, 30.0) is None
+
+
+def test_garbage_is_collected_in_the_gui_thread_only(qapp):
+    import gc
+    import weakref
+
+    from raftcorr.gui.gc_guard import MainThreadGarbageCollector
+
+    was_enabled = gc.isenabled()
+    guard = MainThreadGarbageCollector(interval_ms=60_000)
+    try:
+        assert not gc.isenabled()
+
+        class Node:
+            pass
+
+        node = Node()
+        node.me = node                      # a reference cycle: only the cyclic collector frees it
+        ref = weakref.ref(node)
+        del node
+        keep = [[] for _ in range(gc.get_threshold()[0] + 10)]   # push generation 0 past its threshold
+        assert ref() is not None
+        guard.check()
+        assert ref() is None
+        del keep
+    finally:
+        guard.stop()
+        (gc.enable if was_enabled else gc.disable)()
+
+
+def test_config_card_follows_the_sidebar(win, tmp_path):
+    card = win._canvas_area._config_overlay
+    assert not card.isVisible()                       # fewer than two images
+    win._image_ctrl.load_folder(str(_folder(tmp_path)))
+    st = win._state
+    assert card.isVisible()
+    assert (card._mode_lbl.text(), card._model_lbl.text(), card._iters_lbl.text()) == \
+        ("Accumulative", "RAFTcorr-s4", "20")
+    st.tracking_mode, st.inc_ref_mode, st.inc_ref_interval = "incremental", "every_n", 5
+    st.set_param("model", "s8")
+    st.set_param("iters", 12)
+    assert (card._mode_lbl.text(), card._model_lbl.text(), card._iters_lbl.text()) == \
+        ("Incremental, every 5 frames", "RAFTcorr-s8", "12")

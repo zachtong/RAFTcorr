@@ -151,6 +151,13 @@ def style_text(template: str, colors: Colors | None = None) -> str:
     return template.format_map(asdict(colors if colors is not None else current_colors()))
 
 
+def _faded(hex_color: str, alpha: int) -> str:
+    """``rgba()`` of a ``#rrggbb`` colour with *alpha* (0-255), for disabled states."""
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
 def _columns_apart(c: Colors) -> bool:
     """True for a palette whose sidebars stand apart from the window (light)."""
     return c.BG_SIDEBAR != c.BG_DARKEST and not c.IS_DARK
@@ -497,11 +504,12 @@ QPushButton[class="btn-danger"]:pressed {{
     border-color: {c.DANGER_PRESSED};
 }}
 
-/* Without this a disabled danger button (Cancel when nothing runs) kept its red, live look. */
+/* A disabled danger button (Cancel when nothing runs) stays red, as in pyALDIC, but faded so
+   it does not look live. */
 QPushButton[class="btn-danger"]:disabled {{
     background: transparent;
-    border-color: {c.BORDER};
-    color: {c.TEXT_MUTED};
+    border-color: {_faded(c.DANGER, 110)};
+    color: {_faded(c.DANGER, 150)};
 }}
 
 /* ============================================================

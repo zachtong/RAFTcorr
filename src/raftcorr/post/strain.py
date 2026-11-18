@@ -14,6 +14,13 @@ Crack-aware mode fits each connected component of the valid region separately, s
 spans a crack or a hole. Fits whose window holds too few valid points (``min_coverage``) or whose
 normal matrix is ill-conditioned (``condition_max``) are rejected (NaN).
 
+Edge trim (pyALDIC's "Trim low-confidence edges", ``edge_trim_alpha``): next to an edge of the
+valid region (the region of interest, a hole, a crack, the grid border) the gauge is cut on one
+side and its fit is one-sided, biased by the strain gradient and noisier. Points closer to an edge
+than ``alpha`` times the gauge half-width ``(Lg - 1) / 2`` are trimmed: NaN in every component,
+and marked in :attr:`StrainSeries.trimmed`. Pictures may fill them back from the reliable points
+(:func:`fill_trimmed`); data never do.
+
 Strain measures (``F = I + grad u``, gradients in reference coordinates):
 
 * ``green_lagrange``: ``E = (F^T F - I) / 2``;
@@ -203,18 +210,80 @@ def strain_components(g: Gradients, measure: str) -> dict[str, np.ndarray]:
     return {k: np.asarray(v, dtype=np.float32) for k, v in out.items()}
 
 
+def edge_trimmed(valid: np.ndarray, gauge_px: int, alpha: float) -> np.ndarray:
+    """Points of ``valid`` whose gauge an edge cuts too close to the centre (pyALDIC's edge trim).
+
+    A point is trimmed when an invalid point (or the grid border) lies inside the central square of
+    half-width ``alpha * (gauge_px - 1) / 2`` of its gauge, i.e. when its chessboard distance to the
+    nearest invalid point is at most that half-width. The square matches the square gauge:
+    ``alpha = 1`` trims every point whose gauge is not entirely valid, ``alpha = 0`` trims nothing.
+    """
+    if alpha <= 0.0 or not valid.any():
+        return np.zeros(valid.shape, dtype=bool)
+    band = alpha * (gauge_px // 2)
+    padded = np.pad(valid, 1, constant_values=False)       # the grid border is an edge too
+    dist = ndimage.distance_transform_cdt(padded, metric="chessboard")[1:-1, 1:-1]
+    return valid & (dist <= band)
+
+
+def fill_trimmed(values: np.ndarray, trimmed: np.ndarray) -> np.ndarray:
+    """A copy of ``values`` for pictures, the trimmed points filled from the nearest reliable point.
+
+    pyALDIC's "Fill trimmed edges": each trimmed point takes the value of the nearest finite,
+    untrimmed point of its own connected region (reliable points plus the trimmed band), so a
+    filled band never takes values from across a crack or a hole. Data files keep NaN there.
+    """
+    out = np.array(values, dtype=np.float32, copy=True)
+    if not trimmed.any():
+        return out
+    good = np.isfinite(out) & ~trimmed
+    labels, _n = ndimage.label(good | trimmed)
+    for lab, sl in enumerate(ndimage.find_objects(labels), start=1):
+        if sl is None:
+            continue
+        region = labels[sl] == lab
+        src = good[sl] & region
+        need = trimmed[sl] & region
+        if not need.any() or not src.any():
+            continue
+        _d, (iy, ix) = ndimage.distance_transform_edt(~src, return_indices=True)
+        block = out[sl]                                     # a view: writes go to ``out``
+        block[need] = block[iy[need], ix[need]]
+    return out
+
+
 def frame_strain(u: np.ndarray, v: np.ndarray, mask: np.ndarray, cfg: StrainConfig) -> dict[str, np.ndarray]:
-    """Strain components of one frame on the grid subsampled by ``cfg.step``."""
+    """Strain components of one frame on the grid subsampled by ``cfg.step`` (trimmed band NaN)."""
+    return _frame_strain(u, v, mask, cfg)[0]
+
+
+def _frame_strain(u: np.ndarray, v: np.ndarray, mask: np.ndarray,
+                  cfg: StrainConfig) -> tuple[dict[str, np.ndarray], np.ndarray]:
+    """Strain components of one frame and its edge-trimmed points, both on the output grid."""
     valid = mask & np.isfinite(u) & np.isfinite(v)
     if cfg.smoothing_sigma > 0:
         sm = nan_gaussian(np.stack([u, v]), cfg.smoothing_sigma, valid)
         u, v = sm[0], sm[1]
         valid &= np.isfinite(u) & np.isfinite(v)
     g = vsg_gradients(u, v, valid, cfg)
+    trimmed = edge_trimmed(valid, cfg.gauge_px, cfg.edge_trim_alpha)
     if cfg.step > 1:
         s = cfg.step
         g = Gradients(g.dudx[::s, ::s], g.dudy[::s, ::s], g.dvdx[::s, ::s], g.dvdy[::s, ::s])
-    return strain_components(g, cfg.measure)
+        trimmed = trimmed[::s, ::s]
+    if trimmed.any():
+        g = Gradients(*(np.where(trimmed, np.nan, a) for a in (g.dudx, g.dudy, g.dvdx, g.dvdy)))
+    return strain_components(g, cfg.measure), trimmed
+
+
+def check_edge_trim(roi: np.ndarray, cfg: StrainConfig) -> None:
+    """Refuse a trim that blanks the whole region of interest (every field would be NaN)."""
+    if roi.any() and edge_trimmed(roi, cfg.gauge_px, cfg.edge_trim_alpha)[roi].all():
+        band = cfg.edge_trim_alpha * (cfg.gauge_px // 2)
+        raise ValueError(
+            f"Edge trimming would remove every strain point: the trimmed band, {cfg.edge_trim_alpha:.2f} x "
+            f"{cfg.gauge_px // 2} px = {band:.1f} px, is wider than half the width of the region of "
+            f"interest. Reduce the VSG size or lower 'Trim low-confidence edges'.")
 
 
 def compute_strain(series: DisplacementSeries, cfg: StrainConfig | None = None, frames: list[int] | None = None,
@@ -222,22 +291,26 @@ def compute_strain(series: DisplacementSeries, cfg: StrainConfig | None = None, 
     """Strain of every computed frame of a displacement series."""
     cfg = cfg or StrainConfig()
     cb = coerce(callbacks)
+    check_edge_trim(series.mask, cfg)
     T = series.n_frames
     hs = -(-series.grid.height // cfg.step)
     ws = -(-series.grid.width // cfg.step)
     comps = {name: np.full((T, hs, ws), np.nan, dtype=np.float32) for name in COMPONENTS}
+    trimmed = np.zeros((T, hs, ws), dtype=bool) if cfg.edge_trim_alpha > 0 else None
     done = np.zeros(T, dtype=bool)
     todo = [k for k in (frames if frames is not None else range(T)) if series.done[k]]
     for i, k in enumerate(todo):
         check_stop(cb)
-        res = frame_strain(series.u[k], series.v[k], series.mask, cfg)
+        res, cut = _frame_strain(series.u[k], series.v[k], series.mask, cfg)
         for name in COMPONENTS:
             comps[name][k] = res[name]
+        if trimmed is not None:
+            trimmed[k] = cut
         done[k] = True
         cb.progress((i + 1) / max(1, len(todo)), f"strain: frame {k} ({i + 1}/{len(todo)})")
     settings = StrainSettings(
         measure=cfg.measure, gauge_px=cfg.gauge_px, weighting=cfg.weighting, poly_order=cfg.poly_order,
         step=cfg.step, gaussian_sigma=cfg.gaussian_sigma, smoothing_sigma=cfg.smoothing_sigma,
-        connectivity_aware=cfg.connectivity_aware,
+        connectivity_aware=cfg.connectivity_aware, edge_trim_alpha=cfg.edge_trim_alpha,
     )
-    return StrainSeries(series.grid, cfg.step, comps, done, settings)
+    return StrainSeries(series.grid, cfg.step, comps, done, settings, trimmed)

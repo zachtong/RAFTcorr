@@ -4,71 +4,71 @@
 <context>
     <name>AdvancedPanel</name>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="117"/>
+        <location filename="../../gui/widgets/param_panel.py" line="116"/>
         <source>Margin = model reach</source>
         <translation>邊距 = 模型量程</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="120"/>
+        <location filename="../../gui/widgets/param_panel.py" line="119"/>
         <source>Extra image context around the ROI so that displaced points stay inside
 the window given to the network. Automatic: the model&apos;s reach (32 s px).</source>
         <translation>在 ROI 周圍額外保留的影像範圍，使發生位移的點仍位於
 送入網路的視窗內。自動：取模型量程（32 s px）。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="128"/>
+        <location filename="../../gui/widgets/param_panel.py" line="127"/>
         <source>Margin</source>
         <translation>邊距</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="129"/>
+        <location filename="../../gui/widgets/param_panel.py" line="128"/>
         <source>Must cover the largest displacement of the ROI.</source>
         <translation>必須涵蓋 ROI 內的最大位移。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="136"/>
+        <location filename="../../gui/widgets/param_panel.py" line="135"/>
         <source>GPU memory</source>
         <translation>GPU 記憶體</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="137"/>
+        <location filename="../../gui/widgets/param_panel.py" line="136"/>
         <source>Fraction of the free GPU memory one window may use.
 Large regions are cut into tiles to fit it.</source>
         <translation>單一視窗可使用的閒置 GPU 記憶體比例。
 較大的區域會被切分成多個分塊以符合此限制。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="144"/>
+        <location filename="../../gui/widgets/param_panel.py" line="143"/>
         <source>Tile blending</source>
         <translation>分塊融合</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="145"/>
+        <location filename="../../gui/widgets/param_panel.py" line="144"/>
         <source>Width of the feathered overlap between neighbouring tiles.</source>
         <translation>相鄰分塊之間羽化重疊區的寬度。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="148"/>
+        <location filename="../../gui/widgets/param_panel.py" line="147"/>
         <source>Automatic</source>
         <translation>自動</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="149"/>
+        <location filename="../../gui/widgets/param_panel.py" line="148"/>
         <source>On demand</source>
         <translation>隨需計算</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="150"/>
+        <location filename="../../gui/widgets/param_panel.py" line="149"/>
         <source>Stored volume</source>
         <translation>預存相關體</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="152"/>
+        <location filename="../../gui/widgets/param_panel.py" line="151"/>
         <source>Correlation</source>
         <translation>相關計算</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="153"/>
+        <location filename="../../gui/widgets/param_panel.py" line="152"/>
         <source>How the correlation lookup is computed; the results are identical.
 Automatic: stored volume for s8 (fast), on demand for s1-s4
 (memory linear in the image size).</source>
@@ -967,14 +967,52 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
         <translation>縮小</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1321"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1327"/>
         <source>Editing the ROI of frame 1 (the reference)</source>
         <translation>正在編輯第 1 影格（參考影格）的 ROI</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1322"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1328"/>
         <source>Editing the mask of frame %1 (regions left out are excluded)</source>
         <translation>正在編輯第 %1 影格的遮罩（未包含的區域將被排除）</translation>
+    </message>
+</context>
+<context>
+    <name>CanvasConfigOverlay</name>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="40"/>
+        <source>Mode</source>
+        <translation>模式</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="41"/>
+        <source>Model</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="42"/>
+        <source>Iterations</source>
+        <translation>迭代次數</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="85"/>
+        <source>Accumulative</source>
+        <translation>累積式</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="87"/>
+        <source>Incremental, every %1 frames</source>
+        <translation>增量式，每 %1 個影格</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="89"/>
+        <source>Custom reference frames</source>
+        <translation>自訂參考影格</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="90"/>
+        <source>Incremental</source>
+        <translation>增量式</translation>
     </message>
 </context>
 <context>
@@ -1014,7 +1052,7 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="73"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Field</source>
         <translation>場變數</translation>
     </message>
@@ -1030,7 +1068,7 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="106"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Colormap</source>
         <translation>色彩對映</translation>
     </message>
@@ -1041,19 +1079,19 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="114"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Min</source>
         <translation>最小</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="118"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Max</source>
         <translation>最大</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="125"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="174"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="176"/>
         <source>Opacity</source>
         <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Older names that share a field&apos;s colour state.</extracomment>
         <translation>不透明度</translation>
@@ -1089,95 +1127,95 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
         <translation>該場/影格沒有資料。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="175"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="177"/>
         <source>Field opacity (0 = transparent, 1 = fully opaque)</source>
         <translation>場的不透明度（0 = 透明，1 = 完全不透明）</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="282"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="284"/>
         <source>All</source>
         <translation>全部</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="284"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="286"/>
         <source>None</source>
         <translation>無</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="355"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="357"/>
         <source>Select:</source>
         <translation>選擇：</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Export</source>
         <translation>匯出</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Auto</source>
         <translation>自動</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="385"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="387"/>
         <source>PHYSICAL UNITS</source>
         <translation>物理單位</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="389"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="391"/>
         <source>Enable physical units</source>
         <translation>啟用物理單位</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="391"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="393"/>
         <source>Scale displacement values by pixel size and show physical units on colorbar labels. Strain is dimensionless and unaffected.</source>
         <translation>按像素尺寸縮放位移值，並在色條標籤上顯示物理單位。應變為無因次量，不受影響。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="408"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="410"/>
         <source>/ pixel</source>
         <translation>/ 像素</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="410"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="412"/>
         <source>Pixel size</source>
         <translation>像素尺寸</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="419"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="421"/>
         <source>fps</source>
         <translation>fps</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="421"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="423"/>
         <source>Frame rate</source>
         <translation>影格率</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="447"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="449"/>
         <source>FRAME RANGE</source>
         <translation>影格範圍</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="449"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="451"/>
         <source>All frames</source>
         <translation>所有影格</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="454"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="456"/>
         <source>Numbered like the frame slider: frame 1 is the reference image.
 File names use the same numbers: frame 1 is written as _0001.</source>
         <translation>與影格滑桿的編號一致：第 1 影格是參考影像。
 檔名使用相同的編號：第 1 影格寫為 _0001。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="457"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="459"/>
         <source>From</source>
         <comment>Frame range: starting frame</comment>
         <translation>從</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="462"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="464"/>
         <source>to</source>
         <comment>Frame range: ending frame</comment>
         <translation>到</translation>
@@ -1453,22 +1491,22 @@ but looks choppier. Playback duration is preserved (the FPS above is the pre-dec
         <translation>產生報告</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="706"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="707"/>
         <source>Select Output Folder</source>
         <translation>選擇輸出資料夾</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="807"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="808"/>
         <source>Writing %1 (%2%)</source>
         <translation>正在寫入 %1 (%2%)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="840"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="841"/>
         <source>Error: %1</source>
         <translation>錯誤：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="782"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="783"/>
         <source>Starting…</source>
         <translation>開始中…</translation>
     </message>
@@ -1558,43 +1596,43 @@ or one range from every exported frame, so a colour means the same value in ever
         <translation>繪製方式與「影像」頁相同：色彩對映、範圍、不透明度與配置皆一致。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="639"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="687"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="640"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="688"/>
         <source>Min must be below Max for %1.</source>
         <translation>%1 的最小值必須小於最大值。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="645"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="646"/>
         <source>Nothing to export: enable at least one field with computed frames in the frame range.</source>
         <translation>沒有可匯出的內容：請至少啟用一個在影格範圍內有已計算影格的場。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="653"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="654"/>
         <source>Select at least one format.</source>
         <translation>請至少選擇一種格式。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="657"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="658"/>
         <source>Select at least one variable to export.</source>
         <translation>請至少選擇一個要匯出的變數。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="690"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="691"/>
         <source>Nothing to export: select a field or the parameter table.</source>
         <translation>沒有可匯出的內容：請選擇一個場或參數表。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="743"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="744"/>
         <source>… and %1 more</source>
         <translation>… 另有 %1 個檔案</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="745"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="746"/>
         <source>Replace Existing Files?</source>
         <translation>取代現有檔案？</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="746"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="747"/>
         <source>These already exist in the output folder and will be replaced:
 
 %1</source>
@@ -1603,65 +1641,65 @@ or one range from every exported frame, so a colour means the same value in ever
 %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="765"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="766"/>
         <source>The results changed after this dialog was opened (a new run, strain or project). Close it and open Export again to export them.</source>
         <translation>開啟此對話方塊後結果已變更（新的執行、應變或專案）。請關閉對話方塊並重新開啟「匯出」，再匯出這些結果。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="769"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="770"/>
         <source>Nothing exported: the existing files were kept.</source>
         <translation>未匯出任何內容：已保留現有檔案。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="794"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="795"/>
         <source>Stopping…</source>
         <translation>正在停止…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="805"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="806"/>
         <source>Rendering %1 (%2/%3)</source>
         <translation>正在繪製 %1 (%2/%3)</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="823"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="824"/>
         <source>Exported %n file(s) → %1</source>
         <translation>
             <numerusform>已匯出 %n 個檔案 → %1</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="825"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="826"/>
         <source>Exported %n image(s) → %1</source>
         <translation>
             <numerusform>已匯出 %n 張影像 → %1</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="841"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="842"/>
         <source>Export failed: %1</source>
         <translation>匯出失敗：%1</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="849"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="850"/>
         <source>Export cancelled: %n file(s) written before stopping.</source>
         <translation>
             <numerusform>匯出已取消：停止前已寫入 %n 個檔案。</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="829"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="830"/>
         <source>No animation was written. See the log for details.</source>
         <translation>未寫入任何動畫。詳情請查看日誌。</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="831"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="832"/>
         <source>Exported %n animation(s) → %1</source>
         <translation>
             <numerusform>已匯出 %n 個動畫 → %1</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="833"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="834"/>
         <source>Report saved → %1</source>
         <translation>報告已儲存 → %1</translation>
     </message>
@@ -2343,13 +2381,6 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
         <translation>迭代次數</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="66"/>
-        <source>Refinement iterations of the network.
-The paper evaluates every model with 20.</source>
-        <translation>網路的迭代細化次數。
-論文中所有模型皆以 20 次進行評估。</translation>
-    </message>
-    <message>
         <location filename="../../gui/widgets/param_panel.py" line="73"/>
         <source>off (raw)</source>
         <translation>關閉（原始）</translation>
@@ -2360,26 +2391,29 @@ The paper evaluates every model with 20.</source>
         <translation>平滑 σ</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="76"/>
-        <source>Gaussian smoothing of the displacement (standard deviation).
-Off by default, as in the paper: smoothing lengthens the
-spatial resolution.</source>
-        <translation>位移的高斯平滑（標準差）。
-預設關閉，與論文一致：平滑會降低
-空間解析度。</translation>
+        <location filename="../../gui/widgets/param_panel.py" line="66"/>
+        <source>Refinement iterations of the network (default: 20).</source>
+        <translation>網路的迭代細化次數（預設：20）。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="81"/>
+        <location filename="../../gui/widgets/param_panel.py" line="76"/>
+        <source>Gaussian smoothing of the displacement (standard deviation).
+Off by default: smoothing coarsens the spatial resolution.</source>
+        <translation>位移的高斯平滑（標準差）。
+預設關閉：平滑會降低空間解析度。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="80"/>
         <source>Automatic</source>
         <translation>自動</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="85"/>
+        <location filename="../../gui/widgets/param_panel.py" line="84"/>
         <source>Device</source>
         <translation>裝置</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="86"/>
+        <location filename="../../gui/widgets/param_panel.py" line="85"/>
         <source>Automatic uses the GPU when PyTorch sees one.</source>
         <translation>選擇「自動」時，只要 PyTorch 偵測到 GPU 就使用 GPU。</translation>
     </message>
@@ -2387,12 +2421,12 @@ spatial resolution.</source>
 <context>
     <name>PhysicalUnitsWidget</name>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="57"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="54"/>
         <source>Use physical units</source>
         <translation>使用物理單位</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="68"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="65"/>
         <source>Physical size of one image pixel</source>
         <translation>單個影像像素對應的物理尺寸</translation>
     </message>
@@ -2859,22 +2893,22 @@ See the console log for the full traceback.</source>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="130"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="430"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="434"/>
         <source>Ready</source>
         <translation>就緒</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="138"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="432"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="532"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="436"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="536"/>
         <source>ELAPSED  %1</source>
         <translation>已用時間  %1</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="143"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="434"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="540"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="438"/>
         <location filename="../../gui/panels/right_sidebar.py" line="544"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="548"/>
         <source>REMAINING  %1</source>
         <translation>剩餘時間  %1</translation>
     </message>
@@ -2919,77 +2953,77 @@ See the console log for the full traceback.</source>
         <translation>隱藏背景填充</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="194"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="197"/>
         <source>White</source>
         <translation>白色</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="195"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="198"/>
         <source>Black</source>
         <translation>黑色</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="196"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
         <source>Transparent</source>
         <translation>透明</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="202"/>
         <source>What replaces the image when it is hidden. Transparency is kept for PNG and TIFF on export; other formats get white.</source>
         <translation>背景隱藏時用什麼替代影像。匯出時 PNG 與 TIFF 會保留透明度，其他格式改用白色。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="208"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="211"/>
         <source>Hide untracked regions</source>
         <translation>隱藏未追蹤區域</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="211"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="214"/>
         <source>Leave areas without a tracked node transparent, for example material that left the field of view, instead of filling them with values copied from distant nodes. Also used for exported images and animations; data files always keep NaN there.</source>
         <translation>讓沒有已追蹤節點的區域（例如已移出視野的材料）保持透明，而不是以從遠處節點複製的值填滿。匯出的影像與動畫也採用此設定；資料檔中這些區域一律為 NaN。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="221"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="224"/>
         <source>VISUALIZATION</source>
         <translation>視覺化</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="226"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="229"/>
         <source>Colormap</source>
         <translation>色彩對映</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="245"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="248"/>
         <source>Opacity</source>
         <translation>不透明度</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="252"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="255"/>
         <source>Overlay opacity (0 = transparent, 100 = opaque)</source>
         <translation>疊加圖不透明度（0 = 透明，100 = 不透明）</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="258"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="261"/>
         <source>PHYSICAL UNITS</source>
         <translation>物理單位</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="264"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="267"/>
         <source>LOG</source>
         <translation>日誌</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="270"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="273"/>
         <source>Clear</source>
         <translation>清除</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="399"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="403"/>
         <source>Place at least one Starting Point in each red region before running (red = needs a Starting Point).</source>
         <translation>執行前請在每個紅色區域放置至少一個種子點（紅色 = 需要種子點）。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="515"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="519"/>
         <source>%1  —  Frame %2</source>
         <translation>%1  —  第 %2 影格</translation>
     </message>
@@ -3150,43 +3184,72 @@ See the console log for the full traceback.</source>
 <context>
     <name>StrainParamPanel</name>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="86"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="88"/>
         <source>Plane fitting</source>
-        <extracomment>Strain measures in combo order (pyALDIC&apos;s order: infinitesimal, Eulerian, Green-Lagrangian). The configuration in the controls changed (by the user or Paper settings).</extracomment>
+        <extracomment>Strain measures in combo order (pyALDIC&apos;s order: infinitesimal, Eulerian, Green-Lagrange). The configuration in the controls changed (edited by the user).</extracomment>
         <translation>平面擬合</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="95"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="91"/>
+        <source>Polynomial fitted to each displacement component over the VSG window. Its slopes at the centre are the displacement gradients.
+• Plane fitting (1st order): the standard VSG (default).
+• Quadratic fitting (2nd order): follows strain gradients inside the window better, at the cost of more noise.</source>
+        <translation>在 VSG 視窗內對每個位移分量擬合多項式，其在中心處的斜率即為位移梯度。
+• 平面擬合（一階）：標準 VSG（預設）。
+• 二次擬合（二階）：能更好地跟隨視窗內的應變梯度，但雜訊較大。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="97"/>
         <source>Method</source>
         <translation>方法</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="110"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="112"/>
         <source>VSG size</source>
         <translation>VSG 尺寸</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="152"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="123"/>
+        <source>Hides low-confidence strain along the edges of the region of interest, holes and cracks, where the edge cuts the VSG window and the local fit becomes one-sided and unreliable.
+
+• Coefficient × VSG half-width (Lg − 1) / 2 = width of the trimmed band.
+• 0.00 = keep every point (no trimming).
+• 0.70 = default.
+• 1.00 = strictest (trim every point whose window touches an edge).
+
+Trimmed points are empty (NaN) in exported data files.</source>
+        <translation>隱藏感興趣區域、孔洞與裂紋邊緣處低可信度的應變：那裡邊緣截斷了 VSG 視窗，局部擬合變成單邊、不可靠。
+
+• 係數 × VSG 半寬 (Lg − 1) / 2 = 裁剪帶的寬度。
+• 0.00 = 保留所有點（不裁剪）。
+• 0.70 = 預設值。
+• 1.00 = 最嚴格（視窗一旦觸及邊緣即裁剪）。
+
+被裁剪的點在匯出的資料檔案中為空 (NaN)。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="154"/>
+        <source>Weight of the points inside the VSG window: all equal (uniform, default), or decreasing with the distance from the centre (Gaussian).</source>
+        <translation>VSG 視窗內各點的權重：全部相等（均勻，預設），或隨離中心的距離遞減（高斯）。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="189"/>
         <source>Off</source>
         <comment>Strain smoothing preset</comment>
         <translation>關閉</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="87"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="191"/>
+        <source>Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured displacement as it is (default).</source>
+        <translation>擬合前對位移進行高斯平滑（σ 以像素計）。關閉（0）時直接對測得的位移求導（預設）。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="89"/>
         <source>Quadratic fitting</source>
         <translation>二次擬合</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="89"/>
-        <source>Polynomial fitted to each displacement component over the VSG window. Its slopes at the centre are the displacement gradients.
-• Plane fitting (1st order): the standard VSG (paper setting).
-• Quadratic fitting (2nd order): follows strain gradients inside the window better, at the cost of more noise.</source>
-        <translation>在 VSG 視窗內對每個位移分量擬合多項式，其在中心處的斜率即為位移梯度。
-• 平面擬合（一階）：標準 VSG（論文設定）。
-• 二次擬合（二階）：能更好地跟隨視窗內的應變梯度，但雜訊較大。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="103"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="105"/>
         <source>VSG (Virtual Strain Gauge) size Lg is the side, in pixels, of the square window around each point over which the displacement is fitted. Strain is then taken from the fit&apos;s slopes.
 
 • Larger VSG → smoother strain, lower spatial resolution.
@@ -3199,110 +3262,100 @@ See the console log for the full traceback.</source>
 • 取奇數，使視窗有中心像素（預設：41 px）。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="114"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="133"/>
+        <source>Trim low-confidence edges</source>
+        <translation>裁剪低可信度邊緣</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="151"/>
         <source>Uniform</source>
         <translation>均勻</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="115"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="152"/>
         <source>Gaussian</source>
         <translation>高斯</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="117"/>
-        <source>Weight of the points inside the VSG window: all equal (uniform, paper setting), or decreasing with the distance from the centre (Gaussian).</source>
-        <translation>VSG 視窗內各點的權重：全部相等（均勻，論文設定），或隨離中心的距離遞減（高斯）。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="121"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="158"/>
         <source>Weighting</source>
         <translation>加權</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="129"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="166"/>
         <source>Auto (Lg / 4)</source>
         <translation>自動（Lg / 4）</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="131"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="168"/>
         <source>Standard deviation of the Gaussian weight. Auto uses a quarter of the VSG size.</source>
         <translation>高斯權重的標準差。「自動」取 VSG 尺寸的四分之一。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="134"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="171"/>
         <source>Gaussian σ</source>
         <translation>高斯 σ</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="141"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="178"/>
         <source>Spacing of the strain points: 1 computes strain at every pixel; larger values are faster and lighter for long sequences.</source>
         <translation>應變點的間距：1 表示在每個像素上計算應變；較大的值對長序列更快、占用更少。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="144"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="181"/>
         <source>Output spacing</source>
         <translation>輸出間距</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="154"/>
-        <source>Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured displacement as it is (paper setting).</source>
-        <translation>擬合前對位移進行高斯平滑（σ 以像素計）。關閉（0）時直接對測得的位移求導（論文設定）。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="158"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="195"/>
         <source>Displacement smoothing</source>
         <translation>位移平滑</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="161"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="198"/>
         <source>Never fit across cracks or holes</source>
         <translation>擬合不跨越裂紋或孔洞</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="163"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="200"/>
         <source>Fit each connected part of the tracked region separately, so no VSG window ever spans a crack, a hole or the gap between two regions.</source>
         <translation>對追蹤區域的每個連通部分分別擬合，使任何 VSG 視窗都不會跨越裂紋、孔洞或兩個區域之間的間隙。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="172"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="209"/>
         <source>Infinitesimal</source>
         <translation>無窮小應變</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="173"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="210"/>
         <source>Eulerian</source>
         <translation>歐拉應變</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="174"/>
-        <source>Green-Lagrangian</source>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="211"/>
+        <source>Green-Lagrange</source>
         <translation>格林-拉格朗日應變</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="176"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="213"/>
         <source>Strain measure from the deformation gradient F = I + ∇u:
 • Infinitesimal: (∇u + ∇uᵀ) / 2 (small strains only).
 • Eulerian (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.
-• Green-Lagrangian: (Fᵀ F − I) / 2 (paper setting).</source>
+• Green-Lagrange: (Fᵀ F − I) / 2 (default).</source>
         <translation>由變形梯度 F = I + ∇u 得到的應變度量：
 • 無窮小應變：(∇u + ∇uᵀ) / 2（僅適用於小應變）。
 • 歐拉應變（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。
-• 格林-拉格朗日應變：(Fᵀ F − I) / 2（論文設定）。</translation>
+• 格林-拉格朗日應變：(Fᵀ F − I) / 2（預設）。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="181"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="218"/>
         <source>Strain type</source>
         <translation>應變類型</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="184"/>
-        <source>Paper settings</source>
-        <translation>論文設定</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="186"/>
-        <source>Green-Lagrangian strain, unweighted plane fit, VSG 41 px, every pixel, no smoothing, never across cracks (the settings of the RAFTcorr paper).</source>
-        <translation>格林-拉格朗日應變、無加權平面擬合、VSG 41 px、逐像素、不平滑、不跨越裂紋（RAFTcorr 論文中的設定）。</translation>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="272"/>
+        <source>Trimmed: %1 points (%2%)</source>
+        <translation>已裁剪：%1 個點 (%2%)</translation>
     </message>
 </context>
 <context>
@@ -3359,12 +3412,22 @@ See the console log for the full traceback.</source>
         <translation>背景隱藏時用什麼替代影像。匯出時 PNG 與 TIFF 會保留透明度，其他格式改用白色。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="139"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="141"/>
+        <source>Fill trimmed edges (display only)</source>
+        <translation>填充裁剪的邊緣（僅顯示）</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="144"/>
+        <source>Fill the edge-trimmed strain band from the nearest reliable point of the same region. Affects the view and exported images and animations; exported data files always keep the trimmed band as NaN.</source>
+        <translation>以同一區域內最近的可靠點填充邊緣被裁剪的應變帶。影響顯示以及匯出的影像與動畫；匯出的資料檔案始終將裁剪帶保留為 NaN。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="151"/>
         <source>Hide untracked regions</source>
         <translation>隱藏未追蹤區域</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="142"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="154"/>
         <source>Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest (reference frame view). Data files always keep NaN there.</source>
         <translation>讓沒有結果的點（例如已移出視野的材料）保持透明，而不是以感興趣區域內最近的值填滿（參考影格檢視）。資料檔中這些點一律為 NaN。</translation>
     </message>
@@ -3404,7 +3467,7 @@ See the console log for the full traceback.</source>
         <translation>不透明度</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="147"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="148"/>
         <source>Edges</source>
         <translation>邊緣</translation>
     </message>
@@ -3452,68 +3515,73 @@ See the console log for the full traceback.</source>
         <translation>應變參數</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="303"/>
+        <location filename="../../gui/strain_window.py" line="293"/>
+        <source>ADVANCED</source>
+        <translation>進階</translation>
+    </message>
+    <message>
+        <location filename="../../gui/strain_window.py" line="308"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="307"/>
+        <location filename="../../gui/strain_window.py" line="312"/>
         <source>Cancel the running strain computation. The previous strain result is kept.</source>
         <translation>取消正在進行的應變計算。保留先前的應變結果。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="319"/>
+        <location filename="../../gui/strain_window.py" line="324"/>
         <source>Export displacement and strain results to NPZ / MAT / CSV / PNG</source>
         <translation>將位移和應變結果匯出為 NPZ / MAT / CSV / PNG</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="349"/>
+        <location filename="../../gui/strain_window.py" line="354"/>
         <source>FIELD</source>
         <translation>場變數</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="356"/>
+        <location filename="../../gui/strain_window.py" line="361"/>
         <source>VISUALIZATION</source>
         <translation>視覺化</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="368"/>
+        <location filename="../../gui/strain_window.py" line="373"/>
         <source>PHYSICAL UNITS</source>
         <translation>物理單位</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="374"/>
+        <location filename="../../gui/strain_window.py" line="379"/>
         <source>LOG</source>
         <translation>日誌</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="855"/>
-        <location filename="../../gui/strain_window.py" line="891"/>
+        <location filename="../../gui/strain_window.py" line="861"/>
+        <location filename="../../gui/strain_window.py" line="899"/>
         <source>No displacement results.</source>
         <translation>沒有位移結果。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="893"/>
+        <location filename="../../gui/strain_window.py" line="901"/>
         <source>Frame %1 was not computed.</source>
         <translation>第 %1 影格未計算。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="901"/>
+        <location filename="../../gui/strain_window.py" line="909"/>
         <source>Click Compute Strain to show this field.</source>
         <translation>點擊「計算應變」以顯示此場。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="902"/>
+        <location filename="../../gui/strain_window.py" line="910"/>
         <source>No strain for frame %1: click Compute Strain.</source>
         <translation>第 %1 影格沒有應變：請點擊「計算應變」。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="904"/>
+        <location filename="../../gui/strain_window.py" line="912"/>
         <source>Velocity needs at least two computed frames.</source>
         <translation>速度至少需要兩個已計算影格。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="905"/>
+        <location filename="../../gui/strain_window.py" line="913"/>
         <source>No valid values in frame %1.</source>
         <translation>第 %1 影格沒有有效值。</translation>
     </message>
@@ -3523,65 +3591,65 @@ See the console log for the full traceback.</source>
         <translation>應變場</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="414"/>
+        <location filename="../../gui/strain_window.py" line="419"/>
         <source>Analysis is not available</source>
         <translation>分析功能無法使用</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="417"/>
-        <location filename="../../gui/strain_window.py" line="420"/>
+        <location filename="../../gui/strain_window.py" line="422"/>
+        <location filename="../../gui/strain_window.py" line="425"/>
         <source>Analysis</source>
         <translation>分析</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="418"/>
+        <location filename="../../gui/strain_window.py" line="423"/>
         <source>Analysis is not available (see the application log).</source>
         <translation>分析功能無法使用（詳見應用程式日誌）。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="529"/>
+        <location filename="../../gui/strain_window.py" line="534"/>
         <source>Strain compute failed: %1: %2</source>
         <translation>應變計算失敗：%1：%2</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="535"/>
-        <location filename="../../gui/strain_window.py" line="598"/>
+        <location filename="../../gui/strain_window.py" line="540"/>
+        <location filename="../../gui/strain_window.py" line="603"/>
         <source>Strain computation complete.</source>
         <translation>應變計算完成。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="546"/>
+        <location filename="../../gui/strain_window.py" line="551"/>
         <source>Strain window: no displacement results to post-process.</source>
         <translation>應變視窗：沒有可後處理的位移結果。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="591"/>
+        <location filename="../../gui/strain_window.py" line="596"/>
         <source>The displacement results changed during the strain computation; its result was discarded.</source>
         <translation>應變計算期間位移結果發生了變化；本次應變結果已捨棄。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="615"/>
+        <location filename="../../gui/strain_window.py" line="620"/>
         <source>Strain computation canceled.</source>
         <translation>應變計算已取消。</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="622"/>
+        <location filename="../../gui/strain_window.py" line="627"/>
         <source>Strain compute failed: %1</source>
         <translation>應變計算失敗：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="626"/>
+        <location filename="../../gui/strain_window.py" line="631"/>
         <source>Strain Computation Failed</source>
         <translation>應變計算失敗</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="665"/>
-        <location filename="../../gui/strain_window.py" line="667"/>
+        <location filename="../../gui/strain_window.py" line="671"/>
+        <location filename="../../gui/strain_window.py" line="673"/>
         <source>Export is not available: %1</source>
         <translation>匯出功能無法使用：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="679"/>
+        <location filename="../../gui/strain_window.py" line="685"/>
         <source>⚠ Params changed -- click Compute Strain</source>
         <translation>⚠ 參數已變更 — 請點擊“計算應變”</translation>
     </message>
@@ -3591,28 +3659,28 @@ See the console log for the full traceback.</source>
         <translation>縮小</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="294"/>
+        <location filename="../../gui/strain_window.py" line="299"/>
         <source>Compute Strain</source>
         <translation>計算應變</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="316"/>
-        <location filename="../../gui/strain_window.py" line="666"/>
+        <location filename="../../gui/strain_window.py" line="321"/>
+        <location filename="../../gui/strain_window.py" line="672"/>
         <source>Export Results</source>
         <translation>匯出結果</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="558"/>
+        <location filename="../../gui/strain_window.py" line="563"/>
         <source>Starting…</source>
         <translation>開始中…</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="576"/>
+        <location filename="../../gui/strain_window.py" line="581"/>
         <source>Canceling…</source>
         <translation>正在取消…</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="595"/>
+        <location filename="../../gui/strain_window.py" line="600"/>
         <source>Complete</source>
         <translation>已完成</translation>
     </message>
@@ -3890,7 +3958,7 @@ or Browse</source>
 <context>
     <name>dialog</name>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="307"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="309"/>
         <source>Cancel Export</source>
         <translation>取消匯出</translation>
     </message>

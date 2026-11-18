@@ -1263,6 +1263,10 @@ class CanvasArea(QWidget):
 
         # --- Colorbar overlay (child of the canvas viewport) ---
         self._colorbar = ColorbarOverlay(self._canvas.viewport())
+        # --- Config overlay (top-left: tracking mode, model, iterations; live) ---
+        from raftcorr.gui.widgets.canvas_config_overlay import CanvasConfigOverlay
+
+        self._config_overlay = CanvasConfigOverlay(self._canvas.viewport())
         self._canvas.viewport().installEventFilter(self)
 
         # --- Bottom frame navigator ---
@@ -1297,6 +1301,8 @@ class CanvasArea(QWidget):
     def _sync_overlay_geometry(self) -> None:
         vp = self._canvas.viewport()
         self._colorbar.setGeometry(0, 0, vp.width(), vp.height())
+        self._config_overlay.reposition()
+        self._config_overlay.raise_()
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)

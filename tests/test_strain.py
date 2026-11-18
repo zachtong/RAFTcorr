@@ -4,11 +4,21 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from scipy import ndimage
 
 from raftcorr.config import StrainConfig
 from raftcorr.engine.mapping import Grid
 from raftcorr.post.smoothing import nan_gaussian, temporal_gaussian
-from raftcorr.post.strain import COMPONENTS, Gradients, compute_strain, frame_strain, strain_components, vsg_gradients
+from raftcorr.post.strain import (
+    COMPONENTS,
+    Gradients,
+    compute_strain,
+    edge_trimmed,
+    fill_trimmed,
+    frame_strain,
+    strain_components,
+    vsg_gradients,
+)
 from raftcorr.results import DisplacementSeries, RunInfo
 from raftcorr.schedule import FrameSchedule
 
@@ -271,7 +281,7 @@ def _series(T: int = 3) -> tuple[DisplacementSeries, np.ndarray]:
 @pytest.mark.parametrize("step", [1, 2, 4, 5])
 def test_compute_strain_shape_and_values(step):
     series, mask = _series()
-    cfg = StrainConfig(gauge_px=7, step=step)
+    cfg = StrainConfig(gauge_px=7, step=step, edge_trim_alpha=0.0)  # every gauge point, edges included
     st = compute_strain(series, cfg)
     hs, ws = -(-26 // step), -(-33 // step)
     assert st.step == step and st.grid == series.grid
@@ -304,9 +314,147 @@ def test_compute_strain_frame_subset():
 
 def test_compute_strain_default_config():
     series, _ = _series()
-    st = compute_strain(series)
+    # the 26 x 30 px region is narrower than two default trim bands (2 x 0.7 x 20 px)
+    with pytest.raises(ValueError, match="every strain point"):
+        compute_strain(series)
+    st = compute_strain(series, StrainConfig(edge_trim_alpha=0.0))
     assert st.settings.gauge_px == 41 and st.settings.measure == "green_lagrange"
+    assert st.settings.edge_trim_alpha == 0.0 and st.trimmed is None
     assert st.components["exx"].shape == (3, 26, 33)
+
+
+# -- edge trim (pyALDIC's "Trim low-confidence edges") ------------------------------------------------
+def _trimmed_columns(alpha: float, gauge: int = 41) -> int:
+    """Width of the trimmed band next to a straight edge (invalid columns on the left)."""
+    valid = np.ones((200, 200), dtype=bool)
+    valid[:, :50] = False
+    cut = edge_trimmed(valid, gauge, alpha)
+    row = cut[100]                                    # away from the top and bottom borders
+    return int(row[50:100].sum())                     # next to the edge only, not the right border
+
+
+def test_edge_trim_band_width_is_alpha_times_the_gauge_half_width():
+    assert _trimmed_columns(0.0) == 0
+    assert _trimmed_columns(0.7) == 14                # 0.7 x 20 px
+    assert _trimmed_columns(1.0) == 20
+    assert _trimmed_columns(0.5, gauge=21) == 5
+
+
+def test_edge_trim_alpha_one_trims_exactly_the_cut_gauges():
+    yy, xx = np.mgrid[0:150, 0:160]
+    valid = np.hypot(xx - 80, yy - 75) > 25          # a hole
+    valid[:, :8] = False
+    full = ndimage.binary_erosion(valid, np.ones((41, 41), dtype=bool), border_value=0)
+    np.testing.assert_array_equal(edge_trimmed(valid, 41, 1.0), valid & ~full)
+
+
+def test_edge_trim_counts_the_grid_border_as_an_edge():
+    cut = edge_trimmed(np.ones((100, 100), dtype=bool), 41, 0.7)
+    assert cut[50, :14].all() and not cut[50, 14:86].any() and cut[50, 86:].all()
+
+
+def _affine_series_with_hole(T: int = 2) -> tuple[DisplacementSeries, np.ndarray]:
+    grid = Grid(0, 0, 160, 140, 160, 140)
+    h, w = grid.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    mask = np.hypot(xx - 80, yy - 70) > 20
+    u = np.zeros((T, h, w), dtype=np.float32)
+    v = np.zeros((T, h, w), dtype=np.float32)
+    uu, vv = _affine_uv(h, w, A_TEST, (0.5, -0.25))
+    u[1], v[1] = uu, vv
+    u[:, ~mask] = np.nan
+    v[:, ~mask] = np.nan
+    info = RunInfo(software_version="test", model_name="none", model_sha256="", downsample_factor=1, iters=1,
+                   corr_mode="volume", device="cpu", config={})
+    s = DisplacementSeries(grid, mask, u, v, np.ones(T, dtype=bool), tuple(f"f{k}.png" for k in range(T)),
+                           FrameSchedule.accumulative(T), info)
+    return s, mask
+
+
+@pytest.mark.parametrize("step", [1, 3])
+def test_compute_strain_trims_the_edge_band(step):
+    series, mask = _affine_series_with_hole()
+    st = compute_strain(series, StrainConfig(gauge_px=21, step=step))   # default alpha 0.7: 7 px band
+    cut = edge_trimmed(mask, 21, 0.7)[::step, ::step]
+    assert st.settings.edge_trim_alpha == 0.7
+    np.testing.assert_array_equal(st.trimmed[1], cut)
+    np.testing.assert_array_equal(st.trimmed_in(1), cut)
+    kept = mask[::step, ::step] & ~cut
+    E = _measure_tensor(A_TEST, "green_lagrange")
+    for name in COMPONENTS:
+        assert np.isnan(st.get(name, 1)[cut]).all(), name
+    np.testing.assert_allclose(st.get("exx", 1)[kept], E[0, 0], atol=1e-6)
+
+
+def test_compute_strain_without_trim_keeps_the_edge_values():
+    series, mask = _affine_series_with_hole()
+    st = compute_strain(series, StrainConfig(gauge_px=21, edge_trim_alpha=0.0))
+    assert st.trimmed is None and st.trimmed_in(1) is None
+    assert np.isfinite(st.get("exx", 1)[mask]).all()
+
+
+def test_fill_trimmed_takes_values_from_its_own_side_only():
+    vals = np.full((40, 60), np.nan, dtype=np.float32)
+    trimmed = np.zeros((40, 60), dtype=bool)
+    vals[:, :25] = 1.0                                # left region, a 5 px gap, right region
+    vals[:, 30:] = 2.0
+    trimmed[:, 20:25] = True                          # the band next to the gap, on both sides
+    trimmed[:, 30:35] = True
+    vals[trimmed] = np.nan
+    island = np.zeros_like(trimmed)
+    island[5:8, 40:43] = True                         # no reliable point of its own: stays NaN
+    vals[4:9, 39:44] = np.nan
+    trimmed |= island
+    out = fill_trimmed(vals, trimmed)
+    assert out.dtype == np.float32 and np.isnan(vals[trimmed]).all()      # the input is untouched
+    assert (out[:, 20:25] == 1.0).all() and (out[:, 30:35] == 2.0).all()
+    assert np.isnan(out[:, 25:30]).all()                                  # the gap stays empty
+    assert np.isnan(out[island]).all()
+    np.testing.assert_array_equal(out[~trimmed], vals[~trimmed])
+
+
+def test_pictures_fill_the_trimmed_band_and_data_do_not():
+    from raftcorr.export.figures import FrameStyle, compose
+    from raftcorr.viz.fields import FieldProvider, Units
+    from raftcorr.viz.render import ColorRange
+
+    series, mask = _affine_series_with_hole()
+    st = compute_strain(series, StrainConfig(gauge_px=21))
+    E = _measure_tensor(A_TEST, "green_lagrange")[0, 0]
+    prov = FieldProvider(series, st)
+    cut = st.trimmed[1]
+    raw, _ = prov.values("exx", 1)
+    filled, _ = prov.values("exx", 1, fill_trimmed=True)
+    assert np.isnan(raw[cut]).all()
+    np.testing.assert_allclose(filled[cut], E, atol=1e-6)
+    np.testing.assert_array_equal(filled[~cut], raw[~cut])
+    assert np.isnan(filled[~mask]).all()                              # the hole stays empty
+    assert np.isnan(prov.values("exx", 1)[0][cut]).all()              # data untouched afterwards
+    d_raw, _ = prov.deformed("exx", 1)
+    d_fill, _ = prov.deformed("exx", 1, fill_trimmed=True)
+    assert np.isfinite(d_fill).sum() > np.isfinite(d_raw).sum()
+
+    images = [np.full(series.grid.image_shape, 128, np.uint8)] * 2
+    rng = ColorRange(E - 0.01, E + 0.01)
+    plain = compose(prov, images, 1, FrameStyle(field="exx", background="none"), Units(), rng)
+    full = compose(prov, images, 1, FrameStyle(field="exx", background="none", fill_trimmed_edges=True),
+                   Units(), rng)
+    y, x = np.argwhere(cut)[0]
+    assert (plain[y, x, :3] == 255).all() and not (full[y, x, :3] == 255).all()
+
+
+def test_trim_wider_than_the_region_is_refused():
+    series, _ = _series()
+    with pytest.raises(ValueError, match="Reduce the VSG size"):
+        compute_strain(series, StrainConfig(gauge_px=41, edge_trim_alpha=0.7))
+    compute_strain(series, StrainConfig(gauge_px=41, edge_trim_alpha=0.3))   # 6 px band: points remain
+
+
+def test_strain_config_validates_edge_trim_alpha():
+    for bad in (-0.1, 1.5):
+        with pytest.raises(ValueError, match="edge_trim_alpha"):
+            StrainConfig(edge_trim_alpha=bad)
+    assert StrainConfig().edge_trim_alpha == 0.7
 
 
 # -- smoothing ------------------------------------------------------------------------------------

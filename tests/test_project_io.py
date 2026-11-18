@@ -71,6 +71,10 @@ def assert_strain_equal(a: StrainSeries, b: StrainSeries) -> None:
         assert a.components[name].dtype == b.components[name].dtype
         np.testing.assert_array_equal(a.components[name], b.components[name])
     np.testing.assert_array_equal(a.done, b.done)
+    assert (a.trimmed is None) == (b.trimmed is None)
+    if a.trimmed is not None:
+        assert b.trimmed.dtype == bool
+        np.testing.assert_array_equal(a.trimmed, b.trimmed)
 
 
 def test_round_trip_everything(tmp_path: Path) -> None:
@@ -183,6 +187,37 @@ def rewrite_document(src: Path, dst: Path, **changes: object) -> Path:
                 data = json.dumps({**json.loads(data), **changes}).encode("utf-8")
             zout.writestr(info.filename, data)
     return dst
+
+
+def _trimmed_strain() -> StrainSeries:
+    strain = make_strain()
+    trimmed = np.zeros(strain.components["exx"].shape, dtype=bool)
+    trimmed[:2, 0, :] = True
+    settings = dataclasses.replace(strain.settings, edge_trim_alpha=0.7)
+    return dataclasses.replace(strain, settings=settings, trimmed=trimmed)
+
+
+def test_round_trip_keeps_the_edge_trim(tmp_path: Path) -> None:
+    project = dataclasses.replace(make_project(None), strain=_trimmed_strain())
+    path = save_project(tmp_path / "p.raftcorr", project)
+    with zipfile.ZipFile(path) as zf:
+        assert "strain/trimmed.npy" in zf.namelist()
+    loaded = load_project(path)
+    assert loaded.strain.settings.edge_trim_alpha == 0.7
+    assert_strain_equal(loaded.strain, project.strain)
+
+
+def test_project_saved_before_the_edge_trim_still_opens(tmp_path: Path) -> None:
+    path = save_project(tmp_path / "p.raftcorr", dataclasses.replace(make_project(None), strain=_trimmed_strain()))
+    with zipfile.ZipFile(path) as zf:
+        doc = json.loads(zf.read("project.json"))
+    strain_doc = {k: v for k, v in doc["strain"].items() if k != "trimmed"}
+    strain_doc["settings"] = {k: v for k, v in strain_doc["settings"].items() if k != "edge_trim_alpha"}
+    config = {k: v for k, v in doc["strain_config"].items() if k != "edge_trim_alpha"}
+    old = rewrite_document(path, tmp_path / "old.raftcorr", strain=strain_doc, strain_config=config)
+    loaded = load_project(old)
+    assert loaded.strain.settings.edge_trim_alpha == 0.0 and loaded.strain.trimmed is None
+    assert loaded.strain_config.edge_trim_alpha == 0.7          # the next computation trims (default)
 
 
 def test_newer_schema_is_rejected(tmp_path: Path) -> None:

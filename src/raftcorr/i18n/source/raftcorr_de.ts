@@ -4,71 +4,71 @@
 <context>
     <name>AdvancedPanel</name>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="117"/>
+        <location filename="../../gui/widgets/param_panel.py" line="116"/>
         <source>Margin = model reach</source>
         <translation>Rand = Modellreichweite</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="120"/>
+        <location filename="../../gui/widgets/param_panel.py" line="119"/>
         <source>Extra image context around the ROI so that displaced points stay inside
 the window given to the network. Automatic: the model&apos;s reach (32 s px).</source>
         <translation>Zusätzlicher Bildbereich um die ROI, damit verschobene Punkte innerhalb
 des Fensters bleiben, das das Netzwerk erhält. Automatisch: die Modellreichweite (32 s px).</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="128"/>
+        <location filename="../../gui/widgets/param_panel.py" line="127"/>
         <source>Margin</source>
         <translation>Rand</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="129"/>
+        <location filename="../../gui/widgets/param_panel.py" line="128"/>
         <source>Must cover the largest displacement of the ROI.</source>
         <translation>Muss die größte Verschiebung in der ROI abdecken.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="136"/>
+        <location filename="../../gui/widgets/param_panel.py" line="135"/>
         <source>GPU memory</source>
         <translation>GPU-Speicher</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="137"/>
+        <location filename="../../gui/widgets/param_panel.py" line="136"/>
         <source>Fraction of the free GPU memory one window may use.
 Large regions are cut into tiles to fit it.</source>
         <translation>Anteil des freien GPU-Speichers, den ein Fenster nutzen darf.
 Große Bereiche werden passend dazu in Kacheln zerlegt.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="144"/>
+        <location filename="../../gui/widgets/param_panel.py" line="143"/>
         <source>Tile blending</source>
         <translation>Kachelüberblendung</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="145"/>
+        <location filename="../../gui/widgets/param_panel.py" line="144"/>
         <source>Width of the feathered overlap between neighbouring tiles.</source>
         <translation>Breite der weich überblendeten Überlappung zwischen benachbarten Kacheln.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="148"/>
+        <location filename="../../gui/widgets/param_panel.py" line="147"/>
         <source>Automatic</source>
         <translation>Automatisch</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="149"/>
+        <location filename="../../gui/widgets/param_panel.py" line="148"/>
         <source>On demand</source>
         <translation>Bei Bedarf</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="150"/>
+        <location filename="../../gui/widgets/param_panel.py" line="149"/>
         <source>Stored volume</source>
         <translation>Gespeichertes Volumen</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="152"/>
+        <location filename="../../gui/widgets/param_panel.py" line="151"/>
         <source>Correlation</source>
         <translation>Korrelation</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="153"/>
+        <location filename="../../gui/widgets/param_panel.py" line="152"/>
         <source>How the correlation lookup is computed; the results are identical.
 Automatic: stored volume for s8 (fast), on demand for s1-s4
 (memory linear in the image size).</source>
@@ -968,14 +968,52 @@ Automatisch: gespeichertes Volumen für s8 (schnell), bei Bedarf für s1-s4
         <translation>Verkleinern</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1321"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1327"/>
         <source>Editing the ROI of frame 1 (the reference)</source>
         <translation>ROI von Bild 1 (Referenz) wird bearbeitet</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1322"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1328"/>
         <source>Editing the mask of frame %1 (regions left out are excluded)</source>
         <translation>Maske von Bild %1 wird bearbeitet (ausgesparte Bereiche werden ausgeschlossen)</translation>
+    </message>
+</context>
+<context>
+    <name>CanvasConfigOverlay</name>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="40"/>
+        <source>Mode</source>
+        <translation>Modus</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="41"/>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="42"/>
+        <source>Iterations</source>
+        <translation>Iterationen</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="85"/>
+        <source>Accumulative</source>
+        <translation>Akkumulativ</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="87"/>
+        <source>Incremental, every %1 frames</source>
+        <translation>Inkrementell, alle %1 Bilder</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="89"/>
+        <source>Custom reference frames</source>
+        <translation>Benutzerdefinierte Referenzbilder</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/canvas_config_overlay.py" line="90"/>
+        <source>Incremental</source>
+        <translation>Inkrementell</translation>
     </message>
 </context>
 <context>
@@ -1015,7 +1053,7 @@ Automatisch: gespeichertes Volumen für s8 (schnell), bei Bedarf für s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="73"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Field</source>
         <translation>Feld</translation>
     </message>
@@ -1031,7 +1069,7 @@ Automatisch: gespeichertes Volumen für s8 (schnell), bei Bedarf für s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="106"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Colormap</source>
         <translation>Farbskala</translation>
     </message>
@@ -1042,19 +1080,19 @@ Automatisch: gespeichertes Volumen für s8 (schnell), bei Bedarf für s1-s4
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="114"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="118"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/export_preview.py" line="125"/>
-        <location filename="../../gui/dialogs/export_widgets.py" line="174"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="176"/>
         <source>Opacity</source>
         <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Older names that share a field&apos;s colour state.</extracomment>
         <translation>Deckkraft</translation>
@@ -1090,95 +1128,95 @@ Automatisch: gespeichertes Volumen für s8 (schnell), bei Bedarf für s1-s4
         <translation>Keine Daten für dieses Feld/Bild.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="175"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="177"/>
         <source>Field opacity (0 = transparent, 1 = fully opaque)</source>
         <translation>Feld-Deckkraft (0 = transparent, 1 = vollständig deckend)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="282"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="284"/>
         <source>All</source>
         <translation>Alle</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="284"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="286"/>
         <source>None</source>
         <translation>Keine</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="355"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="357"/>
         <source>Select:</source>
         <translation>Auswählen:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="368"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="370"/>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="385"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="387"/>
         <source>PHYSICAL UNITS</source>
         <translation>PHYSIKALISCHE EINHEITEN</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="389"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="391"/>
         <source>Enable physical units</source>
         <translation>Physikalische Einheiten aktivieren</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="391"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="393"/>
         <source>Scale displacement values by pixel size and show physical units on colorbar labels. Strain is dimensionless and unaffected.</source>
         <translation>Verschiebungswerte mit der Pixelgröße skalieren und physikalische Einheiten auf den Farbleistenbeschriftungen anzeigen. Dehnung ist dimensionslos und wird nicht beeinflusst.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="408"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="410"/>
         <source>/ pixel</source>
         <translation>/ Pixel</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="410"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="412"/>
         <source>Pixel size</source>
         <translation>Pixelgröße</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="419"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="421"/>
         <source>fps</source>
         <translation>fps</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="421"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="423"/>
         <source>Frame rate</source>
         <translation>Bildrate</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="447"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="449"/>
         <source>FRAME RANGE</source>
         <translation>BILDBEREICH</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="449"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="451"/>
         <source>All frames</source>
         <translation>Alle Bilder</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="454"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="456"/>
         <source>Numbered like the frame slider: frame 1 is the reference image.
 File names use the same numbers: frame 1 is written as _0001.</source>
         <translation>Nummeriert wie der Bildschieberegler: Bild 1 ist das Referenzbild.
 Dateinamen verwenden dieselben Nummern: Bild 1 wird als _0001 geschrieben.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="457"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="459"/>
         <source>From</source>
         <comment>Frame range: starting frame</comment>
         <translation>Von</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="462"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="464"/>
         <source>to</source>
         <comment>Frame range: ending frame</comment>
         <translation>bis</translation>
@@ -1454,22 +1492,22 @@ wirkt aber ruckeliger. Die Abspieldauer bleibt erhalten (die FPS oben sind die R
         <translation>Bericht erstellen</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="706"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="707"/>
         <source>Select Output Folder</source>
         <translation>Ausgabeordner auswählen</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="807"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="808"/>
         <source>Writing %1 (%2%)</source>
         <translation>Schreibe %1 (%2%)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="840"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="841"/>
         <source>Error: %1</source>
         <translation>Fehler: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="782"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="783"/>
         <source>Starting…</source>
         <translation>Wird gestartet…</translation>
     </message>
@@ -1559,43 +1597,43 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
         <translation>Wie im Reiter „Bilder“ gezeichnet: gleiche Farbskala, gleicher Bereich, gleiche Deckkraft und Konfiguration.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="639"/>
-        <location filename="../../gui/dialogs/export_dialog.py" line="687"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="640"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="688"/>
         <source>Min must be below Max for %1.</source>
         <translation>Min muss für %1 kleiner als Max sein.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="645"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="646"/>
         <source>Nothing to export: enable at least one field with computed frames in the frame range.</source>
         <translation>Nichts zu exportieren: Aktivieren Sie mindestens ein Feld mit berechneten Bildern im Bildbereich.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="653"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="654"/>
         <source>Select at least one format.</source>
         <translation>Wählen Sie mindestens ein Format.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="657"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="658"/>
         <source>Select at least one variable to export.</source>
         <translation>Wählen Sie mindestens eine zu exportierende Variable.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="690"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="691"/>
         <source>Nothing to export: select a field or the parameter table.</source>
         <translation>Nichts zu exportieren: Wählen Sie ein Feld oder die Parametertabelle.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="743"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="744"/>
         <source>… and %1 more</source>
         <translation>… und %1 weitere</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="745"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="746"/>
         <source>Replace Existing Files?</source>
         <translation>Vorhandene Dateien ersetzen?</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="746"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="747"/>
         <source>These already exist in the output folder and will be replaced:
 
 %1</source>
@@ -1604,27 +1642,27 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
 %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="765"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="766"/>
         <source>The results changed after this dialog was opened (a new run, strain or project). Close it and open Export again to export them.</source>
         <translation>Die Ergebnisse haben sich geändert, seit dieser Dialog geöffnet wurde (neuer Lauf, neue Dehnung oder neues Projekt). Schließen Sie ihn und öffnen Sie den Export erneut, um sie zu exportieren.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="769"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="770"/>
         <source>Nothing exported: the existing files were kept.</source>
         <translation>Nichts exportiert: Die vorhandenen Dateien wurden beibehalten.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="794"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="795"/>
         <source>Stopping…</source>
         <translation>Wird gestoppt…</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="805"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="806"/>
         <source>Rendering %1 (%2/%3)</source>
         <translation>Rendere %1 (%2/%3)</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="823"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="824"/>
         <source>Exported %n file(s) → %1</source>
         <translation>
             <numerusform>%n Datei exportiert → %1</numerusform>
@@ -1632,7 +1670,7 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="825"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="826"/>
         <source>Exported %n image(s) → %1</source>
         <translation>
             <numerusform>%n Bild exportiert → %1</numerusform>
@@ -1640,12 +1678,12 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="841"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="842"/>
         <source>Export failed: %1</source>
         <translation>Export fehlgeschlagen: %1</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="849"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="850"/>
         <source>Export cancelled: %n file(s) written before stopping.</source>
         <translation>
             <numerusform>Export abgebrochen: %n Datei vor dem Abbruch geschrieben.</numerusform>
@@ -1653,12 +1691,12 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="829"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="830"/>
         <source>No animation was written. See the log for details.</source>
         <translation>Es wurde keine Animation geschrieben. Einzelheiten siehe Protokoll.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/dialogs/export_dialog.py" line="831"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="832"/>
         <source>Exported %n animation(s) → %1</source>
         <translation>
             <numerusform>%n Animation exportiert → %1</numerusform>
@@ -1666,7 +1704,7 @@ oder ein Bereich aus allen exportierten Bildern, sodass eine Farbe in jedem Bild
         </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_dialog.py" line="833"/>
+        <location filename="../../gui/dialogs/export_dialog.py" line="834"/>
         <source>Report saved → %1</source>
         <translation>Bericht gespeichert → %1</translation>
     </message>
@@ -2355,13 +2393,6 @@ Nicht aktiviert: rein alphabetisch, für nullgefüllte Namen.</translation>
         <translation>Iterationen</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="66"/>
-        <source>Refinement iterations of the network.
-The paper evaluates every model with 20.</source>
-        <translation>Verfeinerungsiterationen des Netzwerks.
-Im Artikel wird jedes Modell mit 20 ausgewertet.</translation>
-    </message>
-    <message>
         <location filename="../../gui/widgets/param_panel.py" line="73"/>
         <source>off (raw)</source>
         <translation>aus (roh)</translation>
@@ -2372,26 +2403,29 @@ Im Artikel wird jedes Modell mit 20 ausgewertet.</translation>
         <translation>Glättung σ</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="76"/>
-        <source>Gaussian smoothing of the displacement (standard deviation).
-Off by default, as in the paper: smoothing lengthens the
-spatial resolution.</source>
-        <translation>Gaußsche Glättung der Verschiebung (Standardabweichung).
-Standardmäßig aus, wie im Artikel: Glättung vergröbert die
-räumliche Auflösung.</translation>
+        <location filename="../../gui/widgets/param_panel.py" line="66"/>
+        <source>Refinement iterations of the network (default: 20).</source>
+        <translation>Verfeinerungsiterationen des Netzwerks (Standard: 20).</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="81"/>
+        <location filename="../../gui/widgets/param_panel.py" line="76"/>
+        <source>Gaussian smoothing of the displacement (standard deviation).
+Off by default: smoothing coarsens the spatial resolution.</source>
+        <translation>Gaußsche Glättung der Verschiebung (Standardabweichung).
+Standardmäßig aus: Glättung vergröbert die räumliche Auflösung.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="80"/>
         <source>Automatic</source>
         <translation>Automatisch</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="85"/>
+        <location filename="../../gui/widgets/param_panel.py" line="84"/>
         <source>Device</source>
         <translation>Gerät</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="86"/>
+        <location filename="../../gui/widgets/param_panel.py" line="85"/>
         <source>Automatic uses the GPU when PyTorch sees one.</source>
         <translation>„Automatisch“ verwendet die GPU, wenn PyTorch eine erkennt.</translation>
     </message>
@@ -2399,12 +2433,12 @@ räumliche Auflösung.</translation>
 <context>
     <name>PhysicalUnitsWidget</name>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="57"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="54"/>
         <source>Use physical units</source>
         <translation>Physikalische Einheiten verwenden</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="68"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="65"/>
         <source>Physical size of one image pixel</source>
         <translation>Physikalische Größe eines Bildpixels</translation>
     </message>
@@ -2876,22 +2910,22 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="130"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="430"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="434"/>
         <source>Ready</source>
         <translation>Bereit</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="138"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="432"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="532"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="436"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="536"/>
         <source>ELAPSED  %1</source>
         <translation>VERSTRICHEN  %1</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="143"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="434"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="540"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="438"/>
         <location filename="../../gui/panels/right_sidebar.py" line="544"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="548"/>
         <source>REMAINING  %1</source>
         <translation>VERBLEIBEND  %1</translation>
     </message>
@@ -2936,77 +2970,77 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>Ausgeblendeter Hintergrund</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="194"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="197"/>
         <source>White</source>
         <translation>Weiß</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="195"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="198"/>
         <source>Black</source>
         <translation>Schwarz</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="196"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
         <source>Transparent</source>
         <translation>Transparent</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="202"/>
         <source>What replaces the image when it is hidden. Transparency is kept for PNG and TIFF on export; other formats get white.</source>
         <translation>Was das Bild ersetzt, wenn es ausgeblendet ist. Beim Export bleibt die Transparenz bei PNG und TIFF erhalten; andere Formate erhalten Weiß.</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="208"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="211"/>
         <source>Hide untracked regions</source>
         <translation>Nicht verfolgte Bereiche ausblenden</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="211"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="214"/>
         <source>Leave areas without a tracked node transparent, for example material that left the field of view, instead of filling them with values copied from distant nodes. Also used for exported images and animations; data files always keep NaN there.</source>
         <translation>Bereiche ohne verfolgten Knoten, etwa Material, das das Sichtfeld verlassen hat, bleiben transparent, statt mit Werten entfernter Knoten gefüllt zu werden. Gilt auch für exportierte Bilder und Animationen; in Datendateien steht dort immer NaN.</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="221"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="224"/>
         <source>VISUALIZATION</source>
         <translation>VISUALISIERUNG</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="226"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="229"/>
         <source>Colormap</source>
         <translation>Farbskala</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="245"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="248"/>
         <source>Opacity</source>
         <translation>Deckkraft</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="252"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="255"/>
         <source>Overlay opacity (0 = transparent, 100 = opaque)</source>
         <translation>Deckkraft der Überlagerung (0 = transparent, 100 = deckend)</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="258"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="261"/>
         <source>PHYSICAL UNITS</source>
         <translation>PHYSIKALISCHE EINHEITEN</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="264"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="267"/>
         <source>LOG</source>
         <translation>PROTOKOLL</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="270"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="273"/>
         <source>Clear</source>
         <translation>Löschen</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="399"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="403"/>
         <source>Place at least one Starting Point in each red region before running (red = needs a Starting Point).</source>
         <translation>Platzieren Sie vor dem Ausführen mindestens einen Startpunkt in jeder roten Region (rot = Startpunkt benötigt).</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="515"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="519"/>
         <source>%1  —  Frame %2</source>
         <translation>%1  —  Bild %2</translation>
     </message>
@@ -3167,43 +3201,72 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
 <context>
     <name>StrainParamPanel</name>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="86"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="88"/>
         <source>Plane fitting</source>
-        <extracomment>Strain measures in combo order (pyALDIC&apos;s order: infinitesimal, Eulerian, Green-Lagrangian). The configuration in the controls changed (by the user or Paper settings).</extracomment>
+        <extracomment>Strain measures in combo order (pyALDIC&apos;s order: infinitesimal, Eulerian, Green-Lagrange). The configuration in the controls changed (edited by the user).</extracomment>
         <translation>Ebenenanpassung</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="95"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="91"/>
+        <source>Polynomial fitted to each displacement component over the VSG window. Its slopes at the centre are the displacement gradients.
+• Plane fitting (1st order): the standard VSG (default).
+• Quadratic fitting (2nd order): follows strain gradients inside the window better, at the cost of more noise.</source>
+        <translation>Polynom, das über das VSG-Fenster an jede Verschiebungskomponente angepasst wird. Seine Steigungen im Zentrum sind die Verschiebungsgradienten.
+• Ebenenanpassung (1. Ordnung): das Standard-VSG (Standard).
+• Quadratische Anpassung (2. Ordnung): folgt Dehnungsgradienten im Fenster besser, auf Kosten von mehr Rauschen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="97"/>
         <source>Method</source>
         <translation>Methode</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="110"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="112"/>
         <source>VSG size</source>
         <translation>VSG-Größe</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="152"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="123"/>
+        <source>Hides low-confidence strain along the edges of the region of interest, holes and cracks, where the edge cuts the VSG window and the local fit becomes one-sided and unreliable.
+
+• Coefficient × VSG half-width (Lg − 1) / 2 = width of the trimmed band.
+• 0.00 = keep every point (no trimming).
+• 0.70 = default.
+• 1.00 = strictest (trim every point whose window touches an edge).
+
+Trimmed points are empty (NaN) in exported data files.</source>
+        <translation>Blendet Dehnung mit geringer Konfidenz an den Rändern der Region of Interest, an Löchern und Rissen aus, wo der Rand das VSG-Fenster abschneidet und die lokale Anpassung einseitig und unzuverlässig wird.
+
+• Koeffizient × VSG-Halbbreite (Lg − 1) / 2 = Breite des beschnittenen Bands.
+• 0.00 = jeden Punkt behalten (kein Beschneiden).
+• 0.70 = Standard.
+• 1.00 = strengste Einstellung (beschneidet jeden Punkt, dessen Fenster einen Rand berührt).
+
+Beschnittene Punkte sind in exportierten Datendateien leer (NaN).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="154"/>
+        <source>Weight of the points inside the VSG window: all equal (uniform, default), or decreasing with the distance from the centre (Gaussian).</source>
+        <translation>Gewicht der Punkte im VSG-Fenster: alle gleich (gleichmäßig, Standard) oder mit dem Abstand vom Zentrum abnehmend (Gauß).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="189"/>
         <source>Off</source>
         <comment>Strain smoothing preset</comment>
         <translation>Aus</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="87"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="191"/>
+        <source>Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured displacement as it is (default).</source>
+        <translation>Gaußsche Glättung (σ in Pixeln) der Verschiebung vor der Anpassung. Aus (0) differenziert die gemessene Verschiebung unverändert (Standard).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="89"/>
         <source>Quadratic fitting</source>
         <translation>Quadratische Anpassung</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="89"/>
-        <source>Polynomial fitted to each displacement component over the VSG window. Its slopes at the centre are the displacement gradients.
-• Plane fitting (1st order): the standard VSG (paper setting).
-• Quadratic fitting (2nd order): follows strain gradients inside the window better, at the cost of more noise.</source>
-        <translation>Polynom, das über das VSG-Fenster an jede Verschiebungskomponente angepasst wird. Seine Steigungen im Zentrum sind die Verschiebungsgradienten.
-• Ebenenanpassung (1. Ordnung): das Standard-VSG (Einstellung des Artikels).
-• Quadratische Anpassung (2. Ordnung): folgt Dehnungsgradienten im Fenster besser, auf Kosten von mehr Rauschen.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="103"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="105"/>
         <source>VSG (Virtual Strain Gauge) size Lg is the side, in pixels, of the square window around each point over which the displacement is fitted. Strain is then taken from the fit&apos;s slopes.
 
 • Larger VSG → smoother strain, lower spatial resolution.
@@ -3216,110 +3279,100 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
 • Ungerade, damit das Fenster ein Mittelpixel hat (Standard: 41 px).</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="114"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="133"/>
+        <source>Trim low-confidence edges</source>
+        <translation>Ränder mit geringer Konfidenz beschneiden</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="151"/>
         <source>Uniform</source>
         <translation>Gleichmäßig</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="115"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="152"/>
         <source>Gaussian</source>
         <translation>Gauß</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="117"/>
-        <source>Weight of the points inside the VSG window: all equal (uniform, paper setting), or decreasing with the distance from the centre (Gaussian).</source>
-        <translation>Gewicht der Punkte im VSG-Fenster: alle gleich (gleichmäßig, Einstellung des Artikels) oder mit dem Abstand vom Zentrum abnehmend (Gauß).</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="121"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="158"/>
         <source>Weighting</source>
         <translation>Gewichtung</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="129"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="166"/>
         <source>Auto (Lg / 4)</source>
         <translation>Auto (Lg / 4)</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="131"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="168"/>
         <source>Standard deviation of the Gaussian weight. Auto uses a quarter of the VSG size.</source>
         <translation>Standardabweichung der Gauß-Gewichtung. Auto verwendet ein Viertel der VSG-Größe.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="134"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="171"/>
         <source>Gaussian σ</source>
         <translation>Gauß-σ</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="141"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="178"/>
         <source>Spacing of the strain points: 1 computes strain at every pixel; larger values are faster and lighter for long sequences.</source>
         <translation>Abstand der Dehnungspunkte: 1 berechnet die Dehnung an jedem Pixel; größere Werte sind für lange Sequenzen schneller und sparsamer.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="144"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="181"/>
         <source>Output spacing</source>
         <translation>Ausgabeabstand</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="154"/>
-        <source>Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured displacement as it is (paper setting).</source>
-        <translation>Gaußsche Glättung (σ in Pixeln) der Verschiebung vor der Anpassung. Aus (0) differenziert die gemessene Verschiebung unverändert (Einstellung des Artikels).</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="158"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="195"/>
         <source>Displacement smoothing</source>
         <translation>Verschiebungsglättung</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="161"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="198"/>
         <source>Never fit across cracks or holes</source>
         <translation>Nie über Risse oder Löcher hinweg anpassen</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="163"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="200"/>
         <source>Fit each connected part of the tracked region separately, so no VSG window ever spans a crack, a hole or the gap between two regions.</source>
         <translation>Jeden zusammenhängenden Teil des verfolgten Bereichs getrennt anpassen, sodass kein VSG-Fenster je einen Riss, ein Loch oder die Lücke zwischen zwei Bereichen überspannt.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="172"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="209"/>
         <source>Infinitesimal</source>
         <translation>Infinitesimal</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="173"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="210"/>
         <source>Eulerian</source>
         <translation>Euler</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="174"/>
-        <source>Green-Lagrangian</source>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="211"/>
+        <source>Green-Lagrange</source>
         <translation>Green-Lagrange</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="176"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="213"/>
         <source>Strain measure from the deformation gradient F = I + ∇u:
 • Infinitesimal: (∇u + ∇uᵀ) / 2 (small strains only).
 • Eulerian (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.
-• Green-Lagrangian: (Fᵀ F − I) / 2 (paper setting).</source>
+• Green-Lagrange: (Fᵀ F − I) / 2 (default).</source>
         <translation>Dehnungsmaß aus dem Deformationsgradienten F = I + ∇u:
 • Infinitesimal: (∇u + ∇uᵀ) / 2 (nur kleine Dehnungen).
 • Euler (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.
-• Green-Lagrange: (Fᵀ F − I) / 2 (Einstellung des Artikels).</translation>
+• Green-Lagrange: (Fᵀ F − I) / 2 (Standard).</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="181"/>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="218"/>
         <source>Strain type</source>
         <translation>Dehnungstyp</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="184"/>
-        <source>Paper settings</source>
-        <translation>Artikel-Einstellungen</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="186"/>
-        <source>Green-Lagrangian strain, unweighted plane fit, VSG 41 px, every pixel, no smoothing, never across cracks (the settings of the RAFTcorr paper).</source>
-        <translation>Green-Lagrange-Dehnung, ungewichtete Ebenenanpassung, VSG 41 px, jedes Pixel, keine Glättung, nie über Risse hinweg (die Einstellungen des RAFTcorr-Artikels).</translation>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="272"/>
+        <source>Trimmed: %1 points (%2%)</source>
+        <translation>Beschnitten: %1 Punkte (%2%)</translation>
     </message>
 </context>
 <context>
@@ -3376,12 +3429,22 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>Was das Bild ersetzt, wenn es ausgeblendet ist. Beim Export bleibt die Transparenz bei PNG und TIFF erhalten; andere Formate erhalten Weiß.</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="139"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="141"/>
+        <source>Fill trimmed edges (display only)</source>
+        <translation>Beschnittene Ränder füllen (nur Anzeige)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="144"/>
+        <source>Fill the edge-trimmed strain band from the nearest reliable point of the same region. Affects the view and exported images and animations; exported data files always keep the trimmed band as NaN.</source>
+        <translation>Füllt das randbeschnittene Dehnungsband mit dem nächstgelegenen zuverlässigen Punkt desselben Bereichs. Betrifft die Ansicht sowie exportierte Bilder und Animationen; exportierte Datendateien behalten das beschnittene Band immer als NaN.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="151"/>
         <source>Hide untracked regions</source>
         <translation>Nicht verfolgte Bereiche ausblenden</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="142"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="154"/>
         <source>Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest (reference frame view). Data files always keep NaN there.</source>
         <translation>Punkte ohne Ergebnis, etwa Material, das das Sichtfeld verlassen hat, bleiben transparent, statt mit dem nächstgelegenen Wert innerhalb der Region of Interest gefüllt zu werden (Ansicht im Referenzbild). In Datendateien steht dort immer NaN.</translation>
     </message>
@@ -3421,7 +3484,7 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>Deckkraft</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_viz_panel.py" line="147"/>
+        <location filename="../../gui/widgets/strain_viz_panel.py" line="148"/>
         <source>Edges</source>
         <translation>Ränder</translation>
     </message>
@@ -3469,68 +3532,73 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>DEHNUNGSPARAMETER</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="303"/>
+        <location filename="../../gui/strain_window.py" line="293"/>
+        <source>ADVANCED</source>
+        <translation>ERWEITERT</translation>
+    </message>
+    <message>
+        <location filename="../../gui/strain_window.py" line="308"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="307"/>
+        <location filename="../../gui/strain_window.py" line="312"/>
         <source>Cancel the running strain computation. The previous strain result is kept.</source>
         <translation>Laufende Dehnungsberechnung abbrechen. Das vorherige Dehnungsergebnis bleibt erhalten.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="319"/>
+        <location filename="../../gui/strain_window.py" line="324"/>
         <source>Export displacement and strain results to NPZ / MAT / CSV / PNG</source>
         <translation>Verschiebungs- und Dehnungsergebnisse als NPZ / MAT / CSV / PNG exportieren</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="349"/>
+        <location filename="../../gui/strain_window.py" line="354"/>
         <source>FIELD</source>
         <translation>FELD</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="356"/>
+        <location filename="../../gui/strain_window.py" line="361"/>
         <source>VISUALIZATION</source>
         <translation>VISUALISIERUNG</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="368"/>
+        <location filename="../../gui/strain_window.py" line="373"/>
         <source>PHYSICAL UNITS</source>
         <translation>PHYSIKALISCHE EINHEITEN</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="374"/>
+        <location filename="../../gui/strain_window.py" line="379"/>
         <source>LOG</source>
         <translation>PROTOKOLL</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="855"/>
-        <location filename="../../gui/strain_window.py" line="891"/>
+        <location filename="../../gui/strain_window.py" line="861"/>
+        <location filename="../../gui/strain_window.py" line="899"/>
         <source>No displacement results.</source>
         <translation>Keine Verschiebungsergebnisse.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="893"/>
+        <location filename="../../gui/strain_window.py" line="901"/>
         <source>Frame %1 was not computed.</source>
         <translation>Bild %1 wurde nicht berechnet.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="901"/>
+        <location filename="../../gui/strain_window.py" line="909"/>
         <source>Click Compute Strain to show this field.</source>
         <translation>Klicken Sie auf „Dehnung berechnen“, um dieses Feld anzuzeigen.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="902"/>
+        <location filename="../../gui/strain_window.py" line="910"/>
         <source>No strain for frame %1: click Compute Strain.</source>
         <translation>Keine Dehnung für Bild %1: Klicken Sie auf „Dehnung berechnen“.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="904"/>
+        <location filename="../../gui/strain_window.py" line="912"/>
         <source>Velocity needs at least two computed frames.</source>
         <translation>Die Geschwindigkeit benötigt mindestens zwei berechnete Bilder.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="905"/>
+        <location filename="../../gui/strain_window.py" line="913"/>
         <source>No valid values in frame %1.</source>
         <translation>Keine gültigen Werte in Bild %1.</translation>
     </message>
@@ -3540,65 +3608,65 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>Dehnungsfeld</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="414"/>
+        <location filename="../../gui/strain_window.py" line="419"/>
         <source>Analysis is not available</source>
         <translation>Analyse ist nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="417"/>
-        <location filename="../../gui/strain_window.py" line="420"/>
+        <location filename="../../gui/strain_window.py" line="422"/>
+        <location filename="../../gui/strain_window.py" line="425"/>
         <source>Analysis</source>
         <translation>Analyse</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="418"/>
+        <location filename="../../gui/strain_window.py" line="423"/>
         <source>Analysis is not available (see the application log).</source>
         <translation>Analyse ist nicht verfügbar (siehe Anwendungsprotokoll).</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="529"/>
+        <location filename="../../gui/strain_window.py" line="534"/>
         <source>Strain compute failed: %1: %2</source>
         <translation>Dehnungsberechnung fehlgeschlagen: %1: %2</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="535"/>
-        <location filename="../../gui/strain_window.py" line="598"/>
+        <location filename="../../gui/strain_window.py" line="540"/>
+        <location filename="../../gui/strain_window.py" line="603"/>
         <source>Strain computation complete.</source>
         <translation>Dehnungsberechnung abgeschlossen.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="546"/>
+        <location filename="../../gui/strain_window.py" line="551"/>
         <source>Strain window: no displacement results to post-process.</source>
         <translation>Dehnungsfenster: Keine Verschiebungs-Ergebnisse zur Nachbearbeitung.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="591"/>
+        <location filename="../../gui/strain_window.py" line="596"/>
         <source>The displacement results changed during the strain computation; its result was discarded.</source>
         <translation>Die Verschiebungsergebnisse haben sich während der Dehnungsberechnung geändert; ihr Ergebnis wurde verworfen.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="615"/>
+        <location filename="../../gui/strain_window.py" line="620"/>
         <source>Strain computation canceled.</source>
         <translation>Dehnungsberechnung abgebrochen.</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="622"/>
+        <location filename="../../gui/strain_window.py" line="627"/>
         <source>Strain compute failed: %1</source>
         <translation>Dehnungsberechnung fehlgeschlagen: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="626"/>
+        <location filename="../../gui/strain_window.py" line="631"/>
         <source>Strain Computation Failed</source>
         <translation>Dehnungsberechnung fehlgeschlagen</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="665"/>
-        <location filename="../../gui/strain_window.py" line="667"/>
+        <location filename="../../gui/strain_window.py" line="671"/>
+        <location filename="../../gui/strain_window.py" line="673"/>
         <source>Export is not available: %1</source>
         <translation>Export ist nicht verfügbar: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="679"/>
+        <location filename="../../gui/strain_window.py" line="685"/>
         <source>⚠ Params changed -- click Compute Strain</source>
         <translation>⚠ Parameter geändert — „Dehnung berechnen“ klicken</translation>
     </message>
@@ -3608,28 +3676,28 @@ Den vollständigen Traceback finden Sie im Konsolenprotokoll.</translation>
         <translation>Verkleinern</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="294"/>
+        <location filename="../../gui/strain_window.py" line="299"/>
         <source>Compute Strain</source>
         <translation>Dehnung berechnen</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="316"/>
-        <location filename="../../gui/strain_window.py" line="666"/>
+        <location filename="../../gui/strain_window.py" line="321"/>
+        <location filename="../../gui/strain_window.py" line="672"/>
         <source>Export Results</source>
         <translation>Ergebnisse exportieren</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="558"/>
+        <location filename="../../gui/strain_window.py" line="563"/>
         <source>Starting…</source>
         <translation>Wird gestartet…</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="576"/>
+        <location filename="../../gui/strain_window.py" line="581"/>
         <source>Canceling…</source>
         <translation>Wird abgebrochen…</translation>
     </message>
     <message>
-        <location filename="../../gui/strain_window.py" line="595"/>
+        <location filename="../../gui/strain_window.py" line="600"/>
         <source>Complete</source>
         <translation>Abgeschlossen</translation>
     </message>
@@ -3907,7 +3975,7 @@ oder Durchsuchen</translation>
 <context>
     <name>dialog</name>
     <message>
-        <location filename="../../gui/dialogs/export_widgets.py" line="307"/>
+        <location filename="../../gui/dialogs/export_widgets.py" line="309"/>
         <source>Cancel Export</source>
         <translation>Export abbrechen</translation>
     </message>

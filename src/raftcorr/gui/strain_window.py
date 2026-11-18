@@ -289,6 +289,11 @@ class StrainWindow(QMainWindow):
         self._params_section.add_widget(self._param_panel)
         right.addWidget(self._params_section)
 
+        # Less used fit options, folded like the main window's ADVANCED section.
+        self._advanced_section = CollapsibleSection(self.tr("ADVANCED"), expanded=False)
+        self._advanced_section.add_widget(self._param_panel.advanced_widget())
+        right.addWidget(self._advanced_section)
+
         # Action buttons stay OUTSIDE collapsible sections so users can
         # trigger Compute / Export even when STRAIN PARAMETERS is folded.
         self._compute_btn = QPushButton(self.tr("Compute Strain"))
@@ -642,6 +647,7 @@ class StrainWindow(QMainWindow):
                 show_background=bool(viz["show_background"]),
                 hidden_bg_color=str(viz["hidden_bg_color"]),
                 hide_untracked=bool(viz["hide_untracked"]),
+                fill_trimmed_edges=bool(viz["fill_trimmed_edges"]),
                 overlay_alpha=float(viz["alpha"]),
                 use_physical_units=self._state.use_physical_units,
                 pixel_size=self._state.pixel_size,
@@ -860,8 +866,10 @@ class StrainWindow(QMainWindow):
             cmap=str(viz["colormap"]),
             alpha=float(viz["alpha"]),
             hide_untracked=bool(viz["hide_untracked"]),
+            fill_trimmed=bool(viz["fill_trimmed_edges"]),
             range_of=self._resolve_range,
         )
+        self._update_trim_readout(frame)
         if out is None:
             self._clear_field()
             self._hint_label.setText(self._missing_reason(field_name, frame))
@@ -929,6 +937,7 @@ class StrainWindow(QMainWindow):
             cmap=str(fs.colormap),
             alpha=float(viz["alpha"]),
             hide_untracked=bool(viz["hide_untracked"]),
+            fill_trimmed=bool(viz["fill_trimmed_edges"]),
             range_of=range_of,
         )
         return None if out is None else out[0]
@@ -943,6 +952,7 @@ class StrainWindow(QMainWindow):
         alpha: float,
         range_of: Callable[[NDArray[np.float32]], tuple[float, float]],
         hide_untracked: bool = True,
+        fill_trimmed: bool = False,
     ) -> tuple[FieldImage, ShownField] | None:
         """Render *field_name* at *frame*: the one path both tabs draw through.
 
@@ -967,7 +977,19 @@ class StrainWindow(QMainWindow):
             unit="" if unit == "-" else unit,
             label=field_colorbar_label(field_name, st.use_physical_units, st.pixel_unit, st.frame_rate),
             hide_untracked=hide_untracked,
+            fill_trimmed=fill_trimmed,
         )
+
+    def _update_trim_readout(self, frame: int) -> None:
+        """'Trimmed: N points (M%)' of the shown frame's strain; hidden without a trim."""
+        strain = self._state.strain_results
+        trimmed = None if strain is None or not 0 <= frame < len(strain.done) else strain.trimmed_in(frame)
+        if trimmed is None:
+            self._param_panel.set_trim_readout(0, 0)
+            return
+        n_trimmed = int(trimmed.sum())
+        n_kept = int(np.isfinite(strain.components["exx"][frame]).sum())
+        self._param_panel.set_trim_readout(n_trimmed, n_trimmed + n_kept)
 
     def _resolve_range(self, values: NDArray[np.float32]) -> tuple[float, float]:
         """Compute (vmin, vmax) from the local viz panel state."""

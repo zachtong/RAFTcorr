@@ -127,6 +127,7 @@ class StrainSettings:
     gaussian_sigma: float | None
     smoothing_sigma: float
     connectivity_aware: bool
+    edge_trim_alpha: float = 0.0          # 0: nothing trimmed (also results saved before the trim existed)
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
@@ -137,7 +138,9 @@ class StrainSeries:
     """Strain components per frame on a (possibly coarser) grid inside the displacement grid.
 
     ``components[name]`` is ``(T, hs, ws)`` float32; sample ``(i, j)`` sits at image pixel
-    ``(grid.x0 + j * step, grid.y0 + i * step)``.
+    ``(grid.x0 + j * step, grid.y0 + i * step)``. Points of the edge-trimmed band (see
+    :func:`raftcorr.post.strain.edge_trimmed`) are NaN in every component; ``trimmed`` marks them,
+    ``(T, hs, ws)`` bool, or is None when nothing was trimmed.
     """
 
     grid: Grid
@@ -145,6 +148,7 @@ class StrainSeries:
     components: dict[str, np.ndarray]
     done: np.ndarray
     settings: StrainSettings
+    trimmed: np.ndarray | None = None
 
     @property
     def names(self) -> list[str]:
@@ -152,3 +156,9 @@ class StrainSeries:
 
     def get(self, name: str, frame: int) -> np.ndarray:
         return self.components[name][frame]
+
+    def trimmed_in(self, frame: int) -> np.ndarray | None:
+        """Edge-trimmed points of one frame, or None when nothing is trimmed."""
+        if self.trimmed is None or not self.done[frame]:
+            return None
+        return self.trimmed[frame]

@@ -181,13 +181,15 @@ class FieldRenderer:
         unit: str = "",
         label: str = "",
         hide_untracked: bool = True,
+        fill_trimmed: bool = False,
     ) -> tuple[FieldImage, ShownField] | None:
         """FieldProvider field *key* of *frame*, or None when there is none.
 
         *deformed* asks for the deformed configuration; the reference is used
         for frame 0 (it is its own deformed configuration). *factor* converts
         the raw values to the displayed unit (physical units). *range_of* maps
-        the displayed values to ``(vmin, vmax)``.
+        the displayed values to ``(vmin, vmax)``. *fill_trimmed* fills the
+        edge-trimmed band of a strain field from its reliable points.
         """
         if provider is None:
             return None
@@ -198,10 +200,10 @@ class FieldRenderer:
             return None
         use_deformed = bool(deformed) and frame > 0
         if use_deformed:
-            vals, pl = provider.deformed(key, frame)
+            vals, pl = provider.deformed(key, frame, fill_trimmed=fill_trimmed)
             vals = np.asarray(vals, dtype=np.float32)
         else:
-            vals, pl = provider.values(key, frame)
+            vals, pl = provider.values(key, frame, fill_trimmed=fill_trimmed)
             step = int(pl.step)
             inside = series.mask[::step, ::step] if step > 1 else series.mask
             vals = np.where(inside, np.asarray(vals, dtype=np.float32), np.float32(np.nan))
@@ -217,7 +219,7 @@ class FieldRenderer:
         # Displacement pixmaps survive a new strain result; strain ones do not.
         strain_id = id(provider.strain) if ALL_FIELDS[key].is_strain else None
         ck = (id(series), strain_id, key, frame, use_deformed, cmap, float(vmin), float(vmax),
-              float(factor), bool(hide_untracked))
+              float(factor), bool(hide_untracked), bool(fill_trimmed))
         pixmap = self._cache.get(ck)
         if pixmap is None:
             pixmap = _to_pixmap(shown_vals, vmin, vmax, cmap)

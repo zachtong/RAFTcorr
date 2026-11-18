@@ -59,6 +59,10 @@ configuration), with any colour map, fixed or automatic ranges, physical units a
 The **residual** view shows how well each frame was tracked (the grey-level mismatch after
 warping), and RAFTcorr warns when it jumps. **Strain** (strain window) comes from a virtual strain
 gauge (default: Green-Lagrange, unweighted plane fit, 41 px gauge), never fitted across a crack.
+Next to an edge of the region of interest, a hole or a crack the gauge is cut on one side and its
+fit is biased, so points within 0.7 of the gauge half-width of an edge are left empty (**Trim
+low-confidence edges**, from 0 = keep all to 1 = only uncut gauges; `--edge-trim` on the command
+line). Pictures can fill that band from the nearest reliable points; data files keep it empty.
 **Analysis**: points, extensometers, crack-opening gauges, rectangles, circles and polygons, plotted
 over time, along a line, as a kymograph, or against the load of a testing machine (stress-strain).
 **Export**: HDF5, MATLAB v7.3 or NumPy files with every field and the full provenance; per-frame

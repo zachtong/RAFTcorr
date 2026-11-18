@@ -944,14 +944,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr":    "Itérations",
         "es":    "Iteraciones",
     },
-    "Refinement iterations of the network.\nThe paper evaluates every model with 20.": {
-        "zh_CN": "网络的迭代细化次数。\n论文中所有模型均以 20 次进行评估。",
-        "zh_TW": "網路的迭代細化次數。\n論文中所有模型皆以 20 次進行評估。",
-        "ja":    "ネットワークの反復改良回数です。\n論文ではすべてのモデルを 20 回で評価しています。",
-        "ko":    "네트워크의 반복 정제 횟수입니다.\n논문에서는 모든 모델을 20회로 평가합니다.",
-        "de":    "Verfeinerungsiterationen des Netzwerks.\nIm Artikel wird jedes Modell mit 20 ausgewertet.",
-        "fr":    "Itérations de raffinement du réseau.\nL'article évalue chaque modèle avec 20.",
-        "es":    "Iteraciones de refinamiento de la red.\nEl artículo evalúa todos los modelos con 20.",
+    "Refinement iterations of the network (default: 20).": {
+        "zh_CN": "网络的迭代细化次数（默认：20）。",
+        "zh_TW": "網路的迭代細化次數（預設：20）。",
+        "ja":    "ネットワークの反復改良回数です（既定値：20）。",
+        "ko":    "네트워크의 반복 정제 횟수입니다(기본값: 20).",
+        "de":    "Verfeinerungsiterationen des Netzwerks (Standard: 20).",
+        "fr":    "Itérations de raffinement du réseau (par défaut : 20).",
+        "es":    "Iteraciones de refinamiento de la red (predeterminado: 20).",
     },
     # Spin-box special value (0 px): no smoothing, the raw network output.
     "off (raw)": {
@@ -973,15 +973,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Suavizado σ",
     },
     "Gaussian smoothing of the displacement (standard deviation).\n"
-    "Off by default, as in the paper: smoothing lengthens the\n"
-    "spatial resolution.": {
-        "zh_CN": "位移的高斯平滑（标准差）。\n默认关闭，与论文一致：平滑会降低\n空间分辨率。",
-        "zh_TW": "位移的高斯平滑（標準差）。\n預設關閉，與論文一致：平滑會降低\n空間解析度。",
-        "ja":    "変位のガウス平滑化（標準偏差）です。\n論文と同じく既定ではオフ：平滑化すると\n空間分解能が粗くなります。",
-        "ko":    "변위의 가우스 평활화(표준편차)입니다.\n논문과 같이 기본값은 끔: 평활화하면\n공간 분해능이 낮아집니다.",
-        "de":    "Gaußsche Glättung der Verschiebung (Standardabweichung).\nStandardmäßig aus, wie im Artikel: Glättung vergröbert die\nräumliche Auflösung.",
-        "fr":    "Lissage gaussien du déplacement (écart-type).\nDésactivé par défaut, comme dans l'article : le lissage dégrade la\nrésolution spatiale.",
-        "es":    "Suavizado gaussiano del desplazamiento (desviación típica).\nDesactivado por defecto, como en el artículo: el suavizado empeora la\nresolución espacial.",
+    "Off by default: smoothing coarsens the spatial resolution.": {
+        "zh_CN": "位移的高斯平滑（标准差）。\n默认关闭：平滑会降低空间分辨率。",
+        "zh_TW": "位移的高斯平滑（標準差）。\n預設關閉：平滑會降低空間解析度。",
+        "ja":    "変位のガウス平滑化（標準偏差）です。\n既定ではオフ：平滑化すると空間分解能が粗くなります。",
+        "ko":    "변위의 가우스 평활화(표준편차)입니다.\n기본값은 끔: 평활화하면 공간 분해능이 낮아집니다.",
+        "de":    "Gaußsche Glättung der Verschiebung (Standardabweichung).\nStandardmäßig aus: Glättung vergröbert die räumliche Auflösung.",
+        "fr":    "Lissage gaussien du déplacement (écart-type).\nDésactivé par défaut : le lissage dégrade la résolution spatiale.",
+        "es":    "Suavizado gaussiano del desplazamiento (desviación típica).\nDesactivado por defecto: el suavizado empeora la resolución espacial.",
     },
     "Device": {
         "zh_CN": "设备",
@@ -1154,15 +1153,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Ajuste cuadrático",
     },
     "Polynomial fitted to each displacement component over the VSG window. Its slopes at the centre are the "
-    "displacement gradients.\n• Plane fitting (1st order): the standard VSG (paper setting).\n"
+    "displacement gradients.\n• Plane fitting (1st order): the standard VSG (default).\n"
     "• Quadratic fitting (2nd order): follows strain gradients inside the window better, at the cost of more noise.": {
-        "zh_CN": "在 VSG 窗口内对每个位移分量拟合多项式，其在中心处的斜率即为位移梯度。\n• 平面拟合（一阶）：标准 VSG（论文设置）。\n• 二次拟合（二阶）：能更好地跟随窗口内的应变梯度，但噪声更大。",
-        "zh_TW": "在 VSG 視窗內對每個位移分量擬合多項式，其在中心處的斜率即為位移梯度。\n• 平面擬合（一階）：標準 VSG（論文設定）。\n• 二次擬合（二階）：能更好地跟隨視窗內的應變梯度，但雜訊較大。",
-        "ja":    "VSG ウィンドウ内で各変位成分に多項式をフィットします。中心での傾きが変位勾配です。\n• 平面フィット（1 次）：標準的な VSG（論文の設定）。\n• 二次フィット（2 次）：ウィンドウ内のひずみ勾配によく追従しますが、ノイズが増えます。",
-        "ko":    "VSG 창 안에서 각 변위 성분에 다항식을 피팅합니다. 중심에서의 기울기가 변위 구배입니다.\n• 평면 피팅(1차): 표준 VSG(논문 설정).\n• 2차 피팅(2차): 창 내부의 변형률 구배를 더 잘 따르지만 노이즈가 커집니다.",
-        "de":    "Polynom, das über das VSG-Fenster an jede Verschiebungskomponente angepasst wird. Seine Steigungen im Zentrum sind die Verschiebungsgradienten.\n• Ebenenanpassung (1. Ordnung): das Standard-VSG (Einstellung des Artikels).\n• Quadratische Anpassung (2. Ordnung): folgt Dehnungsgradienten im Fenster besser, auf Kosten von mehr Rauschen.",
-        "fr":    "Polynôme ajusté à chaque composante du déplacement sur la fenêtre VSG. Ses pentes au centre sont les gradients de déplacement.\n• Ajustement de plan (ordre 1) : le VSG standard (réglage de l'article).\n• Ajustement quadratique (ordre 2) : suit mieux les gradients de déformation dans la fenêtre, au prix de plus de bruit.",
-        "es":    "Polinomio ajustado a cada componente del desplazamiento sobre la ventana VSG. Sus pendientes en el centro son los gradientes de desplazamiento.\n• Ajuste de plano (1.er orden): el VSG estándar (ajuste del artículo).\n• Ajuste cuadrático (2.º orden): sigue mejor los gradientes de deformación dentro de la ventana, a costa de más ruido.",
+        "zh_CN": "在 VSG 窗口内对每个位移分量拟合多项式，其在中心处的斜率即为位移梯度。\n• 平面拟合（一阶）：标准 VSG（默认）。\n• 二次拟合（二阶）：能更好地跟随窗口内的应变梯度，但噪声更大。",
+        "zh_TW": "在 VSG 視窗內對每個位移分量擬合多項式，其在中心處的斜率即為位移梯度。\n• 平面擬合（一階）：標準 VSG（預設）。\n• 二次擬合（二階）：能更好地跟隨視窗內的應變梯度，但雜訊較大。",
+        "ja":    "VSG ウィンドウ内で各変位成分に多項式をフィットします。中心での傾きが変位勾配です。\n• 平面フィット（1 次）：標準的な VSG（既定値）。\n• 二次フィット（2 次）：ウィンドウ内のひずみ勾配によく追従しますが、ノイズが増えます。",
+        "ko":    "VSG 창 안에서 각 변위 성분에 다항식을 피팅합니다. 중심에서의 기울기가 변위 구배입니다.\n• 평면 피팅(1차): 표준 VSG(기본값).\n• 2차 피팅(2차): 창 내부의 변형률 구배를 더 잘 따르지만 노이즈가 커집니다.",
+        "de":    "Polynom, das über das VSG-Fenster an jede Verschiebungskomponente angepasst wird. Seine Steigungen im Zentrum sind die Verschiebungsgradienten.\n• Ebenenanpassung (1. Ordnung): das Standard-VSG (Standard).\n• Quadratische Anpassung (2. Ordnung): folgt Dehnungsgradienten im Fenster besser, auf Kosten von mehr Rauschen.",
+        "fr":    "Polynôme ajusté à chaque composante du déplacement sur la fenêtre VSG. Ses pentes au centre sont les gradients de déplacement.\n• Ajustement de plan (ordre 1) : le VSG standard (par défaut).\n• Ajustement quadratique (ordre 2) : suit mieux les gradients de déformation dans la fenêtre, au prix de plus de bruit.",
+        "es":    "Polinomio ajustado a cada componente del desplazamiento sobre la ventana VSG. Sus pendientes en el centro son los gradientes de desplazamiento.\n• Ajuste de plano (1.er orden): el VSG estándar (predeterminado).\n• Ajuste cuadrático (2.º orden): sigue mejor los gradientes de deformación dentro de la ventana, a costa de más ruido.",
     },
     "VSG (Virtual Strain Gauge) size Lg is the side, in pixels, of the square window around each point over "
     "which the displacement is fitted. Strain is then taken from the fit's slopes.\n\n"
@@ -1195,15 +1194,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr":    "Gaussienne",
         "es":    "Gaussiana",
     },
-    "Weight of the points inside the VSG window: all equal (uniform, paper setting), or decreasing with the "
+    "Weight of the points inside the VSG window: all equal (uniform, default), or decreasing with the "
     "distance from the centre (Gaussian).": {
-        "zh_CN": "VSG 窗口内各点的权重：全部相等（均匀，论文设置），或随离中心的距离递减（高斯）。",
-        "zh_TW": "VSG 視窗內各點的權重：全部相等（均勻，論文設定），或隨離中心的距離遞減（高斯）。",
-        "ja":    "VSG ウィンドウ内の点の重みです：すべて等しい（一様、論文の設定）か、中心からの距離とともに減少する（ガウス）。",
-        "ko":    "VSG 창 안 점들의 가중치: 모두 같음(균일, 논문 설정) 또는 중심에서 멀어질수록 감소(가우스).",
-        "de":    "Gewicht der Punkte im VSG-Fenster: alle gleich (gleichmäßig, Einstellung des Artikels) oder mit dem Abstand vom Zentrum abnehmend (Gauß).",
-        "fr":    "Poids des points dans la fenêtre VSG : tous égaux (uniforme, réglage de l'article), ou décroissant avec la distance au centre (gaussienne).",
-        "es":    "Peso de los puntos dentro de la ventana VSG: todos iguales (uniforme, ajuste del artículo) o decreciente con la distancia al centro (gaussiana).",
+        "zh_CN": "VSG 窗口内各点的权重：全部相等（均匀，默认），或随离中心的距离递减（高斯）。",
+        "zh_TW": "VSG 視窗內各點的權重：全部相等（均勻，預設），或隨離中心的距離遞減（高斯）。",
+        "ja":    "VSG ウィンドウ内の点の重みです：すべて等しい（一様、既定値）か、中心からの距離とともに減少する（ガウス）。",
+        "ko":    "VSG 창 안 점들의 가중치: 모두 같음(균일, 기본값) 또는 중심에서 멀어질수록 감소(가우스).",
+        "de":    "Gewicht der Punkte im VSG-Fenster: alle gleich (gleichmäßig, Standard) oder mit dem Abstand vom Zentrum abnehmend (Gauß).",
+        "fr":    "Poids des points dans la fenêtre VSG : tous égaux (uniforme, par défaut), ou décroissant avec la distance au centre (gaussienne).",
+        "es":    "Peso de los puntos dentro de la ventana VSG: todos iguales (uniforme, predeterminado) o decreciente con la distancia al centro (gaussiana).",
     },
     "Weighting": {
         "zh_CN": "加权",
@@ -1261,14 +1260,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Espaciado de salida",
     },
     "Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured "
-    "displacement as it is (paper setting).": {
-        "zh_CN": "拟合前对位移进行高斯平滑（σ 以像素计）。关闭（0）时直接对测得的位移求导（论文设置）。",
-        "zh_TW": "擬合前對位移進行高斯平滑（σ 以像素計）。關閉（0）時直接對測得的位移求導（論文設定）。",
-        "ja":    "フィット前の変位のガウス平滑化（σ はピクセル単位）です。オフ（0）では計測した変位をそのまま微分します（論文の設定）。",
-        "ko":    "피팅 전 변위의 가우스 평활화(σ는 픽셀 단위)입니다. 끔(0)이면 측정된 변위를 그대로 미분합니다(논문 설정).",
-        "de":    "Gaußsche Glättung (σ in Pixeln) der Verschiebung vor der Anpassung. Aus (0) differenziert die gemessene Verschiebung unverändert (Einstellung des Artikels).",
-        "fr":    "Lissage gaussien (σ en pixels) du déplacement avant l'ajustement. Désactivé (0) dérive le déplacement mesuré tel quel (réglage de l'article).",
-        "es":    "Suavizado gaussiano (σ en píxeles) del desplazamiento antes del ajuste. Desactivado (0) deriva el desplazamiento medido tal cual (ajuste del artículo).",
+    "displacement as it is (default).": {
+        "zh_CN": "拟合前对位移进行高斯平滑（σ 以像素计）。关闭（0）时直接对测得的位移求导（默认）。",
+        "zh_TW": "擬合前對位移進行高斯平滑（σ 以像素計）。關閉（0）時直接對測得的位移求導（預設）。",
+        "ja":    "フィット前の変位のガウス平滑化（σ はピクセル単位）です。オフ（0）では計測した変位をそのまま微分します（既定値）。",
+        "ko":    "피팅 전 변위의 가우스 평활화(σ는 픽셀 단위)입니다. 끔(0)이면 측정된 변위를 그대로 미분합니다(기본값).",
+        "de":    "Gaußsche Glättung (σ in Pixeln) der Verschiebung vor der Anpassung. Aus (0) differenziert die gemessene Verschiebung unverändert (Standard).",
+        "fr":    "Lissage gaussien (σ en pixels) du déplacement avant l'ajustement. Désactivé (0) dérive le déplacement mesuré tel quel (par défaut).",
+        "es":    "Suavizado gaussiano (σ en píxeles) del desplazamiento antes del ajuste. Desactivado (0) deriva el desplazamiento medido tal cual (predeterminado).",
     },
     "Displacement smoothing": {
         "zh_CN": "位移平滑",
@@ -1301,34 +1300,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "Strain measure from the deformation gradient F = I + ∇u:\n"
     "• Infinitesimal: (∇u + ∇uᵀ) / 2 (small strains only).\n"
     "• Eulerian (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n"
-    "• Green-Lagrangian: (Fᵀ F − I) / 2 (paper setting).": {
-        "zh_CN": "由变形梯度 F = I + ∇u 得到的应变度量：\n• 无穷小应变：(∇u + ∇uᵀ) / 2（仅适用于小应变）。\n• 欧拉应变（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• 格林-拉格朗日应变：(Fᵀ F − I) / 2（论文设置）。",
-        "zh_TW": "由變形梯度 F = I + ∇u 得到的應變度量：\n• 無窮小應變：(∇u + ∇uᵀ) / 2（僅適用於小應變）。\n• 歐拉應變（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• 格林-拉格朗日應變：(Fᵀ F − I) / 2（論文設定）。",
-        "ja":    "変形勾配 F = I + ∇u から求めるひずみ尺度：\n• 微小ひずみ：(∇u + ∇uᵀ) / 2（小ひずみのみ）。\n• オイラーひずみ（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• グリーン-ラグランジュひずみ：(Fᵀ F − I) / 2（論文の設定）。",
-        "ko":    "변형 구배 F = I + ∇u로부터의 변형률 척도:\n• 미소 변형률: (∇u + ∇uᵀ) / 2(작은 변형률에만).\n• 오일러 변형률(Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• 그린-라그랑주 변형률: (Fᵀ F − I) / 2(논문 설정).",
-        "de":    "Dehnungsmaß aus dem Deformationsgradienten F = I + ∇u:\n• Infinitesimal: (∇u + ∇uᵀ) / 2 (nur kleine Dehnungen).\n• Euler (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange: (Fᵀ F − I) / 2 (Einstellung des Artikels).",
-        "fr":    "Mesure de déformation à partir du gradient de transformation F = I + ∇u :\n• Infinitésimal : (∇u + ∇uᵀ) / 2 (petites déformations uniquement).\n• Eulérien (Euler-Almansi) : (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange : (Fᵀ F − I) / 2 (réglage de l'article).",
-        "es":    "Medida de deformación a partir del gradiente de deformación F = I + ∇u:\n• Infinitesimal: (∇u + ∇uᵀ) / 2 (solo deformaciones pequeñas).\n• Euleriana (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange: (Fᵀ F − I) / 2 (ajuste del artículo).",
-    },
-    # Button: restore the settings the RAFTcorr paper uses.
-    "Paper settings": {
-        "zh_CN": "论文设置",
-        "zh_TW": "論文設定",
-        "ja":    "論文の設定",
-        "ko":    "논문 설정",
-        "de":    "Artikel-Einstellungen",
-        "fr":    "Réglages de l'article",
-        "es":    "Ajustes del artículo",
-    },
-    "Green-Lagrangian strain, unweighted plane fit, VSG 41 px, every pixel, no smoothing, never across cracks "
-    "(the settings of the RAFTcorr paper).": {
-        "zh_CN": "格林-拉格朗日应变、无加权平面拟合、VSG 41 px、逐像素、不平滑、不跨越裂纹（RAFTcorr 论文中的设置）。",
-        "zh_TW": "格林-拉格朗日應變、無加權平面擬合、VSG 41 px、逐像素、不平滑、不跨越裂紋（RAFTcorr 論文中的設定）。",
-        "ja":    "グリーン-ラグランジュひずみ、重みなし平面フィット、VSG 41 px、全ピクセル、平滑化なし、き裂をまたがない（RAFTcorr 論文の設定）。",
-        "ko":    "그린-라그랑주 변형률, 가중치 없는 평면 피팅, VSG 41 px, 모든 픽셀, 평활화 없음, 균열을 가로지르지 않음(RAFTcorr 논문의 설정).",
-        "de":    "Green-Lagrange-Dehnung, ungewichtete Ebenenanpassung, VSG 41 px, jedes Pixel, keine Glättung, nie über Risse hinweg (die Einstellungen des RAFTcorr-Artikels).",
-        "fr":    "Déformation de Green-Lagrange, ajustement de plan non pondéré, VSG 41 px, chaque pixel, sans lissage, jamais à travers les fissures (les réglages de l'article RAFTcorr).",
-        "es":    "Deformación de Green-Lagrange, ajuste de plano sin ponderar, VSG 41 px, cada píxel, sin suavizado, nunca a través de grietas (los ajustes del artículo de RAFTcorr).",
+    "• Green-Lagrange: (Fᵀ F − I) / 2 (default).": {
+        "zh_CN": "由变形梯度 F = I + ∇u 得到的应变度量：\n• 无穷小应变：(∇u + ∇uᵀ) / 2（仅适用于小应变）。\n• 欧拉应变（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• 格林-拉格朗日应变：(Fᵀ F − I) / 2（默认）。",
+        "zh_TW": "由變形梯度 F = I + ∇u 得到的應變度量：\n• 無窮小應變：(∇u + ∇uᵀ) / 2（僅適用於小應變）。\n• 歐拉應變（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• 格林-拉格朗日應變：(Fᵀ F − I) / 2（預設）。",
+        "ja":    "変形勾配 F = I + ∇u から求めるひずみ尺度：\n• 微小ひずみ：(∇u + ∇uᵀ) / 2（小ひずみのみ）。\n• オイラーひずみ（Euler-Almansi）：(I − (F Fᵀ)⁻¹) / 2。\n• グリーン-ラグランジュひずみ：(Fᵀ F − I) / 2（既定値）。",
+        "ko":    "변형 구배 F = I + ∇u로부터의 변형률 척도:\n• 미소 변형률: (∇u + ∇uᵀ) / 2(작은 변형률에만).\n• 오일러 변형률(Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• 그린-라그랑주 변형률: (Fᵀ F − I) / 2(기본값).",
+        "de":    "Dehnungsmaß aus dem Deformationsgradienten F = I + ∇u:\n• Infinitesimal: (∇u + ∇uᵀ) / 2 (nur kleine Dehnungen).\n• Euler (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange: (Fᵀ F − I) / 2 (Standard).",
+        "fr":    "Mesure de déformation à partir du gradient de transformation F = I + ∇u :\n• Infinitésimal : (∇u + ∇uᵀ) / 2 (petites déformations uniquement).\n• Eulérien (Euler-Almansi) : (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange : (Fᵀ F − I) / 2 (par défaut).",
+        "es":    "Medida de deformación a partir del gradiente de deformación F = I + ∇u:\n• Infinitesimal: (∇u + ∇uᵀ) / 2 (solo deformaciones pequeñas).\n• Euleriana (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n• Green-Lagrange: (Fᵀ F − I) / 2 (predeterminado).",
     },
 
     # ===== StrainVizPanel ======================================================
@@ -2001,6 +1980,156 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de":    "Dehnung: Bild %1/%2",
         "fr":    "Déformation : image %1/%2",
         "es":    "Deformación: fotograma %1/%2",
+    },
+
+    # --- CanvasConfigOverlay (top-left card) and the strain window's ADVANCED section ---
+    "Mode": {
+        "zh_CN": "模式", "zh_TW": "模式", "ja": "モード", "ko": "모드",
+        "de": "Modus", "fr": "Mode", "es": "Modo",
+    },
+    "Accumulative": {
+        "zh_CN": "累积式", "zh_TW": "累積式", "ja": "累積式", "ko": "누적형",
+        "de": "Akkumulativ", "fr": "Cumulatif", "es": "Acumulativo",
+    },
+    "Incremental": {
+        "zh_CN": "增量式", "zh_TW": "增量式", "ja": "逐次式", "ko": "증분형",
+        "de": "Inkrementell", "fr": "Incrémental", "es": "Incremental",
+    },
+    "Incremental, every %1 frames": {
+        "zh_CN": "增量式，每 %1 帧",
+        "zh_TW": "增量式，每 %1 個影格",
+        "ja":    "逐次式、%1 フレームごと",
+        "ko":    "증분형, %1 프레임마다",
+        "de":    "Inkrementell, alle %1 Bilder",
+        "fr":    "Incrémental, toutes les %1 images",
+        "es":    "Incremental, cada %1 fotogramas",
+    },
+    "Custom reference frames": {
+        "zh_CN": "自定义参考帧",
+        "zh_TW": "自訂參考影格",
+        "ja":    "カスタム参照フレーム",
+        "ko":    "사용자 지정 참조 프레임",
+        "de":    "Benutzerdefinierte Referenzbilder",
+        "fr":    "Images de référence personnalisées",
+        "es":    "Fotogramas de referencia personalizados",
+    },
+    "ADVANCED": {
+        "zh_CN": "高级", "zh_TW": "進階", "ja": "詳細設定", "ko": "고급 설정",
+        "de": "ERWEITERT", "fr": "AVANCÉ", "es": "AVANZADO",
+    },
+
+    # --- StrainParamPanel: strain measure (one name with README and exports) ---
+    "Green-Lagrange": {
+        "zh_CN": "格林-拉格朗日应变",
+        "zh_TW": "格林-拉格朗日應變",
+        "ja":    "グリーン-ラグランジュひずみ",
+        "ko":    "그린-라그랑주 변형률",
+        "de":    "Green-Lagrange",
+        "fr":    "Green-Lagrange",
+        "es":    "Green-Lagrange",
+    },
+
+    # --- StrainParamPanel / StrainVizPanel: edge trim (wording follows pyALDIC; nodes -> points) ---
+    "Trim low-confidence edges": {
+        "zh_CN": "裁剪低置信度边缘",
+        "zh_TW": "裁剪低可信度邊緣",
+        "ja":    "低信頼度の縁をトリミング",
+        "ko":    "저신뢰도 가장자리 잘라내기",
+        "de":    "Ränder mit geringer Konfidenz beschneiden",
+        "fr":    "Rogner les bords peu fiables",
+        "es":    "Recortar bordes de baja confianza",
+    },
+    "Hides low-confidence strain along the edges of the region of interest, holes and cracks, where the edge "
+    "cuts the VSG window and the local fit becomes one-sided and unreliable.\n\n"
+    "• Coefficient × VSG half-width (Lg − 1) / 2 = width of the trimmed band.\n"
+    "• 0.00 = keep every point (no trimming).\n"
+    "• 0.70 = default.\n"
+    "• 1.00 = strictest (trim every point whose window touches an edge).\n\n"
+    "Trimmed points are empty (NaN) in exported data files.": {
+        "zh_CN": "隐藏感兴趣区域、孔洞和裂纹边缘处低置信度的应变：那里边缘截断了 VSG 窗口，局部拟合变成单边、不可靠。\n\n"
+                 "• 系数 × VSG 半宽 (Lg − 1) / 2 = 裁剪带的宽度。\n"
+                 "• 0.00 = 保留所有点（不裁剪）。\n"
+                 "• 0.70 = 默认值。\n"
+                 "• 1.00 = 最严格（窗口一旦触及边缘即裁剪）。\n\n"
+                 "被裁剪的点在导出的数据文件中为空 (NaN)。",
+        "zh_TW": "隱藏感興趣區域、孔洞與裂紋邊緣處低可信度的應變：那裡邊緣截斷了 VSG 視窗，局部擬合變成單邊、不可靠。\n\n"
+                 "• 係數 × VSG 半寬 (Lg − 1) / 2 = 裁剪帶的寬度。\n"
+                 "• 0.00 = 保留所有點（不裁剪）。\n"
+                 "• 0.70 = 預設值。\n"
+                 "• 1.00 = 最嚴格（視窗一旦觸及邊緣即裁剪）。\n\n"
+                 "被裁剪的點在匯出的資料檔案中為空 (NaN)。",
+        "ja":    "関心領域、穴、き裂の縁で、縁が VSG ウィンドウを切り取り、局所フィットが片側的で信頼できなくなる箇所の"
+                 "低信頼度のひずみを非表示にします。\n\n"
+                 "• 係数 × VSG の半幅 (Lg − 1) / 2 = トリミングされる帯の幅。\n"
+                 "• 0.00 = すべての点を保持（トリミングなし）。\n"
+                 "• 0.70 = 既定値。\n"
+                 "• 1.00 = 最も厳格（ウィンドウが縁に触れる点をすべてトリミング）。\n\n"
+                 "トリミングされた点は、エクスポートしたデータファイルでは空 (NaN) です。",
+        "ko":    "관심 영역, 구멍, 균열의 가장자리에서 가장자리가 VSG 창을 잘라 국소 피팅이 한쪽으로 치우쳐 신뢰할 수 없게 "
+                 "되는 곳의 저신뢰도 변형률을 숨깁니다.\n\n"
+                 "• 계수 × VSG 반폭 (Lg − 1) / 2 = 잘라내는 띠의 폭.\n"
+                 "• 0.00 = 모든 점 유지(잘라내기 없음).\n"
+                 "• 0.70 = 기본값.\n"
+                 "• 1.00 = 가장 엄격(창이 가장자리에 닿는 모든 점을 잘라냄).\n\n"
+                 "잘라낸 점은 내보낸 데이터 파일에서 비어 있습니다(NaN).",
+        "de":    "Blendet Dehnung mit geringer Konfidenz an den Rändern der Region of Interest, an Löchern und Rissen aus, "
+                 "wo der Rand das VSG-Fenster abschneidet und die lokale Anpassung einseitig und unzuverlässig wird.\n\n"
+                 "• Koeffizient × VSG-Halbbreite (Lg − 1) / 2 = Breite des beschnittenen Bands.\n"
+                 "• 0.00 = jeden Punkt behalten (kein Beschneiden).\n"
+                 "• 0.70 = Standard.\n"
+                 "• 1.00 = strengste Einstellung (beschneidet jeden Punkt, dessen Fenster einen Rand berührt).\n\n"
+                 "Beschnittene Punkte sind in exportierten Datendateien leer (NaN).",
+        "fr":    "Masque la déformation peu fiable le long des bords de la région d'intérêt, des trous et des fissures, "
+                 "là où le bord coupe la fenêtre VSG et où l'ajustement local devient unilatéral et peu fiable.\n\n"
+                 "• Coefficient × demi-largeur VSG (Lg − 1) / 2 = largeur de la bande rognée.\n"
+                 "• 0.00 = conserver tous les points (aucun rognage).\n"
+                 "• 0.70 = valeur par défaut.\n"
+                 "• 1.00 = le plus strict (rogne tout point dont la fenêtre touche un bord).\n\n"
+                 "Les points rognés sont vides (NaN) dans les fichiers de données exportés.",
+        "es":    "Oculta la deformación de baja confianza a lo largo de los bordes de la región de interés, los agujeros "
+                 "y las grietas, donde el borde corta la ventana VSG y el ajuste local se vuelve unilateral y poco "
+                 "fiable.\n\n"
+                 "• Coeficiente × semiancho VSG (Lg − 1) / 2 = ancho de la banda recortada.\n"
+                 "• 0.00 = conservar todos los puntos (sin recorte).\n"
+                 "• 0.70 = valor predeterminado.\n"
+                 "• 1.00 = más estricto (recorta todo punto cuya ventana toque un borde).\n\n"
+                 "Los puntos recortados están vacíos (NaN) en los archivos de datos exportados.",
+    },
+    "Trimmed: %1 points (%2%)": {
+        "zh_CN": "已裁剪：%1 个点 (%2%)",
+        "zh_TW": "已裁剪：%1 個點 (%2%)",
+        "ja":    "トリミング: %1 点 (%2%)",
+        "ko":    "잘라냄: 점 %1개 (%2%)",
+        "de":    "Beschnitten: %1 Punkte (%2%)",
+        "fr":    "Rognés : %1 points (%2%)",
+        "es":    "Recortados: %1 puntos (%2%)",
+    },
+    "Fill trimmed edges (display only)": {
+        "zh_CN": "填充裁剪的边缘（仅显示）",
+        "zh_TW": "填充裁剪的邊緣（僅顯示）",
+        "ja":    "トリミングされた縁を埋める（表示のみ）",
+        "ko":    "잘라낸 가장자리 채우기 (표시 전용)",
+        "de":    "Beschnittene Ränder füllen (nur Anzeige)",
+        "fr":    "Remplir les bords rognés (affichage uniquement)",
+        "es":    "Rellenar bordes recortados (solo visualización)",
+    },
+    "Fill the edge-trimmed strain band from the nearest reliable point of the same region. Affects the view and "
+    "exported images and animations; exported data files always keep the trimmed band as NaN.": {
+        "zh_CN": "用同一区域内最近的可靠点填充边缘被裁剪的应变带。影响显示以及导出的图像和动画；导出的数据文件始终将裁剪带保留为 NaN。",
+        "zh_TW": "以同一區域內最近的可靠點填充邊緣被裁剪的應變帶。影響顯示以及匯出的影像與動畫；匯出的資料檔案始終將裁剪帶保留為 NaN。",
+        "ja":    "縁がトリミングされたひずみ帯を、同じ領域内で最も近い信頼できる点の値で埋めます。表示とエクスポートした画像・"
+                 "アニメーションに影響します。エクスポートしたデータファイルでは、トリミングされた帯は常に NaN のままです。",
+        "ko":    "가장자리가 잘린 변형률 띠를 같은 영역에서 가장 가까운 신뢰할 수 있는 점의 값으로 채웁니다. 화면 표시와 내보낸 "
+                 "이미지 및 애니메이션에 영향을 줍니다. 내보낸 데이터 파일은 잘라낸 띠를 항상 NaN으로 유지합니다.",
+        "de":    "Füllt das randbeschnittene Dehnungsband mit dem nächstgelegenen zuverlässigen Punkt desselben Bereichs. "
+                 "Betrifft die Ansicht sowie exportierte Bilder und Animationen; exportierte Datendateien behalten das "
+                 "beschnittene Band immer als NaN.",
+        "fr":    "Remplit la bande de déformation rognée aux bords avec le point fiable le plus proche de la même région. "
+                 "Affecte l'affichage ainsi que les images et animations exportées ; les fichiers de données exportés "
+                 "conservent toujours la bande rognée en NaN.",
+        "es":    "Rellena la banda de deformación recortada en los bordes con el punto fiable más cercano de la misma "
+                 "región. Afecta a la vista y a las imágenes y animaciones exportadas; los archivos de datos exportados "
+                 "siempre mantienen la banda recortada como NaN.",
     },
 }
 

@@ -63,7 +63,7 @@ class ParamPanel(_WheelGuard):
         self._iters.setRange(1, 100)
         self._iters.setValue(state.iters)
         _row(self.tr("Iterations"), self._iters, layout,
-             self.tr("Refinement iterations of the network.\nThe paper evaluates every model with 20."))
+             self.tr("Refinement iterations of the network (default: 20)."))
 
         self._smooth = QDoubleSpinBox()
         self._smooth.setRange(0.0, 50.0)
@@ -74,8 +74,7 @@ class ParamPanel(_WheelGuard):
         self._smooth.setValue(state.smoothing_sigma)
         _row(self.tr("Smoothing σ"), self._smooth, layout,
              self.tr("Gaussian smoothing of the displacement (standard deviation).\n"
-                     "Off by default, as in the paper: smoothing lengthens the\n"
-                     "spatial resolution."))
+                     "Off by default: smoothing coarsens the spatial resolution."))
 
         self._device = QComboBox()
         self._device.addItem(self.tr("Automatic"), "auto")

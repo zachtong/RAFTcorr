@@ -82,9 +82,11 @@ def color_state(field_name: str):
 class VizExportHint:
     """Snapshot of the current window's visualisation settings.
 
-    ``hidden_bg_color``, ``fill_trimmed_edges`` and ``hide_untracked`` are accepted for the
-    callers ported from pyALDIC; RAFTcorr pictures always leave untracked points transparent and
-    draw on white when the background image is hidden.
+    ``fill_trimmed_edges`` is the strain window's "Fill trimmed edges (display only)": exported
+    images and animations fill the edge-trimmed strain band as the view does (data files never).
+    ``hidden_bg_color`` and ``hide_untracked`` are accepted for the callers ported from pyALDIC;
+    RAFTcorr pictures always leave untracked points transparent and draw on white when the
+    background image is hidden.
     """
     colormap: str = "turbo"
     auto_range: bool = True

@@ -625,7 +625,8 @@ class ExportDialog(QDialog):
             colormap=cfg.colormap, opacity=float(cfg.bg_alpha),
             vmin=float(cfg.vmin) if fixed else None, vmax=float(cfg.vmax) if fixed else None,
             range_mode=settings["range_mode"], colorbar=settings["colorbar"], title=False,
-            crop_to_roi=settings["crop"], dpi=int(settings["dpi"]))
+            crop_to_roi=settings["crop"], dpi=int(settings["dpi"]),
+            fill_trimmed_edges=bool(self._hint.fill_trimmed_edges))
 
     def _field_outputs(self, rows: list[FieldRow], settings: dict, prefix: str,
                        step: int = 1) -> tuple[list[jobs.FieldOutput], str]:

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFormLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -185,12 +186,14 @@ class RightSidebar(QWidget):
         # Its own row: sharing one with the checkbox clipped the label, and
         # German runs about half again as long again (R5). Disabled rather
         # than hidden while the image is shown, so the row does not jump.
-        fill_row = QHBoxLayout()
-        fill_row.setSpacing(4)
+        # One line as in pyALDIC when it fits; when the label does not ("Ausgeblendeter
+        # Hintergrund" in German) the combo box moves under it instead of clipping it.
+        fill_row = QFormLayout()
+        fill_row.setContentsMargins(0, 0, 0, 0)
+        fill_row.setHorizontalSpacing(4)
+        fill_row.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        fill_row.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         fill_lbl = QLabel(self.tr("Hidden background"))
-        fill_lbl.setMinimumWidth(64)
-        fill_lbl.setWordWrap(True)  # two lines rather than clipped ("Ausgeblendeter Hintergrund")
-        fill_row.addWidget(fill_lbl)
         self._hidden_bg_combo = QComboBox()
         for _lbl, _val in ((self.tr("White"), "white"),
                            (self.tr("Black"), "black"),
@@ -203,7 +206,7 @@ class RightSidebar(QWidget):
         self._hidden_bg_combo.setEnabled(False)
         self._hidden_bg_combo.currentIndexChanged.connect(
             self._on_hidden_bg_changed)
-        fill_row.addWidget(self._hidden_bg_combo, 1)
+        fill_row.addRow(fill_lbl, self._hidden_bg_combo)
         layout.addLayout(fill_row)
 
         self._hide_untracked_cb = QCheckBox(self.tr("Hide untracked regions"))

@@ -37,6 +37,7 @@ class FrameStyle:
     title: bool = True
     crop_to_roi: bool = False
     dpi: int = 150
+    fill_trimmed_edges: bool = False   # fill the edge-trimmed strain band (pictures only)
 
 
 def compose(provider: FieldProvider, images: Any, frame: int, style: FrameStyle, units: Units,
@@ -57,10 +58,11 @@ def compose(provider: FieldProvider, images: Any, frame: int, style: FrameStyle,
         bg = grey_rgba(np.asarray(images[k_bg]))
     if not provider.has_frame(style.field, frame):
         return bg
+    fill = style.fill_trimmed_edges
     if style.configuration == "deformed":
-        vals, pl = provider.deformed(style.field, frame)
+        vals, pl = provider.deformed(style.field, frame, fill_trimmed=fill)
     else:
-        vals, pl = provider.values(style.field, frame)
+        vals, pl = provider.values(style.field, frame, fill_trimmed=fill)
         if not spec.is_strain:
             vals = np.where(provider.series.mask, vals, np.nan)
     vals = vals * units.factor(spec)

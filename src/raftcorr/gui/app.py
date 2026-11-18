@@ -905,6 +905,11 @@ def main() -> None:
     app.setStyle("Fusion")  # required for QSS to work correctly
     theme_manager(app).set_theme(startup_theme(), persist=False)
 
+    from raftcorr.gui.gc_guard import MainThreadGarbageCollector
+
+    # Workers must never destroy Qt objects: the cyclic collector runs in this thread only.
+    app._raftcorr_gc = MainThreadGarbageCollector(parent=app)  # type: ignore[attr-defined]
+
     from raftcorr.gui.support.matplotlib_fonts import configure_matplotlib_fonts
     from raftcorr.i18n import LanguageManager
 

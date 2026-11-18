@@ -4,17 +4,18 @@ Edits a :class:`raftcorr.config.StrainConfig` (RAFTcorr's virtual strain
 gauge, VSG):
 
 * ``measure`` -- strain type: infinitesimal, Eulerian-Almansi or
-  Green-Lagrangian;
+  Green-Lagrange;
 * ``gauge_px`` -- VSG size ``Lg`` (odd, px): side of the square window of
   each local fit;
 * ``poly_order`` -- fit: plane (1st order) or quadratic (2nd order);
 * ``weighting`` -- uniform or Gaussian (``gaussian_sigma``; Auto = Lg / 4);
 * ``step`` -- output spacing of the strain points (px);
 * ``smoothing_sigma`` -- Gaussian pre-smoothing of the displacement (px);
-* ``connectivity_aware`` -- never fit a gauge across a crack or a hole.
+* ``connectivity_aware`` -- never fit a gauge across a crack or a hole;
+* ``edge_trim_alpha`` -- "Trim low-confidence edges" (pyALDIC): the band of
+  width ``alpha * (Lg - 1) / 2`` along every edge is left empty, with a
+  readout of how many points the current frame loses.
 
-"Paper settings" restores :data:`raftcorr.config.PAPER_STRAIN`
-(Green-Lagrangian, unweighted plane fit, Lg = 41 px, no smoothing).
 Fields the panel does not show (``condition_max``, ``min_coverage``) keep the
 values of the configuration last loaded with :meth:`set_config`.
 
@@ -33,17 +34,18 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QSpinBox,
     QWidget,
 )
 
-from raftcorr.config import PAPER_STRAIN, StrainConfig
+from raftcorr.config import StrainConfig
+from raftcorr.gui.theme_manager import themed
 from raftcorr.gui.widgets.double_spin import LocaleSafeDoubleSpinBox
 from raftcorr.gui.widgets.info_icon import InfoIcon
+from raftcorr.i18n import tr_args
 
 #: Strain measures in combo order (pyALDIC's order: infinitesimal, Eulerian,
-#: Green-Lagrangian).
+#: Green-Lagrange).
 _MEASURES: tuple[str, ...] = ("infinitesimal", "euler_almansi", "green_lagrange")
 _WEIGHTINGS: tuple[str, ...] = ("uniform", "gaussian")
 _ORDERS: tuple[int, ...] = (1, 2)
@@ -70,7 +72,7 @@ class StrainParamPanel(QWidget):
     """Compose measure / VSG / fit / weighting / smoothing editors with a dirty flag."""
 
     params_dirty = Signal()
-    #: The configuration in the controls changed (by the user or Paper settings).
+    #: The configuration in the controls changed (edited by the user).
     config_changed = Signal(object)
 
     def __init__(self, config: StrainConfig | None = None, parent: QWidget | None = None) -> None:
@@ -88,7 +90,7 @@ class StrainParamPanel(QWidget):
         self._method_combo.setToolTip(self.tr(
             "Polynomial fitted to each displacement component over the VSG "
             "window. Its slopes at the centre are the displacement gradients.\n"
-            "• Plane fitting (1st order): the standard VSG (paper setting).\n"
+            "• Plane fitting (1st order): the standard VSG (default).\n"
             "• Quadratic fitting (2nd order): follows strain gradients inside "
             "the window better, at the cost of more noise."
         ))
@@ -109,16 +111,51 @@ class StrainParamPanel(QWidget):
         )
         layout.addRow(_label_with_info(self.tr("VSG size"), vsg_tip), self._vsg_spin)
 
+        # --- Trim low-confidence edges (pyALDIC's edge trim) ---
+        # Points whose VSG window an edge cuts close to the centre get a
+        # one-sided fit; alpha sets the width of the band left empty:
+        # alpha * (Lg - 1) / 2. 0 keeps every point, 1 is the strictest.
+        self._edge_trim_spin = LocaleSafeDoubleSpinBox()
+        self._edge_trim_spin.setRange(0.0, 1.0)
+        self._edge_trim_spin.setSingleStep(0.05)
+        self._edge_trim_spin.setDecimals(2)
+        edge_tip = self.tr(
+            "Hides low-confidence strain along the edges of the region of "
+            "interest, holes and cracks, where the edge cuts the VSG window "
+            "and the local fit becomes one-sided and unreliable.\n\n"
+            "• Coefficient × VSG half-width (Lg − 1) / 2 = width of the "
+            "trimmed band.\n"
+            "• 0.00 = keep every point (no trimming).\n"
+            "• 0.70 = default.\n"
+            "• 1.00 = strictest (trim every point whose window touches an edge).\n\n"
+            "Trimmed points are empty (NaN) in exported data files."
+        )
+        layout.addRow(_label_with_info(self.tr("Trim low-confidence edges"), edge_tip), self._edge_trim_spin)
+
+        # Live readout: how many points the trim removes on the shown frame,
+        # set by the window after each strain render. Informational only.
+        self._edge_trim_readout = QLabel("")
+        themed(self._edge_trim_readout, "color: {TEXT_MUTED}; font-size: 10px; padding-left: 4px;")
+        self._edge_trim_readout.setVisible(False)
+        layout.addRow("", self._edge_trim_readout)
+
+        # --- Advanced options: a section of their own in the window, collapsed by default
+        # (the main window's ADVANCED section does the same for the tracking options) ---
+        self._advanced = QWidget()
+        adv = QFormLayout(self._advanced)
+        adv.setContentsMargins(0, 0, 0, 0)
+        adv.setSpacing(6)
+
         # --- Weighting ---
         self._weight_combo = QComboBox()
         self._weight_combo.addItem(self.tr("Uniform"), "uniform")
         self._weight_combo.addItem(self.tr("Gaussian"), "gaussian")
         self._weight_combo.setToolTip(self.tr(
             "Weight of the points inside the VSG window: all equal (uniform, "
-            "paper setting), or decreasing with the distance from the centre "
+            "default), or decreasing with the distance from the centre "
             "(Gaussian)."
         ))
-        layout.addRow(self.tr("Weighting"), self._weight_combo)
+        adv.addRow(self.tr("Weighting"), self._weight_combo)
 
         # --- Gaussian sigma (Gaussian weighting only; 0 = Auto = Lg / 4) ---
         self._sigma_spin = LocaleSafeDoubleSpinBox()
@@ -131,7 +168,7 @@ class StrainParamPanel(QWidget):
             "Standard deviation of the Gaussian weight. Auto uses a quarter "
             "of the VSG size."
         ))
-        layout.addRow(self.tr("Gaussian σ"), self._sigma_spin)
+        adv.addRow(self.tr("Gaussian σ"), self._sigma_spin)
 
         # --- Output spacing ---
         self._step_spin = QSpinBox()
@@ -141,7 +178,7 @@ class StrainParamPanel(QWidget):
             "Spacing of the strain points: 1 computes strain at every pixel; "
             "larger values are faster and lighter for long sequences."
         ))
-        layout.addRow(self.tr("Output spacing"), self._step_spin)
+        adv.addRow(self.tr("Output spacing"), self._step_spin)
 
         # --- Displacement pre-smoothing ---
         self._smooth_spin = LocaleSafeDoubleSpinBox()
@@ -153,9 +190,9 @@ class StrainParamPanel(QWidget):
         self._smooth_spin.setToolTip(self.tr(
             "Gaussian smoothing (σ in pixels) of the displacement before the "
             "fit. Off (0) differentiates the measured displacement as it is "
-            "(paper setting)."
+            "(default)."
         ))
-        layout.addRow(self.tr("Displacement smoothing"), self._smooth_spin)
+        adv.addRow(self.tr("Displacement smoothing"), self._smooth_spin)
 
         # --- Crack-aware fitting ---
         self._crack_check = QCheckBox(self.tr("Never fit across cracks or holes"))
@@ -165,30 +202,20 @@ class StrainParamPanel(QWidget):
             "regions."
         ))
         # Full-width row: the sentence does not fit in the field column.
-        layout.addRow(self._crack_check)
+        adv.addRow(self._crack_check)
 
         # --- Strain type ---
         self._type_combo = QComboBox()
         self._type_combo.addItem(self.tr("Infinitesimal"), "infinitesimal")
         self._type_combo.addItem(self.tr("Eulerian"), "euler_almansi")
-        self._type_combo.addItem(self.tr("Green-Lagrangian"), "green_lagrange")
+        self._type_combo.addItem(self.tr("Green-Lagrange"), "green_lagrange")
         self._type_combo.setToolTip(self.tr(
             "Strain measure from the deformation gradient F = I + ∇u:\n"
             "• Infinitesimal: (∇u + ∇uᵀ) / 2 (small strains only).\n"
             "• Eulerian (Euler-Almansi): (I − (F Fᵀ)⁻¹) / 2.\n"
-            "• Green-Lagrangian: (Fᵀ F − I) / 2 (paper setting)."
+            "• Green-Lagrange: (Fᵀ F − I) / 2 (default)."
         ))
         layout.addRow(self.tr("Strain type"), self._type_combo)
-
-        # --- Paper settings ---
-        self._paper_btn = QPushButton(self.tr("Paper settings"))
-        self._paper_btn.setToolTip(self.tr(
-            "Green-Lagrangian strain, unweighted plane fit, VSG 41 px, every "
-            "pixel, no smoothing, never across cracks (the settings of the "
-            "RAFTcorr paper)."
-        ))
-        self._paper_btn.clicked.connect(self.apply_paper_settings)
-        layout.addRow("", self._paper_btn)
 
         self._dirty = False
         self._loading = False
@@ -197,6 +224,7 @@ class StrainParamPanel(QWidget):
         # Wire dirty propagation
         self._method_combo.currentIndexChanged.connect(self._on_edited)
         self._vsg_spin.valueChanged.connect(self._on_vsg_value_changed)
+        self._edge_trim_spin.valueChanged.connect(self._on_edited)
         self._weight_combo.currentIndexChanged.connect(self._on_weighting_changed)
         self._sigma_spin.valueChanged.connect(self._on_edited)
         self._step_spin.valueChanged.connect(self._on_edited)
@@ -222,29 +250,27 @@ class StrainParamPanel(QWidget):
             gaussian_sigma=sigma if sigma > 0 else None,
             smoothing_sigma=float(self._smooth_spin.value()),
             connectivity_aware=self._crack_check.isChecked(),
+            edge_trim_alpha=round(float(self._edge_trim_spin.value()), 2),
         )
+
+    def advanced_widget(self) -> QWidget:
+        """Weighting, Gaussian σ, output spacing, displacement smoothing and the crack-aware
+        fit, for the window's ADVANCED section (part of this panel's configuration)."""
+        return self._advanced
 
     def set_config(self, config: StrainConfig) -> None:
         """Show *config* without marking the panel dirty or emitting signals."""
         self._base = config
         self._show_config(config)
 
-    def apply_paper_settings(self) -> None:
-        """Set every control to :data:`PAPER_STRAIN` (dirty if anything changed)."""
-        before = self.get_config()
-        paper = replace(PAPER_STRAIN, condition_max=self._base.condition_max,
-                        min_coverage=self._base.min_coverage)
-        self._show_config(paper)
-        if self.get_config() != before:
-            self._mark_dirty()
-
-    def is_paper_settings(self) -> bool:
-        """True when the controls hold the paper's settings."""
-        c = self.get_config()
-        p = PAPER_STRAIN
-        return (c.measure, c.gauge_px, c.weighting, c.poly_order, c.step, c.smoothing_sigma,
-                c.connectivity_aware) == (p.measure, p.gauge_px, p.weighting, p.poly_order, p.step,
-                                          p.smoothing_sigma, p.connectivity_aware)
+    def set_trim_readout(self, n_trimmed: int, n_total: int) -> None:
+        """Show 'Trimmed: N points (M%)' for the shown frame; hidden when *n_total* <= 0."""
+        if n_total <= 0:
+            self._edge_trim_readout.setVisible(False)
+            return
+        pct = 100.0 * n_trimmed / n_total
+        self._edge_trim_readout.setText(tr_args(self.tr("Trimmed: %1 points (%2%)"), n_trimmed, f"{pct:.0f}"))
+        self._edge_trim_readout.setVisible(True)
 
     def is_dirty(self) -> bool:
         """Return True if any parameter changed since the last
@@ -260,7 +286,7 @@ class StrainParamPanel(QWidget):
     # ------------------------------------------------------------------
 
     def _controls(self) -> tuple[QWidget, ...]:
-        return (self._method_combo, self._vsg_spin, self._weight_combo, self._sigma_spin,
+        return (self._method_combo, self._vsg_spin, self._edge_trim_spin, self._weight_combo, self._sigma_spin,
                 self._step_spin, self._smooth_spin, self._crack_check, self._type_combo)
 
     def _show_config(self, c: StrainConfig) -> None:
@@ -270,6 +296,7 @@ class StrainParamPanel(QWidget):
         try:
             self._method_combo.setCurrentIndex(max(0, self._method_combo.findData(int(c.poly_order))))
             self._vsg_spin.setValue(int(c.gauge_px))
+            self._edge_trim_spin.setValue(float(c.edge_trim_alpha))
             self._weight_combo.setCurrentIndex(max(0, self._weight_combo.findData(c.weighting)))
             self._sigma_spin.setValue(float(c.gaussian_sigma) if c.gaussian_sigma else 0.0)
             self._step_spin.setValue(int(c.step))

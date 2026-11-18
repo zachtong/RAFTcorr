@@ -29,7 +29,7 @@ import operator
 import os
 import zipfile
 import zlib
-from dataclasses import dataclass, field, fields
+from dataclasses import MISSING, dataclass, field, fields
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -54,6 +54,7 @@ _DOCUMENT = "project.json"
 _COMPRESSLEVEL = 1  # displacement floats barely shrink further at higher levels, saving gets slower
 _SERIES_ENTRIES = {"u": "series/u.npy", "v": "series/v.npy", "mask": "series/mask.npy", "done": "series/done.npy"}
 _STRAIN_DONE = "strain/done.npy"
+_STRAIN_TRIMMED = "strain/trimmed.npy"
 _CORRUPT = (KeyError, ValueError, TypeError, IndexError, EOFError, zipfile.BadZipFile, zlib.error)
 
 
@@ -181,6 +182,7 @@ def _strain_document(strain: StrainSeries) -> dict[str, Any]:
         "settings": strain.settings.to_dict(),
         "components": [{"name": name, "entry": _component_entry(i)} for i, name in enumerate(strain.names)],
         "done": _STRAIN_DONE,
+        "trimmed": None if strain.trimmed is None else _STRAIN_TRIMMED,
     }
 
 
@@ -240,6 +242,8 @@ def _write_strain(zf: zipfile.ZipFile, strain: StrainSeries, cb: Callbacks, offs
         write_npy_entry(zf, _component_entry(i), arr.shape, arr.dtype, _frames(arr, cb, steps, total, name))
         steps += int(arr.shape[0])
     _write_array(zf, _STRAIN_DONE, np.asarray(strain.done))
+    if strain.trimmed is not None:
+        _write_array(zf, _STRAIN_TRIMMED, np.asarray(strain.trimmed, dtype=bool))
 
 
 # -- load ---------------------------------------------------------------------------------------
@@ -342,12 +346,20 @@ def _read_strain(zf: zipfile.ZipFile, d: dict[str, Any] | None) -> StrainSeries 
         components=components,
         done=read_npy_entry(zf, d["done"]),
         settings=_strain_settings(d["settings"]),
+        trimmed=read_npy_entry(zf, d["trimmed"]).astype(bool) if d.get("trimmed") else None,
     )
 
 
 def _strain_settings(d: dict[str, Any]) -> StrainSettings:
-    """StrainSettings from its ``to_dict`` (unknown keys ignored, missing keys are an error)."""
-    return StrainSettings(**{f.name: d[f.name] for f in fields(StrainSettings)})
+    """StrainSettings from its ``to_dict``: unknown keys are ignored, a missing key is an error
+    unless the field has a default (``edge_trim_alpha``, added after the first 2.0 projects)."""
+    out: dict[str, Any] = {}
+    for f in fields(StrainSettings):
+        if f.name in d:
+            out[f.name] = d[f.name]
+        elif f.default is MISSING:
+            raise KeyError(f.name)
+    return StrainSettings(**out)
 
 
 def _resolve_image_folder(doc: dict[str, Any], project_path: Path) -> tuple[str | None, tuple[str, ...]]:

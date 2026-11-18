@@ -18,6 +18,7 @@ import numpy as np
 
 from ..engine.mapping import inverse_map, sample_bilinear
 from ..post.strain import COMPONENT_LABELS, COMPONENTS
+from ..post.strain import fill_trimmed as fill_trimmed_band
 from ..results import DisplacementSeries, StrainSeries
 
 
@@ -104,7 +105,7 @@ class FieldProvider:
         self.strain = strain
         self._cache_size = cache_size
         self._inv: OrderedDict[int, tuple[np.ndarray, np.ndarray, tuple[int, int, int, int]]] = OrderedDict()
-        self._def: OrderedDict[tuple[str, int], np.ndarray] = OrderedDict()
+        self._def: OrderedDict[tuple[str, int, bool], np.ndarray] = OrderedDict()
 
     def with_strain(self, strain: StrainSeries | None) -> "FieldProvider":
         out = FieldProvider(self.series, strain, self._cache_size)
@@ -125,7 +126,12 @@ class FieldProvider:
         return bool(self.series.done[frame])
 
     # -- reference configuration ------------------------------------------------------------------
-    def values(self, key: str, frame: int) -> tuple[np.ndarray, Placement]:
+    def values(self, key: str, frame: int, fill_trimmed: bool = False) -> tuple[np.ndarray, Placement]:
+        """Values of a field in the reference configuration.
+
+        *fill_trimmed* fills the edge-trimmed band of a strain field from its reliable points
+        (pyALDIC's "Fill trimmed edges"), for pictures only; it changes nothing else.
+        """
         s = self.series
         g = s.grid
         if key == "u":
@@ -144,7 +150,11 @@ class FieldProvider:
             return val, Placement(g.x0, g.y0)
         if self.strain is None or key not in self.strain.components:
             raise KeyError(f"field {key!r} is not available")
-        return self.strain.components[key][frame], Placement(g.x0, g.y0, self.strain.step)
+        vals = self.strain.components[key][frame]
+        trimmed = self.strain.trimmed_in(frame) if fill_trimmed else None
+        if trimmed is not None:
+            vals = fill_trimmed_band(vals, trimmed)
+        return vals, Placement(g.x0, g.y0, self.strain.step)
 
     def _velocity(self, frame: int) -> tuple[np.ndarray, np.ndarray]:
         s = self.series
@@ -178,13 +188,13 @@ class FieldProvider:
             self._inv.popitem(last=False)
         return inv
 
-    def deformed(self, key: str, frame: int) -> tuple[np.ndarray, Placement]:
+    def deformed(self, key: str, frame: int, fill_trimmed: bool = False) -> tuple[np.ndarray, Placement]:
         """Values over the deformed frame's window (NaN where no material point lands)."""
-        ck = (key, frame)
+        ck = (key, frame, bool(fill_trimmed))
         X, Y, (x0, y0, _x1, _y1) = self.inverse(frame)
         hit = self._def.get(ck)
         if hit is None:
-            vals, pl = self.values(key, frame)
+            vals, pl = self.values(key, frame, fill_trimmed=fill_trimmed)
             if X.size == 0:
                 hit = np.full((0, 0), np.nan, dtype=np.float32)
             else:

@@ -110,6 +110,7 @@ class StrainConfig:
     connectivity_aware: bool = True       # never fit a gauge across a crack / hole
     condition_max: float = 1000.0         # reject ill-conditioned fits (sparse gauges)
     min_coverage: float = 0.25            # fraction of the gauge that must hold valid points
+    edge_trim_alpha: float = 0.70         # trim points within alpha * (Lg - 1) / 2 of an edge (pyALDIC)
 
     def __post_init__(self) -> None:
         if self.measure not in STRAIN_MEASURES:
@@ -124,6 +125,8 @@ class StrainConfig:
             raise ValueError("step must be >= 1")
         if not 0.0 < self.min_coverage <= 1.0:
             raise ValueError("min_coverage must be in (0, 1]")
+        if not 0.0 <= self.edge_trim_alpha <= 1.0:
+            raise ValueError("edge_trim_alpha must be in [0, 1]")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

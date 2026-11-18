@@ -16,10 +16,10 @@ Exposes:
   where the material points are in the current frame (through the inverse
   map of :class:`raftcorr.viz.fields.FieldProvider`) and loads the deformed
   frame image as the background.
+* **Fill trimmed edges (display only)** -- fill the edge-trimmed strain band
+  (see "Trim low-confidence edges" in the parameter panel) from the nearest
+  reliable point, in the view and in exported pictures; off by default.
 * **Hide untracked regions** -- leave points without a result transparent.
-
-pyALDIC's "Fill trimmed edges" toggle is gone: RAFTcorr's strain gauge has no
-edge-trim band (a window with too few valid points simply has no value).
 """
 
 from __future__ import annotations
@@ -135,6 +135,18 @@ class StrainVizPanel(QWidget):
         self._opacity_slider.setValue(70)
         layout.addRow(self.tr("Opacity"), self._opacity_slider)
 
+        # --- Fill trimmed edges (display + image export only) ---
+        # The edge-trimmed strain band is NaN in the data; this re-fills it in
+        # pictures from the nearest reliable point of the same region.
+        self._fill_edges_check = QCheckBox(self.tr("Fill trimmed edges (display only)"))
+        self._fill_edges_check.setChecked(False)
+        self._fill_edges_check.setToolTip(self.tr(
+            "Fill the edge-trimmed strain band from the nearest reliable point "
+            "of the same region. Affects the view and exported images and "
+            "animations; exported data files always keep the trimmed band as NaN."
+        ))
+        layout.addRow(self.tr("Edges"), self._fill_edges_check)
+
         # --- Hide untracked regions (display + image export) ---
         self._hide_untracked_check = QCheckBox(self.tr("Hide untracked regions"))
         self._hide_untracked_check.setChecked(True)
@@ -144,7 +156,8 @@ class StrainVizPanel(QWidget):
             "with the nearest value inside the region of interest (reference "
             "frame view). Data files always keep NaN there."
         ))
-        layout.addRow(self.tr("Edges"), self._hide_untracked_check)
+        # Field column, under "Fill trimmed edges" (the same group of edge options).
+        layout.addRow("", self._hide_untracked_check)
 
         # Wire signals
         self._cmap_combo.currentIndexChanged.connect(self._emit_changed)
@@ -156,6 +169,7 @@ class StrainVizPanel(QWidget):
         self._background_check.toggled.connect(self._on_background_toggled)
         self._hidden_bg_combo.currentIndexChanged.connect(self._emit_changed)
         self._hide_untracked_check.toggled.connect(self._emit_changed)
+        self._fill_edges_check.toggled.connect(self._emit_changed)
 
     # ------------------------------------------------------------------
     # Public API
@@ -173,6 +187,7 @@ class StrainVizPanel(QWidget):
             "show_background": self._background_check.isChecked(),
             "hidden_bg_color": str(self._hidden_bg_combo.currentData()),
             "hide_untracked": self._hide_untracked_check.isChecked(),
+            "fill_trimmed_edges": self._fill_edges_check.isChecked(),
         }
 
     def set_show_deformed(self, deformed: bool) -> None:

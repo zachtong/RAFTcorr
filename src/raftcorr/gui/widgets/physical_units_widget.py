@@ -49,8 +49,7 @@ class PhysicalUnitsWidget(QWidget):
         layout = QFormLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
-        # A label that does not fit beside its field goes above it instead of being clipped
-        # ("Pixelgröße", "像素尺寸" next to the size, unit and "/ px" in a 280 px sidebar).
+        # Beside its field when it fits; above it when a translation does not fit (no clipping).
         layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
 
         # Toggle
@@ -66,6 +65,9 @@ class PhysicalUnitsWidget(QWidget):
         self._pixel_spin.setValue(self._state.pixel_size)
         self._pixel_spin.setEnabled(self._state.use_physical_units)
         self._pixel_spin.setToolTip(self.tr("Physical size of one image pixel"))
+        # Its size hint is sized for the largest value (1e9): let it narrow so that the label,
+        # the unit and "/ px" share one row, as in pyALDIC, in every language.
+        self._pixel_spin.setMinimumWidth(64)
 
         self._unit_combo = QComboBox()
         for u in _UNIT_OPTIONS:
@@ -94,6 +96,7 @@ class PhysicalUnitsWidget(QWidget):
         self._fps_spin.setSuffix(" fps")
         self._fps_spin.setEnabled(self._state.use_physical_units)
         self._fps_spin.setToolTip(self.tr("Acquisition frame rate (used for velocity field)"))
+        self._fps_spin.setMinimumWidth(64)  # sized for 1e9 otherwise; keeps the label beside it
         layout.addRow(self.tr("Frame rate"), self._fps_spin)
 
         # Computed unit info label

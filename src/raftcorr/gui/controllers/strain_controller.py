@@ -193,7 +193,7 @@ class StrainWorker(QThread):
 
 
 _MEASURE_NAMES: dict[str, str] = {
-    "green_lagrange": "Green-Lagrangian",
+    "green_lagrange": "Green-Lagrange",
     "infinitesimal": "infinitesimal",
     "euler_almansi": "Eulerian-Almansi",
 }

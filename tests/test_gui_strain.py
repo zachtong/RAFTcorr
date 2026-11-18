@@ -312,7 +312,7 @@ def test_compute_button_runs_worker(window, state, qtbot):
     np.testing.assert_allclose(np.nanmedian(state.strain_results.components["exx"][3]), exp, atol=1e-6)
     # the strain window offers the settings for an export header
     params = window._strain_parameters()
-    assert params["strain measure"] == "Green-Lagrangian" and params["strain window"].startswith("41 px")
+    assert params["strain measure"] == "Green-Lagrange" and params["strain window"].startswith("41 px")
 
 
 def test_cancel_keeps_previous_strain(window, state, qtbot, monkeypatch):
@@ -412,30 +412,6 @@ def test_param_panel_round_trip_and_odd_gauge(qapp):
     assert not panel._sigma_spin.isEnabled()
 
 
-def test_paper_settings_button(window, state):
-    from dataclasses import replace
-
-    from raftcorr.config import PAPER_STRAIN
-
-    panel = window.param_panel()
-    panel._vsg_spin.setValue(21)
-    panel._type_combo.setCurrentIndex(panel._type_combo.findData("infinitesimal"))
-    panel._method_combo.setCurrentIndex(panel._method_combo.findData(2))
-    assert state.strain_config.gauge_px == 21 and state.strain_config.measure == "infinitesimal"
-    assert not panel.is_paper_settings()
-    window.trigger_compute()
-    assert not window.is_stale()
-    panel._paper_btn.click()
-    assert panel.get_config() == replace(PAPER_STRAIN)
-    assert panel.is_paper_settings()
-    assert state.strain_config == PAPER_STRAIN
-    assert window.is_stale()
-    assert "Params changed" in window._stale_label.text()
-    window.trigger_compute()
-    assert not window.is_stale() and window._stale_label.text() == ""
-    assert state.strain_results.settings.gauge_px == PAPER_STRAIN.gauge_px
-
-
 def test_project_settings_reach_the_panel(window, state):
     from raftcorr.config import StrainConfig
 
@@ -443,6 +419,60 @@ def test_project_settings_reach_the_panel(window, state):
     state.params_changed.emit()  # what opening a project does
     assert window.param_panel().get_config() == state.strain_config
     assert not window.is_stale()
+
+
+# ======================================================================================= edge trim
+def test_edge_trim_control_defaults_and_round_trip(qapp):
+    from raftcorr.config import StrainConfig
+    from raftcorr.gui.widgets.strain_param_panel import StrainParamPanel
+
+    panel = StrainParamPanel()
+    assert panel._edge_trim_spin.value() == pytest.approx(0.70)
+    assert panel.get_config().edge_trim_alpha == 0.70
+    panel.set_config(StrainConfig(edge_trim_alpha=0.35))
+    assert panel.get_config().edge_trim_alpha == 0.35 and not panel.is_dirty()
+    panel._edge_trim_spin.setValue(0.0)
+    assert panel.get_config().edge_trim_alpha == 0.0 and panel.is_dirty()
+
+
+def test_trimmed_band_is_empty_and_counted(window, state):
+    window.set_strain_frame(2)
+    window.set_current_field("strain_exx")
+    window.trigger_compute()
+    strain = state.strain_results
+    assert strain.settings.edge_trim_alpha == 0.70 and strain.trimmed is not None
+    n_trim = int(strain.trimmed[2].sum())
+    n_total = n_trim + int(np.isfinite(strain.components["exx"][2]).sum())
+    assert 0 < n_trim < n_total
+    readout = window.param_panel()._edge_trim_readout
+    assert readout.isVisibleTo(window)
+    assert readout.text() == f"Trimmed: {n_trim} points ({100 * n_trim / n_total:.0f}%)"
+    exp = expected_strain(2, "green_lagrange")["exx"]
+    edge = (GX0 + 5.0, GY0 + GH / 2)                # 5 px from the grid edge: inside the 14 px band
+    assert window.shown_field().value_at(*edge) is None
+    np.testing.assert_allclose(window.shown_field().value_at(GX0 + GW / 2, GY0 + GH / 2), exp, atol=1e-6)
+
+
+def test_fill_trimmed_edges_fills_the_view_only(window, state):
+    window.set_strain_frame(2)
+    window.set_current_field("strain_exx")
+    window.trigger_compute()
+    exp = expected_strain(2, "green_lagrange")["exx"]
+    edge = (GX0 + 5.0, GY0 + GH / 2)
+    window._viz_panel._fill_edges_check.setChecked(True)
+    assert window._viz_panel.get_state()["fill_trimmed_edges"] is True
+    np.testing.assert_allclose(window.shown_field().value_at(*edge), exp, atol=1e-6)   # uniform field
+    assert np.isnan(state.strain_results.components["exx"][2][state.strain_results.trimmed[2]]).all()
+    window._viz_panel._fill_edges_check.setChecked(False)
+    assert window.shown_field().value_at(*edge) is None
+
+
+def test_no_trim_hides_the_readout(window, state):
+    panel = window.param_panel()
+    panel._edge_trim_spin.setValue(0.0)
+    window.trigger_compute()
+    assert state.strain_results.trimmed is None
+    assert not panel._edge_trim_readout.isVisibleTo(window)
 
 
 # ========================================================================================== display
@@ -464,7 +494,8 @@ def test_every_component_renders(window, state):
     assert window._colorbar._label.endswith("(deg)")
     window.set_current_field("strain_eyy")
     exp = expected_strain(2, "green_lagrange")["eyy"]
-    np.testing.assert_allclose(window.shown_field().value_at(GX0 + 10.0, GY0 + 10.0), exp, atol=1e-6)
+    # the centre: points within 0.7 of the gauge half-width of the grid edge are trimmed
+    np.testing.assert_allclose(window.shown_field().value_at(GX0 + GW / 2, GY0 + GH / 2), exp, atol=1e-6)
 
 
 def test_displacement_and_velocity_before_compute(window, state):
@@ -673,3 +704,18 @@ def test_close_disconnects_from_state(window, state):
     assert not window._state_connected
     window.show()
     assert window._state_connected
+
+
+def test_less_used_fit_options_sit_in_a_folded_advanced_section(window, state):
+    panel = window.param_panel()
+    section = window._advanced_section
+    adv = panel.advanced_widget()
+    assert not section.expanded                       # folded by default
+    for control in (panel._weight_combo, panel._sigma_spin, panel._step_spin, panel._smooth_spin,
+                    panel._crack_check):
+        assert adv.isAncestorOf(control) and section.isAncestorOf(control)
+    for control in (panel._method_combo, panel._vsg_spin, panel._edge_trim_spin, panel._type_combo):
+        assert panel.isAncestorOf(control) and not adv.isAncestorOf(control)
+    panel._step_spin.setValue(3)                      # still part of the panel's configuration
+    assert panel.get_config().step == 3 and panel.is_dirty()
+    assert panel._type_combo.currentText() == "Green-Lagrange"
