@@ -52,10 +52,11 @@ def describe(flagged: list[int], medians: np.ndarray, accumulative: bool) -> str
     first = flagged[0]
     before = medians[[k for k in range(1, first) if np.isfinite(medians[k])]]
     ref = float(before.max()) if before.size else float("nan")
-    advice = ("the displacement from frame 0 may exceed the model's reach: try incremental tracking "
+    advice = ("the displacement from frame 1 may exceed the model's reach: try incremental tracking "
               "or a model with a larger s" if accumulative else
               "the step between reference frames may exceed the model's reach: use more reference "
               "frames or a model with a larger s")
-    frames = ", ".join(str(k) for k in flagged[:12]) + (" ..." if len(flagged) > 12 else "")
-    return (f"tracking quality drops from frame {first} on (intensity residual {medians[first]:.1f} vs "
+    # frame numbers as the application shows them (1-based)
+    frames = ", ".join(str(k + 1) for k in flagged[:12]) + (" ..." if len(flagged) > 12 else "")
+    return (f"tracking quality drops from frame {first + 1} on (intensity residual {medians[first]:.1f} vs "
             f"{ref:.1f} grey levels before; frames {frames}); {advice}")

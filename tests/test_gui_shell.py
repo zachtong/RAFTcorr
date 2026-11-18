@@ -277,11 +277,22 @@ def test_run_publishes_results_and_quality_warning(win, tmp_path, qtbot, fake_ru
     st.set_frame_roi(0, np.ones((H, W), bool))
     warnings = []
     st.run_warning.connect(lambda *a: warnings.append(a))
-    fake_run.notes = ("tracking quality drops from frame 2 on (intensity residual 9.0 vs 3.0 grey levels before)",)
+    from dataclasses import replace
+
+    series = fake_run.series
+    res = np.array(series.residual)
+    res[1][np.isfinite(res[1])] = 3.0
+    res[2][np.isfinite(res[2])] = 9.0                # a jump on the third frame
+    fake_run.series = replace(series, residual=res)
     win._pipeline_ctrl.start()
     _wait_done(qtbot, st)
     assert st.run_state == RunState.DONE and st.results is not None and st.current_frame == 2
-    assert warnings and "Residual" in warnings[0][3]
+    assert len(warnings) == 1
+    title, text, informative, details = warnings[0]
+    assert title == "Tracking Quality Warning" and "may not be tracked" in text
+    assert "from frame 3 on" in informative and "9.0" in informative and "3.0" in informative
+    assert "incremental" in informative            # the advice is shown, not hidden
+    assert "Frames with a high residual: 3" in details and "Residual field" in details
     win.close()
 
 
@@ -507,3 +518,11 @@ def test_config_card_follows_the_sidebar(win, tmp_path):
     st.set_param("iters", 12)
     assert (card._mode_lbl.text(), card._model_lbl.text(), card._iters_lbl.text()) == \
         ("Incremental, every 5 frames", "RAFTcorr-s8", "12")
+
+
+def test_progress_label_shows_the_frame_as_the_engine_reports_it(win):
+    sidebar = win._right_sidebar
+    sidebar._on_progress(0.37, "Frame 4/10 (reference 1): 12 s left")
+    assert sidebar._progress_label.text() == "37%  —  Frame 4/10"
+    sidebar._on_progress(0.40, "loading")                      # keeps the last frame
+    assert sidebar._progress_label.text() == "40%  —  Frame 4/10"

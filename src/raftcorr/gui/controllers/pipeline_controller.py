@@ -252,17 +252,12 @@ class PipelineController:
             state.set_run_state(RunState.IDLE)
 
     def _report_tracking_quality(self, result) -> None:
-        notes = [n for n in result.info.notes if n.startswith("tracking quality")]
-        if not notes:
-            return
-        text = notes[0][0].upper() + notes[0][1:] + "."
-        self._state.run_warning.emit(
-            QCoreApplication.translate("PipelineController", "Tracking quality"),
-            QCoreApplication.translate("PipelineController", "Part of the sequence may not be tracked correctly."),
-            text,
-            QCoreApplication.translate("PipelineController", "Show the 'Residual' field to see where the images do not match after the "
-                "displacement is applied."),
-        )
+        """The residual-jump warning (translated; the engine's English note goes to the log)."""
+        from raftcorr.gui.controllers.pipeline_messages import tracking_quality_warning
+
+        warning = tracking_quality_warning(result.residual, result.done, result.schedule.is_accumulative)
+        if warning is not None:
+            self._state.run_warning.emit(*warning)
 
     def cleanup(self) -> None:
         """Release memory maps and remove temporary result folders (on exit)."""

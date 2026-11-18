@@ -119,7 +119,7 @@ def test_stop_keeps_completed_frames(sequence, roi, s4):
     calls = {"n": 0}
 
     def progress(f, msg):
-        if msg.startswith("frame"):
+        if msg.startswith("Frame "):         # "Frame k/N (reference r): ..."
             calls["n"] += 1
 
     cb = FunctionCallbacks(progress=progress, should_stop=lambda: calls["n"] >= 1)

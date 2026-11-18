@@ -96,6 +96,36 @@ class PipelineMessages(QObject):
             "Interest of their own, or run again and continue with frame "
             "1's region.")
 
+    # -- Tracking quality (after a run) -----------------------------------------
+
+    def quality_title(self) -> str:
+        return self.tr("Tracking Quality Warning")
+
+    def quality_summary(self) -> str:
+        return self.tr("Part of the sequence may not be tracked correctly.")
+
+    def quality_finding(self, first: int, now: float, before: float) -> str:
+        """``first`` is the 1-based frame of the jump; residuals in grey levels."""
+        return tr_args(self.tr(
+            "The tracking quality drops from frame %1 on: the intensity residual rises to %2 grey "
+            "levels, against %3 before."), first, f"{now:.1f}", f"{before:.1f}")
+
+    def quality_advice(self, accumulative: bool) -> str:
+        if accumulative:
+            return self.tr(
+                "The displacement from frame 1 may exceed the reach of the model. Try incremental "
+                "tracking, or a model with a larger s.")
+        return self.tr(
+            "The step between reference frames may exceed the reach of the model. Use more "
+            "reference frames, or a model with a larger s.")
+
+    def quality_frames(self, listed: str) -> str:
+        return tr_args(self.tr("Frames with a high residual: %1"), listed)
+
+    def quality_residual_hint(self) -> str:
+        return self.tr("Show the Residual field to see where the images do not match after the "
+                       "displacement is applied.")
+
     # -- Dialogs: a run that cannot start ------------------------------------
 
     def cannot_start_title(self) -> str:
@@ -226,6 +256,34 @@ def missing_roi_dialog(missing: Iterable[int]) -> tuple[str, str]:
         f"<b>{m.missing_roi_question()}</b>",
     ))
     return m.missing_roi_title(), text
+
+
+def tracking_quality_warning(residual, done, accumulative: bool) -> tuple[str, str, str, str] | None:
+    """``(title, text, informative, details)`` of the residual-jump warning, or None.
+
+    The finding and the advice are shown; the flagged frames (1-based) and the hint about the
+    Residual field sit under Show Details.
+    """
+    import numpy as np
+
+    from raftcorr.post.quality import frame_residuals, suspect_frames
+
+    if residual is None:
+        return None
+    medians = frame_residuals(residual, done)
+    flagged = suspect_frames(medians)
+    if not flagged:
+        return None
+    first = flagged[0]
+    before = medians[[k for k in range(1, first) if np.isfinite(medians[k])]]
+    m = PipelineMessages()
+    informative = "\n\n".join((
+        m.quality_finding(first + 1, float(medians[first]), float(before.max()) if before.size else float("nan")),
+        m.quality_advice(accumulative),
+    ))
+    details = "\n\n".join((m.quality_frames(_frame_list(m, [k + 1 for k in flagged])),
+                             m.quality_residual_hint()))
+    return m.quality_title(), m.quality_summary(), informative, details
 
 
 def _frame_list(m: PipelineMessages, frames: list[int]) -> str:

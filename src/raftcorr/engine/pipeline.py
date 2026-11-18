@@ -225,7 +225,7 @@ class Pipeline:
                 check_stop(cb)
                 sub = SubProgress(cb, i / max(1, len(pairs)), (i + 1) / max(1, len(pairs)))
                 if not done[r]:
-                    notes.append(f"frame {k}: reference frame {r} has no result; skipped")
+                    notes.append(f"Frame {k + 1}: reference frame {r + 1} has no result; skipped")
                     cb.log(notes[-1], "warning")
                     continue
                 u_r = np.stack([u[r], v[r]])
@@ -233,7 +233,7 @@ class Pipeline:
                 if roi_r is None:
                     roi_r = warp_mask(mask0, u_r, grid)
                 if not roi_r.any():
-                    notes.append(f"frame {k}: the ROI carried to reference frame {r} is empty; skipped")
+                    notes.append(f"Frame {k + 1}: the region of interest carried to reference frame {r + 1} is empty; skipped")
                     cb.log(notes[-1], "warning")
                     continue
                 step, sx0, sy0 = self.solve_pair(np.asarray(images[r]), np.asarray(images[k]), roi_r, sub)
@@ -256,9 +256,11 @@ class Pipeline:
                 done[k] = True
                 eta.update()
                 cov = float(np.isfinite(u_k[0][mask0]).mean()) if mask0.any() else 0.0
-                cb.progress((i + 1) / max(1, len(pairs)), f"frame {k} (reference {r}): {eta.message('pairs')}")
+                # "Frame k/N" (1-based, as in the application) is what the progress label shows
+                cb.progress((i + 1) / max(1, len(pairs)), f"Frame {k + 1}/{n} (reference {r + 1}): "
+                                                          f"{eta.message('pairs')}")
                 if cov < 0.9:
-                    cb.log(f"frame {k}: only {cov:.0%} of the ROI could be tracked", "warning")
+                    cb.log(f"Frame {k + 1}: only {cov:.0%} of the region of interest could be tracked", "warning")
         except StopRequested:
             notes.append(f"stopped by the user after {int(done.sum()) - 1} of {len(pairs)} pairs")
             cb.log(notes[-1], "warning")
