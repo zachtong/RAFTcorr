@@ -1,0 +1,305 @@
+# pyALDIC Translation Glossary
+
+> **Status**: locked for v0.x. Living document — propose changes via
+> issue / PR rather than editing in-place. Once a term ships in a
+> released `.qm` catalog, changing it requires bumping the catalog
+> version (otherwise users see mixed translations).
+
+> **Revised 2026-09-24** (terminology unification, ships with the next
+> minor version): zh_TW "frame" is 影格 in every row (the table had 影格
+> beside 參考幀/變形幀); "Field" is the physical field (场/場/場/장) plus
+> the standalone selector label -- the old GUI row (字段/欄位, a form
+> field) was the wrong sense for this application; fr/es subset follow the
+> domain terms the catalogs already used (imagette, subconjunto); zh_TW
+> 數位影像相關 and 四元樹 (Taiwan usage); ko 시드점, 증분 추적 (the
+> mechanics term the UI always used) and 탐색 범위 (image-matching search);
+> de Erweiterte Lagrange-Methode; the de/fr/es Seed propagation cells follow
+> their Starting point rows; `Quadtree` left the do-not-translate list (the
+> CJK columns translate it). New rows: Load (a force), Stress, Stress–strain,
+> Gauge points, the mode labels, Solver, Method, Post-processing, Session,
+> Erase, Delete, Invert, Batch import; sense notes on Reset, Edit, View and
+> Field. Every catalog was brought in line (tests/test_i18n_glossary_terms.py
+> keeps it there), and the English label "Initial Seed Search" became
+> "Starting Point Search" like the rest of the UI.
+
+> **Added 2026-10-15** (tracking-quality warning): rows Node (mesh node),
+> already used this way by every catalog, and Specimen, new to the UI.
+
+> **RAFTcorr, 2026-11-18**: this glossary was copied from pyALDIC and is
+> RAFTcorr's too (catalogs `src/raftcorr/i18n/source/raftcorr_<lang>.ts`,
+> filler `scripts/fill_translations.py`). Terms that exist only in RAFTcorr
+> (models, reach, residual, tiling, projects, the paper settings) are in the
+> section **RAFTcorr terms** below.
+
+Fixed translations for domain-specific DIC terminology and high-frequency
+GUI verbs. Single source of truth for all 7 non-English languages.
+
+When translating `.ts` entries (or filling
+`tools/fill_translations.py`):
+
+1. Search this file first.
+2. If the term is here, copy verbatim. Do not improvise variants.
+3. If missing **and likely to recur**, add a row before translating.
+4. If missing and one-shot, translate inline but flag with a `# TODO:
+   glossary?` comment for later canonicalization.
+
+New languages: add a column to every table.
+New terms: add a row, fill at least English + zh_CN.
+
+---
+
+## Do NOT translate (keep English in every locale)
+
+Proper nouns, method names, file-format tokens, math symbols, and
+established abbreviations stay literal English across all 8 languages:
+
+| Category | Tokens |
+|---|---|
+| Brand / method | `pyALDIC`, `AL-DIC`, `IC-GN`, `ADMM`, `FEM`, `Q8`, `DIC` |
+| Algorithm | `FFT`, `NCC`, `BFS`, `IDW`, `VSG` |
+| File formats | `MAT`, `NPZ`, `CSV`, `PNG`, `GIF`, `MP4`, `PDF`, `BMP`, `TIFF`, `JPEG`, `HTML` |
+| Tech abbreviations | `GUI`, `CLI`, `CPU`, `GPU`, `CI`, `ROI`, `POI`, `RMSE`, `DPI`, `FPS` |
+| Library names | `PySide6`, `NumPy`, `SciPy`, `Numba`, `Matplotlib` |
+| Math symbols | `α β σ ε γ ω π τ θ × ÷ ± ≤ ≥ ⚠ ∞` |
+| Strain components | `εxx εyy εxy ε₁ ε₂ γ max von Mises ω rot` |
+| Colormap names | `jet viridis turbo coolwarm plasma RdBu_r seismic inferno black_rainbow` |
+
+**Display-facing exceptions**:
+- `ADMM Iterations` → re-labeled `AL-DIC Iterations` for users (see
+  CLAUDE.md whitelist note). The internal state variable
+  `admm_max_iter` is unchanged.
+
+---
+
+## Core DIC terminology
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Digital Image Correlation | 数字图像相关 | 數位影像相關 | デジタル画像相関 | 디지털 이미지 상관법 | Digitale Bildkorrelation | Corrélation d'images numériques | Correlación digital de imágenes |
+| Subset | 子集 | 子集 | サブセット | 서브셋 | Subset | Imagette | Subconjunto |
+| Subset size | 子集尺寸 | 子集尺寸 | サブセットサイズ | 서브셋 크기 | Subset-Größe | Taille d'imagette | Tamaño del subconjunto |
+| Subset step | 子集步长 | 子集步長 | サブセットステップ | 서브셋 스텝 | Subset-Schritt | Pas d'imagette | Paso del subconjunto |
+| Search range | 搜索范围 | 搜尋範圍 | 探索範囲 | 탐색 범위 | Suchbereich | Plage de recherche | Rango de búsqueda |
+| Shape function | 形函数 | 形函數 | 形状関数 | 형상 함수 | Formfunktion | Fonction de forme | Función de forma |
+| Reference frame | 参考帧 | 參考影格 | 参照フレーム | 참조 프레임 | Referenzbild | Image de référence | Fotograma de referencia |
+| Deformed frame | 变形帧 | 變形影格 | 変形フレーム | 변형된 프레임 | Verformtes Bild | Image déformée | Fotograma deformado |
+| Displacement field | 位移场 | 位移場 | 変位場 | 변위장 | Verschiebungsfeld | Champ de déplacement | Campo de desplazamiento |
+| Strain field | 应变场 | 應變場 | ひずみ場 | 변형률장 | Dehnungsfeld | Champ de déformation | Campo de deformación |
+| Field (a physical field on the map: displacement, strain…) | 场 | 場 | 場 | 장 | Feld | Champ | Campo |
+| Field (the standalone label of a field selector) | 场变量 | 場變數 | フィールド | 필드 | Feld | Champ | Campo |
+| Strain | 应变 | 應變 | ひずみ | 변형률 | Dehnung | Déformation | Deformación |
+| Displacement | 位移 | 位移 | 変位 | 변위 | Verschiebung | Déplacement | Desplazamiento |
+| Velocity | 速度 | 速度 | 速度 | 속도 | Geschwindigkeit | Vitesse | Velocidad |
+| Correlation | 相关 | 相關 | 相関 | 상관 | Korrelation | Corrélation | Correlación |
+| Mesh | 网格 | 網格 | メッシュ | 메시 | Netz | Maillage | Malla |
+| Adaptive mesh | 自适应网格 | 自適應網格 | 適応メッシュ | 적응형 메시 | Adaptives Netz | Maillage adaptatif | Malla adaptativa |
+| Quadtree refinement | 四叉树加密 | 四元樹加密 | 四分木細分化 | 쿼드트리 세분화 | Quadtree-Verfeinerung | Raffinement quadtree | Refinamiento quadtree |
+| Mesh refinement | 网格加密 | 網格加密 | メッシュ細分化 | 메시 세분화 | Netzverfeinerung | Raffinement de maillage | Refinamiento de malla |
+| Node (mesh node) | 节点 | 節點 | ノード | 노드 | Knoten | Nœud | Nodo |
+| Specimen | 试样 | 試樣 | 試験片 | 시편 | Probe | Éprouvette | Probeta |
+| Mask | 掩模 | 遮罩 | マスク | 마스크 | Maske | Masque | Máscara |
+| Region of Interest (ROI) | 感兴趣区域 | 感興趣區域 | 関心領域 | 관심 영역 | Region of Interest | Région d'intérêt | Región de interés |
+| Seed / Starting point | 种子点 | 種子點 | シード点 | 시드점 | Startpunkt | Point de départ | Punto inicial |
+| Seed propagation | 种子传播 | 種子傳播 | シード伝播 | 시드 전파 | Startpunkt-Propagation | Propagation depuis les points de départ | Propagación desde puntos iniciales |
+| Incremental tracking | 增量追踪 | 增量追蹤 | 逐次追跡 | 증분 추적 | Inkrementelles Tracking | Suivi incrémental | Seguimiento incremental |
+| Accumulative tracking | 累积追踪 | 累積追蹤 | 累積追跡 | 누적 추적 | Akkumulatives Tracking | Suivi cumulatif | Seguimiento acumulativo |
+| Incremental (mode label) | 增量式 | 增量式 | 逐次式 | 증분형 | Inkrementell | Incrémental | Incremental |
+| Accumulative (mode label) | 累积式 | 累積式 | 累積式 | 누적형 | Akkumulativ | Cumulatif | Acumulativo |
+| Augmented Lagrangian | 增广拉格朗日 | 增廣拉格朗日 | 拡張ラグランジュ | 증강 라그랑주 | Erweiterte Lagrange-Methode | Lagrangien augmenté | Lagrangiano aumentado |
+| Solver | 求解器 | 求解器 | ソルバー | 솔버 | Löser | Solveur | Solucionador |
+| Method (strain method) | 方法 | 方法 | 手法 | 방법 | Methode | Méthode | Método |
+| Initial guess | 初始猜测 | 初始猜測 | 初期推定 | 초기 추정 | Anfangsschätzung | Estimation initiale | Estimación inicial |
+| Convergence | 收敛 | 收斂 | 収束 | 수렴 | Konvergenz | Convergence | Convergencia |
+| Iteration | 迭代 | 迭代 | 反復 | 반복 | Iteration | Itération | Iteración |
+| Plane fitting | 平面拟合 | 平面擬合 | 平面フィット | 평면 피팅 | Ebenenanpassung | Ajustement de plan | Ajuste de plano |
+| FEM nodal | FEM 节点 | FEM 節點 | FEM ノード | FEM 노드 | FEM-Knoten | FEM nodal | FEM nodal |
+| Smoothing | 平滑 | 平滑 | 平滑化 | 평활화 | Glättung | Lissage | Suavizado |
+| Outlier | 异常值 | 異常值 | 外れ値 | 이상치 | Ausreißer | Valeur aberrante | Valor atípico |
+| Refinement level | 加密级别 | 加密級別 | 細分化レベル | 세분화 레벨 | Verfeinerungsstufe | Niveau de raffinement | Nivel de refinamiento |
+| Pixel size | 像素尺寸 | 像素尺寸 | ピクセルサイズ | 픽셀 크기 | Pixelgröße | Taille de pixel | Tamaño de píxel |
+| Frame rate | 帧率 | 影格率 | フレームレート | 프레임 속도 | Bildrate | Fréquence d'images | Velocidad de fotogramas |
+| Colormap | 颜色映射 | 色彩對映 | カラーマップ | 색상 맵 | Farbskala | Palette | Mapa de colores |
+| Colorbar | 色条 | 色條 | カラーバー | 컬러바 | Farbleiste | Barre de couleur | Barra de color |
+| Opacity | 不透明度 | 不透明度 | 不透明度 | 불투명도 | Deckkraft | Opacité | Opacidad |
+| Range | 范围 | 範圍 | 範囲 | 범위 | Bereich | Plage | Rango |
+| Post-processing | 后处理 | 後處理 | 後処理 | 후처리 | Nachbearbeitung | Post-traitement | Posprocesado |
+| Session | 会话 | 工作階段 | セッション | 세션 | Sitzung | Session | Sesión |
+
+**Field in ja and ko**: 場 and 장 stand only inside compounds (変位場,
+변위장); on its own the word is フィールド / 필드, as in the selector label.
+
+---
+
+## Post-processing analysis (probes)
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Probe | 探针 | 探針 | プローブ | 프로브 | Sonde | Sonde | Sonda |
+| Region (probe type) | 区域 | 區域 | 領域 | 영역 | Bereich | Région | Región |
+| Virtual extensometer | 虚拟引伸计 | 虛擬引伸計 | 仮想伸び計 | 가상 신율계 | Virtueller Dehnungsaufnehmer | Extensomètre virtuel | Extensómetro virtual |
+| Gauge (line reading) | 量规 | 量規 | ゲージ | 게이지 | Messstrecke | Jauge | Calibre |
+| Crack | 裂纹 | 裂紋 | き裂 | 균열 | Riss | Fissure | Grieta |
+| Crack opening | 裂纹张开位移 | 裂紋張開位移 | き裂開口変位 | 균열 개구 변위 | Rissöffnung | Ouverture de fissure | Apertura de grieta |
+| Crack gauge | 裂纹量规 | 裂紋量規 | き裂ゲージ | 균열 게이지 | Riss-Messstrecke | Jauge de fissure | Calibre de grieta |
+| Gauge points (the two marks a gauge measures between) | 标距点 | 標距點 | 標点 | 표점 | Messpunkte | points de mesure | puntos de medida |
+| Load (a force, from a testing machine) | 载荷 | 載荷 | 荷重 | 하중 | Kraft | Charge | Carga |
+| Stress | 应力 | 應力 | 応力 | 응력 | Spannung | Contrainte | Tensión |
+| Stress–strain | 应力–应变 | 應力–應變 | 応力–ひずみ | 응력–변형률 | Spannung–Dehnung | Contrainte–déformation | Tensión–deformación |
+
+---
+
+## RAFTcorr terms
+
+Added 2026-11-18 with the first RAFTcorr catalogs. `RAFTcorr`, the model
+names `RAFTcorr-s1` / `-s2` / `-s4` / `-s8`, the downsampling factor `s`,
+`VSG`, `Lg`, `.raftcorr`, `HDF5` / `.h5` and `MATLAB v7.3` stay literal.
+Where the English writes the abbreviation `ROI` the translation keeps `ROI`
+(fr/es: *la ROI*); where it writes "region of interest" the translation
+uses the Region of Interest row above.
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Model (a RAFTcorr network) | 模型 | 模型 | モデル | 모델 | Modell | Modèle | Modelo |
+| Reach (of a model: how far it measures, 32 s px) | 量程 | 量程 | 到達範囲 | 도달 범위 | Reichweite | Portée | Alcance |
+| Suggest a model (button) | 推荐模型 | 建議模型 | モデルを提案 | 모델 추천 | Modell vorschlagen | Suggérer un modèle | Sugerir un modelo |
+| Suggested model | 推荐的模型 | 建議的模型 | 推奨モデル | 추천 모델 | Vorgeschlagenes Modell | Modèle suggéré | Modelo sugerido |
+| Iterations (network refinement iterations) | 迭代次数 | 迭代次數 | 反復回数 | 반복 횟수 | Iterationen | Itérations | Iteraciones |
+| Device (compute device) | 设备 | 裝置 | デバイス | 장치 | Gerät | Périphérique | Dispositivo |
+| Intensity residual | 灰度残差 | 灰階殘差 | 輝度残差 | 밝기 잔차 | Intensitätsresiduum | Résidu d'intensité | Residuo de intensidad |
+| Residual (the field button) | 残差 | 殘差 | 残差 | 잔차 | Residuum | Résidu | Residuo |
+| Margin (extra image context around the ROI) | 边距 | 邊距 | マージン | 마진 | Rand | Marge | Margen |
+| Window (the image window given to the network) | 窗口 | 視窗 | ウィンドウ | 창 | Fenster | Fenêtre | Ventana |
+| Tile / tiling (a large region cut into tiles) | 分块 | 分塊 | タイル | 타일 | Kachel | Tuile | Tesela |
+| Tile blending | 分块融合 | 分塊融合 | タイルのブレンド | 타일 블렌딩 | Kachelüberblendung | Fondu des tuiles | Fusión de teselas |
+| Correlation (label of the lookup implementation) | 相关计算 | 相關計算 | 相関計算 | 상관 계산 | Korrelation | Corrélation | Correlación |
+| Correlation lookup | 相关查找 | 相關查找 | 相関ルックアップ | 상관 조회 | Korrelationsabfrage | Recherche de corrélation | Consulta de correlación |
+| On demand (lookup mode) | 按需计算 | 隨需計算 | オンデマンド | 필요 시 계산 | Bei Bedarf | À la demande | Bajo demanda |
+| Stored volume (lookup mode) | 预存相关体 | 預存相關體 | ボリューム保持 | 볼륨 저장 | Gespeichertes Volumen | Volume stocké | Volumen almacenado |
+| Project (a `.raftcorr` file) | 项目 | 專案 | プロジェクト | 프로젝트 | Projekt | Projet | Proyecto |
+| Paper (the RAFTcorr paper; "paper setting") | 论文 | 論文 | 論文 | 논문 | Artikel | Article | Artículo |
+| Paper settings (button) | 论文设置 | 論文設定 | 論文の設定 | 논문 설정 | Artikel-Einstellungen | Réglages de l'article | Ajustes del artículo |
+| Virtual Strain Gauge (long form of VSG) | 虚拟应变计 | 虛擬應變計 | 仮想ひずみゲージ | 가상 변형률 게이지 | virtueller Dehnungsmessstreifen | jauge de déformation virtuelle | galga extensométrica virtual |
+| Extensometer (the probe's short name) | 引伸计 | 引伸計 | 伸び計 | 신율계 | Dehnungsaufnehmer | Extensomètre | Extensómetro |
+| Untracked (material no longer measured) | 未追踪 | 未追蹤 | 未追跡 | 추적 안 됨 | nicht verfolgt | non suivi (hors suivi) | sin seguimiento |
+| Intensity (gray level of an image) | 灰度 | 灰階 | 輝度 | 밝기 | Intensität | Intensité | Intensidad |
+| Self-test | 自检 | 自我測試 | セルフテスト | 자체 테스트 | Selbsttest | Autotest | Autoprueba |
+| Magnitude (field label: displacement magnitude) | 位移大小 | 位移大小 | 変位の大きさ | 변위 크기 | Betrag | Norme | Magnitud |
+| Capture range (in the model summaries: = Reach) | 量程 | 量程 | 到達範囲 | 도달 범위 | Reichweite | Portée | Alcance |
+| Export (50 px column header in the export dialog) | 导出 | 匯出 | 出力 | 내보내기 | Export | Exporter | Exportar |
+| Tracking quality (run warning title) | 追踪质量 | 追蹤品質 | 追跡品質 | 추적 품질 | Tracking-Qualität | Qualité du suivi | Calidad del seguimiento |
+| Weights (model weight file) | 权重文件 | 權重檔案 | 重みファイル | 가중치 파일 | Gewichte | Poids | Pesos |
+
+**Notes**: de uses *Netzwerk* for the neural network, never *Netz*, which is
+the mesh. "Reach" (量程) and "Search range" (搜索范围) differ: reach is a
+property of the model, the search range a parameter of subset matching.
+"Off (raw)" on the displacement smoothing spin box is 关闭（原始） /
+aus (roh).
+
+---
+
+## GUI common verbs / labels
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Run | 运行 | 執行 | 実行 | 실행 | Ausführen | Exécuter | Ejecutar |
+| Cancel | 取消 | 取消 | キャンセル | 취소 | Abbrechen | Annuler | Cancelar |
+| OK | 确定 | 確定 | OK | 확인 | OK | OK | Aceptar |
+| Apply | 应用 | 套用 | 適用 | 적용 | Anwenden | Appliquer | Aplicar |
+| Save | 保存 | 儲存 | 保存 | 저장 | Speichern | Enregistrer | Guardar |
+| Load | 加载 | 載入 | 読み込み | 불러오기 | Laden | Charger | Cargar |
+| Import | 导入 | 匯入 | インポート | 가져오기 | Importieren | Importer | Importar |
+| Export | 导出 | 匯出 | エクスポート | 내보내기 | Exportieren | Exporter | Exportar |
+| Refine | 加密 | 加密 | 細分化 | 세분화 | Verfeinern | Raffiner | Refinar |
+| Reset (a button: back to defaults) | 重置 | 重設 | リセット | 재설정 | Zurücksetzen | Réinitialiser | Restablecer |
+| Clear | 清除 | 清除 | クリア | 지우기 | Löschen | Effacer | Borrar |
+| Erase (brush mode, beside Paint and Clear) | 擦除 | 擦除 | 消去 | 지우개 | Radieren | Gommer | Borrar |
+| Delete | 删除 | 刪除 | 削除 | 삭제 | Löschen | Supprimer | Eliminar |
+| Invert (a mask) | 反选 | 反轉 | 反転 | 반전 | Invertieren | Inverser | Invertir |
+| Batch import | 批量导入 | 批次匯入 | 一括インポート | 일괄 가져오기 | Stapelimport | Import par lot | Importación por lotes |
+| Open | 打开 | 開啟 | 開く | 열기 | Öffnen | Ouvrir | Abrir |
+| Close | 关闭 | 關閉 | 閉じる | 닫기 | Schließen | Fermer | Cerrar |
+| Settings | 设置 | 設定 | 設定 | 설정 | Einstellungen | Paramètres | Ajustes |
+| Preferences | 首选项 | 偏好設定 | 環境設定 | 환경 설정 | Voreinstellungen | Préférences | Preferencias |
+| File | 文件 | 檔案 | ファイル | 파일 | Datei | Fichier | Archivo |
+| Filename | 文件名 | 檔名 | ファイル名 | 파일 이름 | Dateiname | Nom de fichier | Nombre de archivo |
+| Edit (the menu) | 编辑 | 編輯 | 編集 | 편집 | Bearbeiten | Édition | Editar |
+| View (the menu) | 视图 | 檢視 | 表示 | 보기 | Ansicht | Affichage | Ver |
+| Help | 帮助 | 說明 | ヘルプ | 도움말 | Hilfe | Aide | Ayuda |
+| About | 关于 | 關於 | について | 정보 | Über | À propos | Acerca de |
+| Browse... | 浏览… | 瀏覽… | 参照… | 찾아보기… | Durchsuchen… | Parcourir… | Examinar… |
+| Generate | 生成 | 產生 | 生成 | 생성 | Erstellen | Générer | Generar |
+| Auto | 自动 | 自動 | 自動 | 자동 | Auto | Auto | Auto |
+| Min | 最小 | 最小 | 最小 | 최소 | Min | Min | Mín |
+| Max | 最大 | 最大 | 最大 | 최대 | Max | Max | Máx |
+| Format | 格式 | 格式 | 形式 | 형식 | Format | Format | Formato |
+| All | 全部 | 全部 | すべて | 모두 | Alle | Tous | Todos |
+| None | 无 | 無 | なし | 없음 | Keine | Aucun | Ninguno |
+
+**Senses**: where a word is a noun or an item's button rather than the
+menu, it may read differently -- es "Vista:" for a view selector, fr
+"Modifier" for an item's Edit button. Clear and Erase must differ where both
+appear (the Refine brush menu: Paint / Erase / Clear Brush; es "Borrar
+todos los trazos" for Clear Brush). ko keeps 모두 선택 / 모두 해제 on the
+Export dialog's select buttons (없음 alone reads as a status).
+
+---
+
+## Status / progress terms
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Ready | 就绪 | 就緒 | 準備完了 | 준비됨 | Bereit | Prêt | Listo |
+| Running | 运行中 | 執行中 | 実行中 | 실행 중 | Läuft | En cours | En ejecución |
+| Paused | 已暂停 | 已暫停 | 一時停止中 | 일시 정지됨 | Angehalten | En pause | En pausa |
+| Completed | 已完成 | 已完成 | 完了 | 완료됨 | Abgeschlossen | Terminé | Completado |
+| Failed | 失败 | 失敗 | 失敗 | 실패 | Fehlgeschlagen | Échec | Fallido |
+| Starting… | 开始中… | 開始中… | 開始中… | 시작 중… | Wird gestartet… | Démarrage… | Iniciando… |
+| Frame | 帧 | 影格 | フレーム | 프레임 | Bild | Image | Fotograma |
+| Elapsed | 已用时间 | 已用時間 | 経過時間 | 경과 시간 | Verstrichen | Écoulé | Transcurrido |
+| Remaining | 剩余时间 | 剩餘時間 | 残り時間 | 남은 시간 | Verbleibend | Restant | Restante |
+| Progress | 进度 | 進度 | 進捗 | 진행률 | Fortschritt | Progression | Progreso |
+| Error | 错误 | 錯誤 | エラー | 오류 | Fehler | Erreur | Error |
+| Warning | 警告 | 警告 | 警告 | 경고 | Warnung | Avertissement | Advertencia |
+
+---
+
+## Severity labels (mesh refinement, smoothing presets)
+
+| English | zh_CN | zh_TW | ja | ko | de | fr | es |
+|---|---|---|---|---|---|---|---|
+| Off | 关闭 | 關閉 | オフ | 끔 | Aus | Désactivé | Desactivado |
+| Light | 轻度 | 輕度 | 軽度 | 약함 | Leicht | Léger | Ligero |
+| Medium | 中等 | 中等 | 中程度 | 중간 | Mittel | Moyen | Medio |
+| Heavy / Strong | 强 | 強 | 強 | 강함 | Stark | Fort | Fuerte |
+| Extra Heavy | 超强 | 超強 | 最強 | 매우 강함 | Sehr stark | Très fort | Muy fuerte |
+| Ultra | 极限 | 極限 | 極限 | 극강 | Ultra | Ultra | Ultra |
+
+---
+
+## Review / QA checklist when adding a language
+
+1. Every row above has the new column filled.
+2. Button labels stay **short** — aim for ≤6 CJK characters or ≤12
+   Latin characters; longer labels get truncated in narrow widgets.
+3. Tokens from the **Do NOT translate** section stay literal English.
+4. Qt `%1 %2 %n` placeholders preserved verbatim.
+5. Ampersand mnemonics (`&Save` → Alt+S) dropped in translations;
+   keyboard shortcuts come from `QAction.setShortcut(QKeySequence.X)`.
+6. Numeric formatting respects the locale (German `3,14` vs `3.14`).
+   Route through `al_dic.utils.locale_format.format_number`.
+7. CJK font fallback: any matplotlib figure must call
+   `configure_matplotlib_fonts()` first or it renders tofu.
+
+---
+
+## How to propose a glossary change
+
+1. Open a GitHub issue tagged `i18n-glossary` describing the term and
+   proposed translation(s).
+2. If the term is **new** (no existing translation), maintainer can
+   merge after one round of review.
+3. If the term **changes** existing translation, the change must
+   coincide with a major-or-minor version bump (`v0.5.0`, not
+   `v0.4.x`) so users don't see mixed translations across an upgrade.
+4. After merge: run `python tools/i18n.py extract` and update every
+   `.ts` file (and `tools/fill_translations.py`) to use the new term.

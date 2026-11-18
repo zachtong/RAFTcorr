@@ -1,0 +1,1427 @@
+"""Center canvas panel — zoomable/pannable QGraphicsView with layered items.
+
+Layers:
+    0: Background image (QGraphicsPixmapItem)
+    1: Field overlay — semi-transparent colormapped result
+    2: ROI mask overlay — blue semi-transparent boolean mask
+
+Supports:
+    - Wheel zoom (factor 1.15, 10%–2000%) anchored under mouse
+    - Middle-button pan (always) + left-button pan when tool == "pan"
+    - Shape tool forwarding: rect / polygon / circle drawing with add/cut modes
+"""
+
+from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING
+
+from raftcorr.gui.support.geometry import circumcircle
+
+import numpy as np
+from numpy.typing import NDArray
+from PySide6.QtCore import Qt, Signal, QPointF, QRectF, QTimer, QEvent
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QImage,
+    QPainter,
+    QPen,
+    QPixmap,
+    QWheelEvent,
+    QMouseEvent,
+    QKeyEvent,
+)
+
+# Alias for use in QPainter drawing calls that expect a QPointF value object
+_QPointF = QPointF
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QGraphicsEllipseItem,
+    QGraphicsLineItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from raftcorr.gui.app_state import AppState
+from raftcorr.gui.theme import COLORS
+from raftcorr.gui.theme_manager import connect_theme, set_icon, themed
+from raftcorr.gui.widgets.colorbar_overlay import ColorbarOverlay
+from raftcorr.gui.widgets.frame_navigator import FrameNavigator
+
+from raftcorr.gui.controllers.viz_controller import VizController
+from raftcorr.gui.app_state import DISPLAY_FIELDS
+from raftcorr.gui.panels.strain_canvas import blank_pixmap
+
+try:
+    from raftcorr.gui.icons import icon_maximize, icon_zoom_in, icon_zoom_out
+    _HAS_ICONS = True
+except ImportError:  # pragma: no cover
+    _HAS_ICONS = False
+
+
+def visible_values(
+    values: NDArray[np.float64],
+    nodes: NDArray[np.float64],
+    mask: NDArray[np.bool_] | None,
+) -> NDArray[np.float64]:
+    """Return *values* with entries outside *mask* set to NaN.
+
+    Used so the colormap range is computed only from nodes that are
+    actually rendered (within the deformed-frame ROI), not from the full
+    reference-mesh node set which may include nodes clipped by the mask.
+    Falls back to the original array when *mask* is None or when the
+    intersection is empty (avoids a degenerate all-NaN range).
+    """
+    if mask is None or len(values) == 0:
+        return values
+    h, w = mask.shape
+    # Crack-destroyed nodes have NaN deformed coordinates: not visible
+    # (nan_to_num avoids the NaN->int cast warning; the finite check does
+    # the actual exclusion).
+    finite = np.isfinite(nodes).all(axis=1)
+    safe = np.nan_to_num(nodes, nan=-1.0)
+    ix = np.round(safe[:, 0]).astype(int)
+    iy = np.round(safe[:, 1]).astype(int)
+    in_bounds = (ix >= 0) & (ix < w) & (iy >= 0) & (iy < h) & finite
+    vis = np.zeros(len(values), dtype=bool)
+    vis[in_bounds] = mask[iy[in_bounds], ix[in_bounds]]
+    if not np.any(vis):
+        return values   # fallback: no node hit the mask
+    out = values.copy()
+    out[~vis] = np.nan
+    return out
+
+
+def resolve_color_range(
+    state: AppState, values: NDArray[np.float64]
+) -> tuple[float, float]:
+    """Return the effective ``(vmin, vmax)`` for colormap rendering.
+
+    Two modes:
+
+    * **Auto** (``state.color_auto`` True): take the 2-98 percentile of
+      the non-NaN entries in *values* (the *current frame's* field).
+      The result is **also written back** to ``state.color_min`` and
+      ``state.color_max`` so that the ColorRange widget reads the live
+      frame range when the user later toggles Auto off -- without it,
+      the spin boxes would always start from the stale 0/1 defaults
+      no matter what the user is currently looking at.
+
+    * **Manual** (``state.color_auto`` False): return the user's
+      dialled-in ``(state.color_min, state.color_max)`` unchanged and
+      do **not** mutate state.  All-NaN frames degrade to ``(0, 1)``
+      so matplotlib's normaliser does not blow up.
+    """
+    if not state.color_auto:
+        return state.color_min, state.color_max
+
+    valid_vals = values[~np.isnan(values)]
+    if len(valid_vals) > 0:
+        pct = np.percentile(valid_vals, [2, 98])
+        vmin, vmax = float(pct[0]), float(pct[1])
+    else:
+        vmin, vmax = 0.0, 1.0
+
+    state.color_min = vmin
+    state.color_max = vmax
+    return vmin, vmax
+
+if TYPE_CHECKING:
+    from raftcorr.gui.controllers.image_controller import ImageController
+    from raftcorr.gui.controllers.roi_controller import ROIController
+
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+_ZOOM_FACTOR = 1.15
+_ZOOM_MIN = 0.10
+_ZOOM_MAX = 20.0
+
+def _centered_arange(lo: int, hi: int, step: int) -> NDArray[np.float64]:
+    """Generate evenly-spaced grid points centered within [lo, hi]."""
+    span = hi - lo
+    n_steps = span // step
+    offset = (span - n_steps * step) // 2
+    return np.arange(lo + offset, hi + 1, step, dtype=np.float64)
+
+
+_PEN_ADD = QPen(QColor(59, 130, 246, 200), 2)  # blue
+_PEN_CUT = QPen(QColor(239, 68, 68, 200), 2)   # red
+
+_ROI_COLOR_ADD = QColor(59, 130, 246, 80)       # blue semi-transparent
+_ROI_COLOR_CUT = QColor(239, 68, 68, 80)        # red semi-transparent
+
+
+# ---------------------------------------------------------------------------
+# ImageCanvas — QGraphicsView
+# ---------------------------------------------------------------------------
+class ImageCanvas(QGraphicsView):
+    """Zoomable, pannable image canvas with layered QGraphicsItems."""
+
+    # Signal emitted when a point is clicked in image coordinates
+    point_clicked = Signal(float, float)
+
+    # Signal emitted when a drawing operation finishes or is canceled
+    drawing_finished = Signal()
+
+    # Signal emitted when the viewport transform changes (zoom, pan, scroll)
+    view_changed = Signal()
+
+    # Signal emitted with scene (x, y) when mouse moves over the canvas
+    scene_hover = Signal(float, float)
+
+    # Signal emitted when mouse leaves the canvas
+    hover_left = Signal()
+
+    # Signal emitted when set_tool is called — passes the tool name.
+    # Used by CanvasArea to show/hide the Starting-Points mode banner.
+    tool_changed = Signal(str)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._scene = QGraphicsScene(self)
+        self.setScene(self._scene)
+
+        # --- Layer 0: background image ---
+        from PySide6.QtWidgets import QGraphicsPixmapItem
+
+        self._bg_item = QGraphicsPixmapItem()
+        self._scene.addItem(self._bg_item)
+        self._bg_item.setZValue(0)
+
+        # --- Layer 1: field overlay (semi-transparent) ---
+        self._overlay_item = QGraphicsPixmapItem()
+        self._scene.addItem(self._overlay_item)
+        self._overlay_item.setZValue(1)
+        self._overlay_item.setOpacity(0.7)
+
+        # --- Layer 2: ROI mask overlay ---
+        self._roi_item = QGraphicsPixmapItem()
+        self._scene.addItem(self._roi_item)
+        self._roi_item.setZValue(2)
+
+        # --- Layer 6: brush refinement mask overlay (cyan) ---
+        self._refine_item = QGraphicsPixmapItem()
+        self._scene.addItem(self._refine_item)
+        self._refine_item.setZValue(6)
+
+        # --- Layer 7: Starting-Points region overlay (yellow/green) ---
+        # Visible only while init_guess_mode == 'seed_propagation'.
+        # Yellow = region needs a seed, green = region has a seed.
+        self._seed_region_item = QGraphicsPixmapItem()
+        self._scene.addItem(self._seed_region_item)
+        self._seed_region_item.setZValue(7)
+        self._seed_region_item.setOpacity(0.25)
+        self._seed_region_item.setVisible(False)
+        # Seed marker graphics items, rebuilt on seeds_changed.
+        self._seed_marker_items: list = []
+
+        # --- Render settings ---
+        self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.setTransformationAnchor(
+            QGraphicsView.ViewportAnchor.AnchorUnderMouse
+        )
+        self.setViewportUpdateMode(
+            QGraphicsView.ViewportUpdateMode.FullViewportUpdate
+        )
+        self.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.setBackgroundBrush(QBrush(QColor(COLORS.BG_CANVAS)))
+        connect_theme(self._on_theme_changed)
+
+        # Enable mouse tracking for hover detection (no button press needed)
+        self.setMouseTracking(True)
+
+        # --- Interaction state ---
+        self._current_tool: str = "select"   # select, pan, rect, polygon, circle, brush
+        self._drawing_mode: str = "add"      # add or cut
+        self._draw_state: dict | None = None  # in-progress drawing data
+        self._preview_items: list = []        # temp graphics items while drawing
+        self._roi_ctrl: ROIController | None = None
+
+        # Brush sub-tool state (paints state.refine_brush_mask via _brush_ctrl)
+        self._brush_ctrl: ROIController | None = None
+        self._brush_radius: int = 16
+        self._brush_mode: str = "paint"      # "paint" or "erase"
+        self._brush_last_pos: QPointF | None = None
+
+        # Brush stroke fade animation
+        self._refine_fade_opacity: float = 1.0
+        self._refine_fade_timer = QTimer(self)
+        self._refine_fade_timer.timeout.connect(self._on_refine_fade)
+
+        # Seed (Starting Points) tool state
+        self._seed_ctrl = None
+        self._seed_preview_item = None  # QGraphicsEllipseItem for hover snap
+        self._seed_preview_box = None   # QGraphicsRectItem showing subset
+
+        # Pan state (middle-button or left-button when tool == "pan")
+        self._panning = False
+        self._pan_start = QPointF()
+
+        # Current zoom level (1.0 = 100%)
+        self._zoom_level: float = 1.0
+
+    # ----- public API -----
+
+
+    def _on_theme_changed(self, _name: str) -> None:
+        """The canvas around the image in the new theme's colour."""
+        self.setBackgroundBrush(QBrush(QColor(COLORS.BG_CANVAS)))
+    def set_tool(self, tool: str) -> None:
+        """Set the active tool.
+
+        Valid tools: select, pan, rect, polygon, circle, circle3, brush, seed.
+        """
+        self._current_tool = tool
+        self._cancel_drawing()
+        # Reset brush stroke state whenever tool changes
+        self._brush_last_pos = None
+        # Always clear the seed-preview circle when leaving seed mode
+        if tool != "seed":
+            self._clear_seed_preview()
+        if tool == "pan":
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        elif tool == "brush":
+            self._update_brush_cursor()
+        elif tool in ("rect", "polygon", "circle", "circle3"):
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        elif tool == "seed":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            # Grab keyboard focus so Escape can exit the mode
+            self.setFocus(Qt.FocusReason.OtherFocusReason)
+        else:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.tool_changed.emit(tool)
+
+    def set_seed_controller(self, ctrl) -> None:
+        """Attach the SeedController for Starting-Points placement."""
+        self._seed_ctrl = ctrl
+
+    def update_seed_region_overlay(
+        self, label_image, region_seeded: dict[int, bool],
+    ) -> None:
+        """Repaint the yellow/green region overlay.
+
+        ``label_image``: (H, W) int array; -1 = outside any tracked region.
+        ``region_seeded``: map region_id -> has_seed.
+        """
+        import numpy as np
+
+        if label_image is None or not region_seeded:
+            self._seed_region_item.setVisible(False)
+            return
+        h, w = label_image.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        # Red = ERROR (region lacks a Starting Point, can't run).
+        # No fill = READY (matches the blue ROI overlay shown in other
+        # init-guess modes; seeded regions read as "normal ROI" and
+        # only problematic regions stand out with a warning color).
+        red = (239, 68, 68, 255)  # COLORS.ERROR-ish
+        for region_id, has_seed in region_seeded.items():
+            if has_seed:
+                continue  # leave transparent → ROI overlay shows through
+            rgba[label_image == region_id] = red
+        qimg = QImage(rgba.data, w, h, 4 * w, QImage.Format.Format_RGBA8888)
+        self._seed_region_item.setPixmap(QPixmap.fromImage(qimg.copy()))
+        self._seed_region_item.setVisible(True)
+
+    def hide_seed_region_overlay(self) -> None:
+        self._seed_region_item.setVisible(False)
+
+    def set_seed_markers(self, seeds) -> None:
+        """Replace all seed marker graphics with current state.seeds."""
+        from PySide6.QtWidgets import QGraphicsEllipseItem
+
+        for item in self._seed_marker_items:
+            self._scene.removeItem(item)
+        self._seed_marker_items.clear()
+
+        zoom = self.transform().m11() or 1.0
+        r_view = 6.0
+        r = r_view / zoom
+        pen_w = 1.5 / zoom
+        for s in seeds:
+            xy = s.xy_canvas
+            if xy is None:
+                continue
+            # Yellow = user-placed, Purple = warped (carried across ref switch)
+            fill = (
+                QColor(168, 85, 247)
+                if getattr(s, "is_warped", False)
+                else QColor(234, 179, 8)
+            )
+            item = QGraphicsEllipseItem(-r, -r, 2 * r, 2 * r)
+            pen = QPen(QColor(0, 0, 0))
+            pen.setWidthF(pen_w)
+            item.setPen(pen)
+            item.setBrush(QBrush(fill))
+            item.setZValue(51)
+            item.setPos(xy[0], xy[1])
+            self._scene.addItem(item)
+            self._seed_marker_items.append(item)
+
+    def refresh_seed_marker_sizes(self) -> None:
+        """Rescale seed markers to maintain viewport-fixed size on zoom."""
+        if not self._seed_marker_items:
+            return
+        zoom = self.transform().m11() or 1.0
+        r = 6.0 / zoom
+        pen_w = 1.5 / zoom
+        for item in self._seed_marker_items:
+            item.setRect(-r, -r, 2 * r, 2 * r)
+            pen = item.pen()
+            pen.setWidthF(pen_w)
+            item.setPen(pen)
+
+    def _clear_seed_preview(self) -> None:
+        if self._seed_preview_item is not None:
+            self._scene.removeItem(self._seed_preview_item)
+            self._seed_preview_item = None
+        if getattr(self, "_seed_preview_box", None) is not None:
+            self._scene.removeItem(self._seed_preview_box)
+            self._seed_preview_box = None
+
+    def _update_seed_preview(self, x: float, y: float) -> None:
+        """Place the hover-snap indicators at node (x, y) in scene coords.
+
+        Two items:
+          - A small filled circle on the node itself (viewport-fixed size
+            so it stays legible at any zoom).
+          - A hollow square with side = subset_size + 1 (pixel units),
+            showing what IC-GN's correlation window will sample. Matches
+            the 'Show Subset' overlay's semantics without forcing that
+            toolbar toggle on.
+        """
+        from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem
+
+        zoom = self.transform().m11() or 1.0
+
+        # --- Node circle (viewport-fixed ~3.5 px: tight enough that the
+        # center is unambiguously ON the node, not 'near' it — earlier
+        # 6-px version was mistaken for 'element center' snapping). ---
+        r_view = 3.5
+        r = r_view / zoom
+        if self._seed_preview_item is None:
+            item = QGraphicsEllipseItem(-r, -r, 2 * r, 2 * r)
+            pen = QPen(QColor(COLORS.ACCENT))
+            pen.setWidthF(1.5 / zoom)
+            item.setPen(pen)
+            item.setBrush(QBrush(QColor(99, 102, 241, 80)))
+            item.setZValue(50)
+            self._scene.addItem(item)
+            self._seed_preview_item = item
+        else:
+            self._seed_preview_item.setRect(-r, -r, 2 * r, 2 * r)
+            pen = self._seed_preview_item.pen()
+            pen.setWidthF(1.5 / zoom)
+            self._seed_preview_item.setPen(pen)
+        self._seed_preview_item.setPos(x, y)
+
+        # --- Subset-window box (scene-size = subset_size + 1 px) ---
+        from raftcorr.gui.app_state import AppState
+        winsize = AppState.instance().subset_size
+        half = winsize / 2.0
+        if getattr(self, "_seed_preview_box", None) is None:
+            box = QGraphicsRectItem(-half, -half, winsize + 1, winsize + 1)
+            pen = QPen(QColor(COLORS.ACCENT))
+            pen.setWidthF(1.0 / zoom)
+            pen.setStyle(Qt.PenStyle.DashLine)
+            box.setPen(pen)
+            box.setBrush(Qt.BrushStyle.NoBrush)
+            box.setZValue(49)
+            self._scene.addItem(box)
+            self._seed_preview_box = box
+        else:
+            self._seed_preview_box.setRect(-half, -half, winsize + 1, winsize + 1)
+            box_pen = self._seed_preview_box.pen()
+            box_pen.setWidthF(1.0 / zoom)
+            self._seed_preview_box.setPen(box_pen)
+        self._seed_preview_box.setPos(x, y)
+
+    def set_drawing_mode(self, mode: str) -> None:
+        """Set drawing mode: 'add' or 'cut'."""
+        self._drawing_mode = mode
+
+    def set_roi_controller(self, ctrl: ROIController) -> None:
+        """Attach the ROI controller for mask operations."""
+        self._roi_ctrl = ctrl
+
+    def set_brush_controller(self, ctrl: ROIController | None) -> None:
+        """Attach the brush refinement controller (frame-0 mask buffer)."""
+        self._brush_ctrl = ctrl
+
+    def set_brush_radius(self, radius: int) -> None:
+        """Set the freehand-brush radius in pixels."""
+        self._brush_radius = max(1, int(radius))
+        self._update_brush_cursor()
+
+    def set_brush_mode(self, mode: str) -> None:
+        """Set the brush mode: 'paint' (add) or 'erase' (cut).
+
+        Switching to erase cancels any ongoing fade and restores the overlay
+        to full opacity so the user can see the painted region to erase.
+        """
+        if mode not in ("paint", "erase"):
+            raise ValueError(f"brush mode must be 'paint' or 'erase', got {mode!r}")
+        self._brush_mode = mode
+        self._update_brush_cursor()
+        if mode == "erase":
+            self._cancel_refine_fade()
+
+    def _update_brush_cursor(self) -> None:
+        """Build a circular cursor reflecting the current brush radius and mode."""
+        if self._current_tool != "brush":
+            return
+        r = max(6, int(self._brush_radius * self._zoom_level))
+        size = r * 2 + 8
+        pm = QPixmap(size, size)
+        pm.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        cx = size / 2.0
+        cy = size / 2.0
+        # Outer dark ring for contrast on bright backgrounds
+        p.setPen(QPen(QColor(0, 0, 0, 160), 2.5))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.drawEllipse(_QPointF(cx, cy), float(r), float(r))
+        # Inner ring: solid white for paint, dashed red for erase
+        if self._brush_mode == "paint":
+            inner_pen = QPen(QColor(255, 255, 255, 220), 1.5)
+        else:
+            inner_pen = QPen(QColor(255, 80, 80, 230), 1.5, Qt.PenStyle.DashLine)
+        p.setPen(inner_pen)
+        p.drawEllipse(_QPointF(cx, cy), float(r - 1), float(r - 1))
+        # Tiny center crosshair for precision
+        p.setPen(QPen(QColor(255, 255, 255, 200), 1.0))
+        p.drawLine(int(cx) - 3, int(cy), int(cx) + 3, int(cy))
+        p.drawLine(int(cx), int(cy) - 3, int(cx), int(cy) + 3)
+        p.end()
+        self.setCursor(QCursor(pm, r + 4, r + 4))
+
+    # --- Brush overlay fade ---
+
+    def _start_refine_fade(self) -> None:
+        """Begin fading the brush refinement overlay to transparent (~1 s)."""
+        self._refine_fade_opacity = 1.0
+        self._refine_item.setOpacity(1.0)
+        self._refine_fade_timer.start(40)  # 25 fps
+
+    def _cancel_refine_fade(self) -> None:
+        """Stop any running fade and restore full opacity."""
+        self._refine_fade_timer.stop()
+        self._refine_fade_opacity = 1.0
+        self._refine_item.setOpacity(1.0)
+
+    def _on_refine_fade(self) -> None:
+        self._refine_fade_opacity = max(0.0, self._refine_fade_opacity - 0.04)
+        self._refine_item.setOpacity(self._refine_fade_opacity)
+        if self._refine_fade_opacity <= 0.0:
+            self._refine_fade_timer.stop()
+
+    def _brush_locked_out(self) -> bool:
+        """Return True if brush painting is currently forbidden.
+
+        The only hard lock is ``current_frame != 0``: brush coordinates
+        only make sense on the reference frame -- the pipeline auto-warps
+        the painted mask to subsequent ref frames at run time.
+
+        Painting after a completed Run is intentionally allowed.  Like
+        ROI edits and mesh-parameter changes, the user is free to refine
+        the mask at any time; the old results remain visible until the
+        next Run overwrites them.
+
+        When locked out we reset the canvas tool to "select" and emit
+        ``drawing_finished`` so the toolbar Refine button highlight
+        clears -- otherwise the cursor stays in cross-hair mode.
+        """
+        state = AppState.instance()
+        if state.current_frame == 0:
+            return False
+        # Auto-navigate to reference frame so the user can paint immediately
+        state.set_current_frame(0)
+        state.log_message.emit(
+            "Brush painting is only for the reference frame — switched to frame 1.",
+            "info",
+        )
+        return False  # now on frame 0; allow painting to proceed
+
+    def set_image(self, rgb: NDArray[np.uint8]) -> None:
+        """Display a numpy RGB uint8 array as the background image."""
+        h, w = rgb.shape[:2]
+        bytes_per_line = 3 * w
+        qimg = QImage(
+            rgb.data, w, h, bytes_per_line, QImage.Format.Format_RGB888
+        )
+        # .copy() so QImage owns the data after numpy array may be freed
+        self._bg_item.setPixmap(QPixmap.fromImage(qimg.copy()))
+        self._scene.setSceneRect(QRectF(0, 0, w, h))
+
+    def set_blank(self, height: int, width: int, color: str = "white") -> None:
+        """Show *color* instead of an image, at the given size.
+
+        "transparent" paints nothing, so the view's own background shows
+        through and the field appears to float -- which is what transparent
+        means once there is no file behind it to see.
+        """
+        if height <= 0 or width <= 0:
+            return
+        self._bg_item.setPixmap(blank_pixmap(width, height, color))
+        self._scene.setSceneRect(QRectF(0, 0, width, height))
+
+    def update_roi_overlay(self) -> None:
+        """Refresh the ROI overlay from per_frame_rois[current_frame].
+
+        Single source of truth: the blue overlay always reflects what is
+        persisted in app state for the current frame.  External mutations
+        (batch import, context-menu import) therefore become visible
+        immediately via the roi_changed signal, without having to re-enter
+        ROI editing mode first.
+
+        The in-memory ``self._roi_ctrl`` buffer is a transient stamping
+        surface for in-progress drawing operations; it is no longer the
+        display source.
+        """
+        state = AppState.instance()
+        mask = state.per_frame_rois.get(state.current_frame)
+        if mask is None or not mask.any():
+            self._roi_item.setPixmap(QPixmap())
+            self._roi_item.setPos(0, 0)
+            return
+        h, w = mask.shape
+        # Build RGBA image — ensure contiguous buffer for QImage
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask, :] = [59, 130, 246, 80]  # blue semi-transparent
+        rgba = np.ascontiguousarray(rgba)
+        bytes_per_line = w * 4
+        qimg = QImage(
+            rgba.data, w, h, bytes_per_line, QImage.Format.Format_RGBA8888
+        ).copy()  # deep-copy so pixmap owns the pixel data
+        self._roi_item.setPixmap(QPixmap.fromImage(qimg))
+        self._roi_item.setPos(0, 0)
+
+    def update_refine_overlay(self) -> None:
+        """Refresh the cyan brush refinement overlay from state.refine_brush_mask.
+
+        The brush mask lives in frame-0 image coordinates, so it only
+        makes sense to display while the user is looking at frame 0.
+        On any other frame the brush strokes would sit at geometrically
+        wrong positions (the material has moved), so we hide the
+        overlay entirely instead of painting stale coordinates over a
+        deformed frame.
+        """
+        # Cancel any ongoing fade and restore full visibility so the
+        # freshly-committed mask is always shown at full opacity.
+        self._cancel_refine_fade()
+        state = AppState.instance()
+        mask = state.refine_brush_mask
+
+        # Hide the overlay outside frame 0 — the brush mask lives in
+        # frame-0 coordinates and bleeds through canvases that are
+        # showing later frames.
+        if state.current_frame != 0 or mask is None or not mask.any():
+            self._refine_item.setPixmap(QPixmap())
+            self._refine_item.setPos(0, 0)
+            return
+        h, w = mask.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask, :] = [20, 220, 200, 110]  # cyan semi-transparent
+        rgba = np.ascontiguousarray(rgba)
+        bytes_per_line = w * 4
+        qimg = QImage(
+            rgba.data, w, h, bytes_per_line, QImage.Format.Format_RGBA8888
+        ).copy()
+        self._refine_item.setPixmap(QPixmap.fromImage(qimg))
+        self._refine_item.setPos(0, 0)
+
+    def fit_to_view(self) -> None:
+        """Fit the entire scene into the viewport."""
+        rect = self._scene.sceneRect()
+        if rect.isEmpty():
+            return
+        self.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
+        self._zoom_level = self.transform().m11()
+        self.view_changed.emit()
+
+    def zoom_to_100(self) -> None:
+        """Reset zoom to 100% (1:1 pixels)."""
+        self.resetTransform()
+        self._zoom_level = 1.0
+        self.view_changed.emit()
+
+    def zoom_in(self) -> None:
+        """Zoom in by one step."""
+        self._apply_zoom(_ZOOM_FACTOR)
+
+    def zoom_out(self) -> None:
+        """Zoom out by one step."""
+        self._apply_zoom(1.0 / _ZOOM_FACTOR)
+
+    # ----- zoom helpers -----
+
+    def _apply_zoom(self, factor: float) -> None:
+        new_level = self._zoom_level * factor
+        if new_level < _ZOOM_MIN or new_level > _ZOOM_MAX:
+            return
+        self.scale(factor, factor)
+        self._zoom_level = new_level
+        self.view_changed.emit()
+        self._update_brush_cursor()
+
+    # ----- wheel zoom -----
+
+    def wheelEvent(self, event: QWheelEvent) -> None:  # noqa: N802
+        delta = event.angleDelta().y()
+        if delta > 0:
+            self._apply_zoom(_ZOOM_FACTOR)
+        elif delta < 0:
+            self._apply_zoom(1.0 / _ZOOM_FACTOR)
+
+    # ----- mouse events -----
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        # Middle-button pan (always available)
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self._panning = True
+            self._pan_start = event.position()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
+
+        # Left-button pan when tool == "pan"
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._current_tool == "pan"
+        ):
+            self._panning = True
+            self._pan_start = event.position()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
+
+        # Shape drawing tools
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._current_tool in ("rect", "polygon", "circle", "circle3")
+        ):
+            scene_pos = self.mapToScene(event.position().toPoint())
+            self._handle_draw_press(scene_pos)
+            event.accept()
+            return
+
+        # Seed tool: left-click to add a Starting Point, right-click to remove.
+        if self._current_tool == "seed" and self._seed_ctrl is not None:
+            scene_pos = self.mapToScene(event.position().toPoint())
+            if event.button() == Qt.MouseButton.LeftButton:
+                self._seed_ctrl.add_seed_at_xy(scene_pos.x(), scene_pos.y())
+                event.accept()
+                return
+            if event.button() == Qt.MouseButton.RightButton:
+                step = self._seed_ctrl._state.subset_step
+                self._seed_ctrl.remove_seed_near(
+                    scene_pos.x(), scene_pos.y(), radius=float(step),
+                )
+                event.accept()
+                return
+
+        # Brush sub-tool: paint a single dot at click site, prime drag state
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._current_tool == "brush"
+        ):
+            if self._brush_ctrl is None:
+                AppState.instance().log_message.emit(
+                    "Load images first before using the brush.", "warn"
+                )
+                event.accept()
+                return
+            # Defensive lockout: brush only paints on frame 0 with no
+            # results.  If somehow the active-layer guard didn't fire,
+            # this catches the press and silently drops the tool.
+            if self._brush_locked_out():
+                event.accept()
+                return
+            scene_pos = self.mapToScene(event.position().toPoint())
+            self._brush_last_pos = scene_pos
+            self._stroke_at(scene_pos, scene_pos)
+            event.accept()
+            return
+
+        super().mousePressEvent(event)
+
+    def scrollContentsBy(self, dx: int, dy: int) -> None:  # noqa: N802
+        super().scrollContentsBy(dx, dy)
+        self.view_changed.emit()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        if self._panning:
+            delta = event.position() - self._pan_start
+            self._pan_start = event.position()
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - int(delta.x())
+            )
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - int(delta.y())
+            )
+            event.accept()
+            return
+
+        # Drawing preview
+        if self._draw_state is not None:
+            scene_pos = self.mapToScene(event.position().toPoint())
+            self._handle_draw_move(scene_pos)
+            event.accept()
+            return
+
+        # Brush drag-paint: while LeftButton held, accumulate strokes
+        if (
+            self._current_tool == "brush"
+            and (event.buttons() & Qt.MouseButton.LeftButton)
+            and self._brush_ctrl is not None
+        ):
+            # Defensive lockout: same conditions as the press handler.
+            if self._brush_locked_out():
+                event.accept()
+                return
+            scene_pos = self.mapToScene(event.position().toPoint())
+            last = self._brush_last_pos
+            if last is not None:
+                self._stroke_at(last, scene_pos)
+            self._brush_last_pos = scene_pos
+            event.accept()
+            return
+
+        # Seed tool: hover-snap preview + cursor shape feedback
+        if self._current_tool == "seed" and self._seed_ctrl is not None:
+            sp = self.mapToScene(event.position().toPoint())
+            if self._seed_ctrl.is_xy_in_mask(sp.x(), sp.y()):
+                self.setCursor(Qt.CursorShape.CrossCursor)
+                preview = self._seed_ctrl.nearest_node_preview(sp.x(), sp.y())
+                if preview is not None:
+                    _, nx, ny = preview
+                    self._update_seed_preview(nx, ny)
+                else:
+                    self._clear_seed_preview()
+            else:
+                self.setCursor(Qt.CursorShape.ForbiddenCursor)
+                self._clear_seed_preview()
+            event.accept()
+            return
+
+        # Emit scene hover for mesh overlay subset window
+        sp = self.mapToScene(event.position().toPoint())
+        self.scene_hover.emit(sp.x(), sp.y())
+
+        super().mouseMoveEvent(event)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802
+        # Escape exits the seed-placement tool, returning to pan.
+        if (
+            self._current_tool == "seed"
+            and event.key() == Qt.Key.Key_Escape
+        ):
+            self.set_tool("pan")
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        if self._panning and event.button() in (
+            Qt.MouseButton.MiddleButton,
+            Qt.MouseButton.LeftButton,
+        ):
+            self._panning = False
+            # Restore cursor for current tool
+            self.set_tool(self._current_tool)
+            event.accept()
+            return
+
+        # Shape finalize (rect, circle — release-to-finish)
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._draw_state is not None
+            and self._current_tool in ("rect", "circle")
+        ):
+            scene_pos = self.mapToScene(event.position().toPoint())
+            self._handle_draw_release(scene_pos)
+            event.accept()
+            return
+
+        # Brush stroke finalize: persist current buffer to app state.
+        # Tool stays in "brush" mode for continuous painting.
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._current_tool == "brush"
+            and self._brush_ctrl is not None
+        ):
+            self._brush_last_pos = None
+            AppState.instance().set_refine_brush_mask(
+                self._brush_ctrl.mask.copy()
+            )
+            # In paint mode, fade the brush stroke after commit so only
+            # the mesh refinement result remains visible.
+            if self._brush_mode == "paint":
+                self._start_refine_fade()
+            event.accept()
+            return
+
+        super().mouseReleaseEvent(event)
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        # Polygon: double-click closes the polygon
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._current_tool == "polygon"
+            and self._draw_state is not None
+        ):
+            self._finalize_polygon()
+            event.accept()
+            return
+
+        super().mouseDoubleClickEvent(event)
+
+    def leaveEvent(self, event) -> None:  # noqa: N802
+        self.hover_left.emit()
+        super().leaveEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
+        # Escape cancels in-progress drawing
+        if event.key() == Qt.Key.Key_Escape and self._draw_state is not None:
+            self._cancel_drawing()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    # ----- drawing logic -----
+
+    def _handle_draw_press(self, pos: QPointF) -> None:
+        pen = _PEN_CUT if self._drawing_mode == "cut" else _PEN_ADD
+
+        if self._current_tool == "rect":
+            self._draw_state = {"start": pos}
+            rect_item = QGraphicsRectItem(QRectF(pos, pos))
+            rect_item.setPen(pen)
+            rect_item.setZValue(10)
+            self._scene.addItem(rect_item)
+            self._preview_items = [rect_item]
+
+        elif self._current_tool == "circle":
+            self._draw_state = {"center": pos}
+            ellipse = QGraphicsEllipseItem(QRectF(pos, pos))
+            ellipse.setPen(pen)
+            ellipse.setZValue(10)
+            self._scene.addItem(ellipse)
+            self._preview_items = [ellipse]
+
+        elif self._current_tool == "polygon":
+            if self._draw_state is None:
+                # First point
+                self._draw_state = {"points": [pos]}
+                self._preview_items = []
+            else:
+                self._draw_state["points"].append(pos)
+
+            # Add a new line segment preview
+            if len(self._draw_state["points"]) >= 2:
+                pts = self._draw_state["points"]
+                line = QGraphicsLineItem(
+                    pts[-2].x(), pts[-2].y(), pts[-1].x(), pts[-1].y()
+                )
+                line.setPen(pen)
+                line.setZValue(10)
+                self._scene.addItem(line)
+                self._preview_items.append(line)
+
+        elif self._current_tool == "circle3":
+            # Three-point circle: collect exactly 3 points on the circle's
+            # edge, then commit the circumcircle automatically on the 3rd click.
+            if self._draw_state is None:
+                self._draw_state = {"points": [pos]}
+                self._preview_items = []
+            else:
+                self._draw_state["points"].append(pos)
+            # Small marker dot at each clicked point for feedback.
+            dot = QGraphicsEllipseItem(QRectF(pos.x() - 2, pos.y() - 2, 4, 4))
+            dot.setPen(pen)
+            dot.setZValue(11)
+            self._scene.addItem(dot)
+            self._preview_items.append(dot)
+            if len(self._draw_state["points"]) >= 3:
+                self._finalize_circle3()
+
+    def _handle_draw_move(self, pos: QPointF) -> None:
+        if self._current_tool == "rect" and self._preview_items:
+            start = self._draw_state["start"]
+            rect = QRectF(start, pos).normalized()
+            self._preview_items[0].setRect(rect)
+
+        elif self._current_tool == "circle" and self._preview_items:
+            center = self._draw_state["center"]
+            dx = pos.x() - center.x()
+            dy = pos.y() - center.y()
+            radius = math.sqrt(dx * dx + dy * dy)
+            self._preview_items[0].setRect(QRectF(
+                center.x() - radius, center.y() - radius,
+                2 * radius, 2 * radius,
+            ))
+
+        elif self._current_tool == "circle3" and self._draw_state is not None:
+            # Live circumcircle preview through the 2 placed points + cursor.
+            pts = self._draw_state.get("points", [])
+            if len(pts) >= 2:
+                res = circumcircle(
+                    (pts[0].x(), pts[0].y()),
+                    (pts[1].x(), pts[1].y()),
+                    (pos.x(), pos.y()),
+                )
+                circ = self._draw_state.get("preview_circle")
+                sr = self._scene.sceneRect()
+                max_r = 5.0 * math.hypot(sr.width(), sr.height())
+                if res is not None and 0 < res[2] <= max_r:
+                    cx, cy, r = res
+                    if circ is None:
+                        cpen = _PEN_CUT if self._drawing_mode == "cut" else _PEN_ADD
+                        circ = QGraphicsEllipseItem()
+                        circ.setPen(cpen)
+                        circ.setZValue(10)
+                        self._scene.addItem(circ)
+                        self._draw_state["preview_circle"] = circ
+                        self._preview_items.append(circ)
+                    circ.setRect(QRectF(cx - r, cy - r, 2 * r, 2 * r))
+                    circ.setVisible(True)
+                elif circ is not None:
+                    circ.setVisible(False)
+
+    def _handle_draw_release(self, pos: QPointF) -> None:
+        if self._roi_ctrl is None:
+            self._cancel_drawing()
+            AppState.instance().log_message.emit(
+                "Load images first before drawing a Region of Interest.",
+                "warn"
+            )
+            return
+
+        if self._current_tool == "rect":
+            start = self._draw_state["start"]
+            x1 = int(min(start.x(), pos.x()))
+            y1 = int(min(start.y(), pos.y()))
+            x2 = int(max(start.x(), pos.x()))
+            y2 = int(max(start.y(), pos.y()))
+            self._roi_ctrl.add_rectangle(x1, y1, x2, y2, self._drawing_mode)
+            self._finish_drawing()
+
+        elif self._current_tool == "circle":
+            center = self._draw_state["center"]
+            dx = pos.x() - center.x()
+            dy = pos.y() - center.y()
+            radius = int(math.sqrt(dx * dx + dy * dy))
+            self._roi_ctrl.add_circle(
+                int(center.x()), int(center.y()), radius, self._drawing_mode
+            )
+            self._finish_drawing()
+
+    def _finalize_polygon(self) -> None:
+        if self._roi_ctrl is None or self._draw_state is None:
+            self._cancel_drawing()
+            if self._roi_ctrl is None:
+                AppState.instance().log_message.emit(
+                    "Load images first before drawing a Region of Interest.",
+                "warn"
+                )
+            return
+        pts = self._draw_state.get("points", [])
+        if len(pts) < 3:
+            self._cancel_drawing()
+            return
+        int_pts = [(int(p.x()), int(p.y())) for p in pts]
+        self._roi_ctrl.add_polygon(int_pts, self._drawing_mode)
+        self._finish_drawing()
+
+    def _finalize_circle3(self) -> None:
+        """Commit a three-point circle (circumcircle of the 3 clicks).
+
+        Aborts gracefully when the points are collinear (no circle) or nearly
+        collinear (circle far larger than the image), which would otherwise
+        produce a garbage radius.
+        """
+        if self._roi_ctrl is None or self._draw_state is None:
+            self._cancel_drawing()
+            if self._roi_ctrl is None:
+                AppState.instance().log_message.emit(
+                    self.tr(
+                        "Load images first before drawing a Region of Interest."
+                    ),
+                    "warn",
+                )
+            return
+        pts = self._draw_state.get("points", [])
+        if len(pts) < 3:
+            self._cancel_drawing()
+            return
+        res = circumcircle(
+            (pts[0].x(), pts[0].y()),
+            (pts[1].x(), pts[1].y()),
+            (pts[2].x(), pts[2].y()),
+        )
+        sr = self._scene.sceneRect()
+        max_r = 5.0 * math.hypot(sr.width(), sr.height())
+        if res is None or not (0 < res[2] <= max_r):
+            AppState.instance().log_message.emit(
+                self.tr(
+                    "The three points are nearly collinear — pick points "
+                    "spread around the circle's edge."
+                ),
+                "warn",
+            )
+            self._cancel_drawing()
+            return
+        cx, cy, r = res
+        self._roi_ctrl.add_circle(
+            int(round(cx)), int(round(cy)), int(round(r)), self._drawing_mode
+        )
+        self._finish_drawing()
+
+    def _finish_drawing(self) -> None:
+        """Clean up preview items, save the stamp to per-frame state,
+        refresh the overlay, and reset to select mode."""
+        self._remove_preview_items()
+        self._draw_state = None
+        # Persist the stamp to per-frame state BEFORE refreshing the
+        # overlay. After Q3 the overlay reads its data from
+        # per_frame_rois[current_frame], so state must be written first
+        # or the first refresh will paint with the previous (stale) mask.
+        if self._roi_ctrl is not None:
+            state = AppState.instance()
+            state.set_frame_roi(
+                state.current_frame, self._roi_ctrl.mask.copy()
+            )
+        self.update_roi_overlay()
+        # One-shot: reset to select mode after completing a shape
+        self._current_tool = "select"
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.drawing_finished.emit()
+
+    def _cancel_drawing(self) -> None:
+        """Cancel in-progress drawing, remove preview items, and reset to select."""
+        was_drawing = self._draw_state is not None
+        self._remove_preview_items()
+        self._draw_state = None
+        if was_drawing:
+            self._current_tool = "select"
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.drawing_finished.emit()
+
+    def _remove_preview_items(self) -> None:
+        for item in self._preview_items:
+            self._scene.removeItem(item)
+        self._preview_items = []
+
+    def _stroke_at(self, p1: QPointF, p2: QPointF) -> None:
+        """Apply a single brush stroke segment and refresh the overlay.
+
+        Pushes the segment into ``self._brush_ctrl`` (which holds a
+        bool buffer in frame-0 image coordinates), then immediately
+        rebuilds the cyan overlay so the user sees their stroke.
+
+        AppState is updated only on mouse release to keep paint latency
+        low — intermediate strokes mutate the buffer in place.
+        """
+        if self._brush_ctrl is None:
+            return
+        sub_mode = "add" if self._brush_mode == "paint" else "cut"
+        self._brush_ctrl.stroke_segment(
+            int(p1.x()), int(p1.y()),
+            int(p2.x()), int(p2.y()),
+            radius=self._brush_radius,
+            mode=sub_mode,
+        )
+        # Render directly from the controller buffer for instant feedback —
+        # state.refine_brush_mask gets the same buffer on mouse release.
+        self._render_brush_buffer()
+
+    def _render_brush_buffer(self) -> None:
+        """Render the in-progress brush controller buffer to the cyan overlay.
+
+        Called between mouse-down and mouse-up so the user sees their
+        stroke before the buffer is committed to AppState.  Identical
+        rendering logic to ``update_refine_overlay`` but reads from
+        ``self._brush_ctrl.mask`` instead of ``state.refine_brush_mask``.
+
+        Cancels any running fade so active strokes are always shown at
+        full opacity.
+        """
+        # Cancel fade so active stroke is always at full opacity
+        self._cancel_refine_fade()
+        if self._brush_ctrl is None:
+            return
+        mask = self._brush_ctrl.mask
+        if mask is None or not mask.any():
+            self._refine_item.setPixmap(QPixmap())
+            self._refine_item.setPos(0, 0)
+            return
+        h, w = mask.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask, :] = [20, 220, 200, 110]  # cyan semi-transparent
+        rgba = np.ascontiguousarray(rgba)
+        bytes_per_line = w * 4
+        qimg = QImage(
+            rgba.data, w, h, bytes_per_line, QImage.Format.Format_RGBA8888
+        ).copy()
+        self._refine_item.setPixmap(QPixmap.fromImage(qimg))
+        self._refine_item.setPos(0, 0)
+
+
+# ---------------------------------------------------------------------------
+# CanvasArea — wrapper widget
+# ---------------------------------------------------------------------------
+class CanvasArea(QWidget):
+    """Canvas wrapper with top toolbar, the ImageCanvas, colour bar and frame navigator.
+
+    The pyALDIC layout and behaviour; the field overlay is RAFTcorr's dense displacement
+    (:class:`raftcorr.viz.fields.FieldProvider`), drawn in the reference or the deformed
+    configuration.
+    """
+
+    def __init__(
+        self,
+        image_ctrl: ImageController,
+        viz_ctrl: VizController | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self._image_ctrl = image_ctrl
+        self._viz_ctrl = viz_ctrl or VizController()
+        self._state = AppState.instance()
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # --- Top toolbar ---
+        toolbar = QWidget()
+        toolbar.setFixedHeight(36)
+        themed(toolbar, "background: {BG_PANEL}; border-bottom: 1px solid {BORDER};")
+        tb_layout = QHBoxLayout(toolbar)
+        tb_layout.setContentsMargins(8, 2, 8, 2)
+        tb_layout.setSpacing(4)
+
+        btn_fit = QPushButton(self.tr("Fit"))
+        btn_fit.setToolTip(self.tr("Fit image to viewport"))
+        btn_fit.setMinimumWidth(60)  # grows for longer translations ("Anpassen")
+        if _HAS_ICONS:
+            set_icon(btn_fit, icon_maximize)
+        btn_100 = QPushButton(self.tr("100%"))
+        btn_100.setToolTip(self.tr("Zoom to 100% (1:1)"))
+        btn_100.setFixedWidth(60)
+        btn_zoom_in = QPushButton("+")
+        btn_zoom_in.setToolTip(self.tr("Zoom in"))
+        btn_zoom_in.setFixedWidth(28)
+        if _HAS_ICONS:
+            set_icon(btn_zoom_in, icon_zoom_in)
+            btn_zoom_in.setText("")
+        btn_zoom_out = QPushButton(self.tr("–"))
+        btn_zoom_out.setToolTip(self.tr("Zoom out"))
+        btn_zoom_out.setFixedWidth(28)
+        if _HAS_ICONS:
+            set_icon(btn_zoom_out, icon_zoom_out)
+            btn_zoom_out.setText("")
+        for b in (btn_fit, btn_100, btn_zoom_in, btn_zoom_out):
+            tb_layout.addWidget(b)
+        tb_layout.addStretch()
+
+        # Cursor read-out: position and the value of the field under the cursor.
+        self._readout = QLabel("")
+        themed(self._readout, "color: {TEXT_SECONDARY}; font-size: 11px; background: transparent;")
+        tb_layout.addWidget(self._readout)
+        layout.addWidget(toolbar)
+
+        # --- ROI editing banner (hidden by default) ---
+        self._roi_banner = QLabel()
+        self._roi_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._roi_banner.setFixedHeight(36)
+        self._roi_banner.setVisible(False)
+        themed(self._roi_banner, "background: {WARNING}; color: #000; font-size: 14px; font-weight: bold; padding: 4px;")
+        layout.addWidget(self._roi_banner)
+
+        # --- Canvas ---
+        self._canvas = ImageCanvas()
+        layout.addWidget(self._canvas, stretch=1)
+
+        # --- Colorbar overlay (child of the canvas viewport) ---
+        self._colorbar = ColorbarOverlay(self._canvas.viewport())
+        self._canvas.viewport().installEventFilter(self)
+
+        # --- Bottom frame navigator ---
+        self._frame_nav = FrameNavigator()
+        layout.addWidget(self._frame_nav)
+
+        # --- Connections ---
+        btn_fit.clicked.connect(self._canvas.fit_to_view)
+        btn_100.clicked.connect(self._canvas.zoom_to_100)
+        btn_zoom_in.clicked.connect(self._canvas.zoom_in)
+        btn_zoom_out.clicked.connect(self._canvas.zoom_out)
+
+        st = self._state
+        st.images_changed.connect(self._on_images_changed)
+        st.current_frame_changed.connect(self._on_frame_changed)
+        st.results_changed.connect(self._on_results_changed)
+        st.display_changed.connect(self._on_display_changed)
+        st.roi_changed.connect(self._on_roi_changed)
+        st.physical_units_changed.connect(self._viz_ctrl.clear_all)
+        st.results_changed.connect(self._viz_ctrl.clear_all)
+        self._canvas.scene_hover.connect(self._on_scene_hover)
+        self._canvas.hover_left.connect(lambda: self._readout.setText(""))
+
+    @property
+    def canvas(self) -> ImageCanvas:
+        return self._canvas
+
+    @property
+    def frame_navigator(self) -> FrameNavigator:
+        return self._frame_nav
+
+    def _sync_overlay_geometry(self) -> None:
+        vp = self._canvas.viewport()
+        self._colorbar.setGeometry(0, 0, vp.width(), vp.height())
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        self._sync_overlay_geometry()
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802
+        if obj is self._canvas.viewport() and event.type() == QEvent.Type.Resize:
+            self._sync_overlay_geometry()
+        return super().eventFilter(obj, event)
+
+    # pyALDIC API kept for the main window (RAFTcorr has no seeds or mesh)
+    def attach_seed_controller(self, ctrl) -> None:
+        return None
+
+    def _refresh_mesh_overlay(self) -> None:
+        return None
+
+    def set_roi_editing_banner(self, frame: int | None) -> None:
+        if frame is None:
+            self._roi_banner.setVisible(False)
+            return
+        text = (self.tr("Editing the ROI of frame 1 (the reference)") if frame == 0
+                else self.tr("Editing the mask of frame %1 (regions left out are excluded)").replace("%1", str(frame + 1)))
+        self._roi_banner.setText(text)
+        self._roi_banner.setVisible(True)
+
+    # --- state reactions ---
+    def _on_images_changed(self) -> None:
+        if self._state.image_files:
+            self._load_frame(0)
+            self._canvas.fit_to_view()
+        self._refresh_overlay()
+
+    def _on_frame_changed(self, idx: int) -> None:
+        state = self._state
+        if state.roi_editing and state.results is not None:
+            state.roi_editing = False
+        self._update_background()
+        self._refresh_overlay()
+
+    def _on_roi_changed(self) -> None:
+        self._viz_ctrl.invalidate_masks()
+        self._refresh_overlay()
+
+    def _on_results_changed(self) -> None:
+        self._update_background()
+        self._refresh_overlay()
+
+    def _on_display_changed(self) -> None:
+        self._update_background()
+        self._refresh_overlay()
+
+    def _update_background(self) -> None:
+        state = self._state
+        if state.roi_editing:
+            self._load_frame(state.current_frame)
+        elif state.results is not None:
+            if not state.show_background:
+                self._blank_background()
+            elif state.show_deformed:
+                self._load_frame(state.current_frame)
+            else:
+                self._load_frame(0)
+        else:
+            self._load_frame(state.current_frame)
+
+    def _blank_background(self) -> None:
+        state = self._state
+        if state.sequence is None:
+            return
+        h, w = state.sequence.shape
+        self._canvas.set_blank(h, w, state.hidden_bg_color)
+
+    def _load_frame(self, idx: int) -> None:
+        try:
+            self._canvas.set_image(self._image_ctrl.read_image_rgb(idx))
+        except (IndexError, FileNotFoundError, ValueError):
+            pass
+
+    def _clear_field(self) -> None:
+        overlay = self._canvas._overlay_item
+        overlay.setPixmap(QPixmap())
+        overlay.setScale(1.0)
+        overlay.setPos(0, 0)
+        self._colorbar.setVisible(False)
+        self._viz_ctrl.shown = None
+
+    def _refresh_overlay(self, *_args: object) -> None:
+        """ROI editing shows the mask; results view shows the coloured field."""
+        state = self._state
+        roi_item = self._canvas._roi_item
+        if state.roi_editing:
+            self._clear_field()
+            self._canvas.update_roi_overlay()
+            self.set_roi_editing_banner(state.current_frame)
+            return
+        self.set_roi_editing_banner(None)
+        if state.results is None or state.provider is None:
+            self._clear_field()
+            self._canvas.update_roi_overlay()
+            return
+        roi_item.setPixmap(QPixmap())
+        try:
+            img = self._viz_ctrl.render_field(state)
+        except Exception as e:  # never let a drawing error break the canvas
+            state.log_message.emit(f"Overlay error: {type(e).__name__}: {e}", "error")
+            self._clear_field()
+            return
+        if img is None:
+            self._clear_field()
+            return
+        overlay = self._canvas._overlay_item
+        overlay.setPixmap(img.pixmap)
+        overlay.setScale(float(img.step))
+        overlay.setOpacity(state.overlay_alpha)
+        overlay.setPos(float(img.x0), float(img.y0))
+        self._colorbar.update_params(img.cmap, img.vmin, img.vmax, img.label)
+        self._sync_overlay_geometry()
+        self._colorbar.setVisible(True)
+
+    def _on_scene_hover(self, sx: float, sy: float) -> None:
+        # scene pixel (c, r) covers [c, c + 1): image coordinates are scene - 0.5
+        x, y = sx - 0.5, sy - 0.5
+        text = f"x {x:.1f}  y {y:.1f} px"
+        val = self._viz_ctrl.value_at(x, y)
+        if val is not None:
+            text += f"   {val[0]} = {val[1]:.5g} {val[2]}"
+        self._readout.setText(text)

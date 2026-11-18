@@ -1,0 +1,118 @@
+"""Color range controls -- explicit Auto/Fixed mode + min/max bounds."""
+
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+
+from raftcorr.gui.app_state import AppState
+from raftcorr.gui.widgets.double_spin import LocaleSafeDoubleSpinBox
+from raftcorr.gui.widgets.range_mode import AutoFixedSelector
+
+
+class ColorRange(QWidget):
+    """Auto/Fixed mode selector + Min/Max spin boxes for color range."""
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+        # Range label + Auto/Fixed selector on same row
+        auto_row = QHBoxLayout()
+        auto_row.setSpacing(6)
+        auto_row.addWidget(QLabel(self.tr("Range")))
+        self._auto_cb = AutoFixedSelector()
+        self._auto_cb.toggled.connect(self._on_auto_changed)
+        auto_row.addWidget(self._auto_cb, 1)
+        layout.addLayout(auto_row)
+
+        # Min/Max row
+        range_row = QHBoxLayout()
+        range_row.setSpacing(4)
+
+        range_row.addWidget(QLabel(self.tr("Min")))
+        self._min_spin = LocaleSafeDoubleSpinBox()
+        self._min_spin.setRange(-1000, 1000)
+        self._min_spin.setDecimals(3)
+        self._min_spin.setValue(0.0)
+        self._min_spin.setSingleStep(0.01)
+        self._min_spin.setEnabled(False)  # disabled when auto=True
+        self._min_spin.valueChanged.connect(self._on_range_changed)
+        range_row.addWidget(self._min_spin)
+
+        range_row.addWidget(QLabel(self.tr("Max")))
+        self._max_spin = LocaleSafeDoubleSpinBox()
+        self._max_spin.setRange(-1000, 1000)
+        self._max_spin.setDecimals(3)
+        self._max_spin.setValue(1.0)
+        self._max_spin.setSingleStep(0.01)
+        self._max_spin.setEnabled(False)
+        self._max_spin.valueChanged.connect(self._on_range_changed)
+        range_row.addWidget(self._max_spin)
+
+        layout.addLayout(range_row)
+
+        # Keep controls in sync when the active field changes.
+        AppState.instance().display_changed.connect(self._sync_from_state)
+
+    def _sync_from_state(self) -> None:
+        """Reload controls from AppState's current field color state.
+
+        Called whenever *display_changed* fires so that switching fields
+        restores that field's remembered auto/manual range settings.
+        We block all signals to prevent triggering a redundant save-back loop.
+        """
+        state = AppState.instance()
+        fs = state.get_field_state(state.display_field)
+        self._auto_cb.blockSignals(True)
+        self._min_spin.blockSignals(True)
+        self._max_spin.blockSignals(True)
+        self._auto_cb.setChecked(fs.auto)
+        self._min_spin.setEnabled(not fs.auto)
+        self._max_spin.setEnabled(not fs.auto)
+        self._min_spin.setValue(fs.vmin)
+        self._max_spin.setValue(fs.vmax)
+        self._auto_cb.blockSignals(False)
+        self._min_spin.blockSignals(False)
+        self._max_spin.blockSignals(False)
+
+    def _on_auto_changed(self, auto: bool) -> None:
+        """Enable/disable spin boxes based on the Auto/Fixed mode."""
+        self._min_spin.setEnabled(not auto)
+        self._max_spin.setEnabled(not auto)
+        if not auto:
+            # Populate spin boxes with the current auto-computed range
+            # so the user starts from the current display, not stale defaults.
+            app_state = AppState.instance()
+            self._min_spin.blockSignals(True)
+            self._max_spin.blockSignals(True)
+            self._min_spin.setValue(app_state.color_min)
+            self._max_spin.setValue(app_state.color_max)
+            self._min_spin.blockSignals(False)
+            self._max_spin.blockSignals(False)
+        self._emit_range()
+
+    def _on_range_changed(self) -> None:
+        """Forward manual range changes to AppState."""
+        self._emit_range()
+
+    def _emit_range(self) -> None:
+        """Push current auto/min/max to AppState."""
+        AppState.instance().set_color_range(
+            auto=self._auto_cb.isChecked(),
+            vmin=self._min_spin.value(),
+            vmax=self._max_spin.value(),
+        )
+
+    def set_range(self, vmin: float, vmax: float) -> None:
+        """Update displayed range (called when auto-range is computed)."""
+        self._min_spin.blockSignals(True)
+        self._max_spin.blockSignals(True)
+        self._min_spin.setValue(vmin)
+        self._max_spin.setValue(vmax)
+        self._min_spin.blockSignals(False)
+        self._max_spin.blockSignals(False)

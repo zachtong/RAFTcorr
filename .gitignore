@@ -1,33 +1,25 @@
-# Worktrees
-.worktrees/
-
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.egg-info/
 .pytest_cache/
-
-# Legacy and Large Files
-legacy_archive/
-_backup_tkinter/
-assets/
-models/
-
-# Examples and test data (large image datasets)
-examples/
-test_data/
-
-# Coverage reports
-htmlcov/
 .coverage
+htmlcov/
+build/
+dist/
+.venv/
 
-# Install log
+# Model weights (distributed separately) and image data
+/models/
+*.pth
+/examples/
+/test_data/
+
+# Local outputs
+/outputs/
+*.raftcorr
 install.log
 
-# Frontend build artifacts
-frontend/dist/
-frontend/node_modules/
-
-# Reference and tools (local only)
-UI_reference/
-tools/
+# Editors
+.vscode/
+.idea/
