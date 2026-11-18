@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
     set "CONDA=conda"
 )
 
-echo [1/4] Creating the conda environment %ENV_NAME% (Python 3.11)...
+echo [1/5] Creating the conda environment %ENV_NAME% (Python 3.11)...
 call "%CONDA%" env list | findstr /b /c:"%ENV_NAME% " >nul 2>&1
 if %errorlevel% equ 0 (
     echo   environment exists, reusing it
@@ -48,7 +48,7 @@ if %errorlevel% neq 0 (
 )
 python -m pip install --upgrade pip >> "%LOGFILE%" 2>&1
 
-echo [2/4] Detecting the GPU...
+echo [2/5] Detecting the GPU...
 set CUDA_MAJOR=0
 set CUDA_MINOR=0
 set TORCH_INDEX=https://download.pytorch.org/whl/cpu
@@ -80,7 +80,7 @@ if !NEED_CU128! equ 1 (
     echo   [WARNING] no NVIDIA GPU found: installing the CPU build. RAFTcorr runs, but slowly.
 )
 
-echo [3/4] Installing PyTorch (this downloads about 2.5 GB)...
+echo [3/5] Installing PyTorch (this downloads about 2.5 GB)...
 pip install torch --index-url !TORCH_INDEX! >> "%LOGFILE%" 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] PyTorch installation failed, see install.log
@@ -88,7 +88,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [4/4] Installing RAFTcorr...
+echo [4/5] Installing RAFTcorr...
 pip install -e ".[all]" >> "%LOGFILE%" 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] RAFTcorr installation failed, see install.log
@@ -96,11 +96,13 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+echo [5/5] Downloading the model files...
+:: Not fatal: the application also downloads a model the first time it is used.
+python -m raftcorr models --download
 echo.
 python -m raftcorr info
 echo.
-python -m raftcorr models
-echo.
-echo Done. Put the model files RAFTcorr-s1.pth ... RAFTcorr-s8.pth into the "models" folder if
-echo "raftcorr models" lists them as NOT INSTALLED, then start RAFTcorr with run.bat.
+echo Done. Start RAFTcorr with run.bat. A model listed above as NOT INSTALLED is downloaded the
+echo first time it is used; if it cannot be downloaded, put its file (RAFTcorr-s1.pth ...
+echo RAFTcorr-s8.pth) into the "models" folder.
 pause

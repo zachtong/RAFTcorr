@@ -12,6 +12,8 @@ A rewrite. One Python process replaces the Flask server and the React front end.
   `weights_only=True` and verified key by key. The 1.x models, their sign flip and the shape
   heuristics are gone.
 - Model suggestion from a quick s8 survey of the sequence.
+- The model files are assets of the GitHub release `weights-v1`: a model is downloaded and
+  verified the first time it is used, or with `raftcorr models --download` (run by `install.bat`).
 
 ### Engine
 - 20 iterations and raw displacements by default (as in the paper).

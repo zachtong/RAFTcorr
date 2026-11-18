@@ -5,6 +5,7 @@
     raftcorr run FOLDER [options]    track a sequence and write results (HDF5 / MAT / NPZ, project)
     raftcorr suggest FOLDER          measure the displacement with s8 and suggest a model
     raftcorr models                  list the models and where their weights are
+    raftcorr models --download       download the missing model files (per-user folder)
     raftcorr selftest                run every installed model on a synthetic pair
     raftcorr info                    versions, PyTorch, CUDA
 """
@@ -54,7 +55,9 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--roi")
     s.add_argument("--device", default="auto")
 
-    sub.add_parser("models", help="list the models")
+    m = sub.add_parser("models", help="list the models")
+    m.add_argument("--download", nargs="*", metavar="KEY",
+                   help="download the missing model files (all, or the keys given: s1 s2 s4 s8)")
     st = sub.add_parser("selftest", help="run every installed model on a synthetic pair")
     st.add_argument("--device", default="auto")
     sub.add_parser("info", help="versions and devices")
@@ -159,9 +162,15 @@ def _suggest(args) -> int:
     return 0
 
 
-def _models(_args) -> int:
-    from ..models.zoo import MODELS, available_models, load_card, search_dirs
+def _models(args) -> int:
+    from ..models.zoo import MODELS, available_models, download_missing, load_card, search_dirs
 
+    failed = False
+    if args.download is not None:
+        for key, outcome in download_missing(args.download or None).items():
+            print(f"RAFTcorr-{key}: {outcome}")
+            failed |= not outcome.startswith(("installed", "downloaded"))
+        print()
     avail = available_models()
     for key, spec in MODELS.items():
         p = avail.get(key)
@@ -173,7 +182,7 @@ def _models(_args) -> int:
               f"{'installed: ' + str(p) if p else 'NOT INSTALLED'}")
         print(f"{'':13s} {spec.summary}")
     print("searched: " + "; ".join(str(d) for d in search_dirs()))
-    return 0
+    return 3 if failed else 0
 
 
 def _selftest(args) -> int:

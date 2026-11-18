@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
             from raftcorr.engine.pipeline import Pipeline
             from raftcorr.models import load_model, resolve_weights
 
-            p = resolve_weights("s8")
+            p = resolve_weights("s8", allow_download=True, callbacks=cb)
             key = (str(p), cfg.device, None)
             loaded = cache.get(key)
             if loaded is None:

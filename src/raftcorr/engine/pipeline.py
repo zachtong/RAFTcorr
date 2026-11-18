@@ -63,7 +63,7 @@ class Pipeline:
         if self._loaded is None:
             from ..models import load_model, resolve_weights
 
-            path = resolve_weights(self.config.model, callbacks=self.callbacks)
+            path = resolve_weights(self.config.model, allow_download=True, callbacks=self.callbacks)
             self._loaded = load_model(path, self.config.device, self.config.corr_mode, self.callbacks)
         return self._loaded
 

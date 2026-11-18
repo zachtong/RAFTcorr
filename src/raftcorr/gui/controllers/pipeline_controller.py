@@ -92,7 +92,7 @@ class PipelineWorker(QThread):
         from raftcorr.models import load_model, resolve_weights
 
         cfg = self._cfg
-        path = resolve_weights(cfg.model, callbacks=cb)
+        path = resolve_weights(cfg.model, allow_download=True, callbacks=cb)  # first use downloads it
         key = (str(path), cfg.device, cfg.corr_mode)
         hit = self._cache.get(key)
         if hit is None:

@@ -24,6 +24,7 @@ import json
 import os
 import shutil
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -33,9 +34,14 @@ from ..callbacks import Callbacks, coerce
 
 ENV_WEIGHTS = "RAFTCORR_WEIGHTS"
 
-#: Base URL of the release assets that hold the weights. ``None`` until the distribution channel
-#: is decided; downloads are then disabled and the weights must be placed by hand.
-RELEASE_BASE_URL: str | None = None
+#: The weights are assets of this GitHub release of the public repository (published with the
+#: RAFTcorr paper). Until then a download reports that they are not published yet.
+RELEASE_TAG = "weights-v1"
+RELEASE_BASE_URL: str | None = f"https://github.com/zachtong/RAFTcorr/releases/download/{RELEASE_TAG}"
+
+
+class WeightsUnavailableError(RuntimeError):
+    """The weights of a model could not be downloaded (not published yet, or no connection)."""
 
 
 @dataclass(frozen=True)
@@ -193,23 +199,41 @@ def find_weights(spec: ModelSpec, weights_dir: str | Path | None = None, callbac
 
 def download(spec: ModelSpec, dest_dir: Path | None = None, callbacks: Callbacks | None = None,
              timeout: float = 60.0) -> Path:
-    """Download a model's weights (atomic rename) and verify the hash."""
+    """Download a model's weights (atomic rename) and verify the hash.
+
+    Raises :class:`WeightsUnavailableError` when the release has no such file (not published yet)
+    or the server cannot be reached, with a message that says where to put the file instead.
+    """
     cb = coerce(callbacks)
-    if spec.url is None:
-        raise RuntimeError("no download location is configured for the model weights")
     dest = (dest_dir or user_weights_dir()) / spec.filename
+    if spec.url is None:
+        raise WeightsUnavailableError(
+            f"no download location is configured for {spec.filename}; place it in {dest.parent}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
     cb.log(f"downloading {spec.url}", "info")
     req = urllib.request.Request(spec.url, headers={"User-Agent": "raftcorr"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp, open(tmp, "wb") as fh:
-        total = int(resp.headers.get("Content-Length") or 0)
-        got = 0
-        while chunk := resp.read(1 << 18):
-            fh.write(chunk)
-            got += len(chunk)
-            if total:
-                cb.progress(min(1.0, got / total), f"downloading {spec.filename}: {got / 1e6:.1f} MB")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp, open(tmp, "wb") as fh:
+            total = int(resp.headers.get("Content-Length") or 0)
+            got = 0
+            while chunk := resp.read(1 << 18):
+                fh.write(chunk)
+                got += len(chunk)
+                if total:
+                    cb.progress(min(1.0, got / total), f"downloading {spec.filename}: {got / 1e6:.1f} MB")
+    except urllib.error.HTTPError as exc:
+        tmp.unlink(missing_ok=True)
+        if exc.code == 404:
+            raise WeightsUnavailableError(
+                f"{spec.filename} is not published yet (the model files are released with the RAFTcorr "
+                f"paper); if you have the file, place it in {dest.parent}") from exc
+        raise WeightsUnavailableError(f"downloading {spec.filename} failed (HTTP {exc.code}); "
+                                      f"place the file in {dest.parent}") from exc
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        tmp.unlink(missing_ok=True)
+        raise WeightsUnavailableError(f"cannot download {spec.filename} ({exc}); check the internet "
+                                      f"connection, or place the file in {dest.parent}") from exc
     if spec.sha256 is not None and sha256_of(tmp) != spec.sha256:
         tmp.unlink(missing_ok=True)
         raise RuntimeError(f"downloaded {spec.filename} failed the SHA-256 check; refusing to use it")
@@ -220,7 +244,11 @@ def download(spec: ModelSpec, dest_dir: Path | None = None, callbacks: Callbacks
 
 def resolve_weights(key_or_path: str | Path, weights_dir: str | Path | None = None,
                     allow_download: bool = False, callbacks: Callbacks | None = None) -> Path:
-    """Path of the weights for a model key (``"s4"``) or an explicit checkpoint path."""
+    """Path of the weights for a model key (``"s4"``) or an explicit checkpoint path.
+
+    With *allow_download* a model without a verified local copy is downloaded from the release
+    into the per-user folder; a FileNotFoundError says why when that is not possible either.
+    """
     p = Path(key_or_path)
     if p.suffix in (".pth", ".pt") or p.is_file():
         if not p.is_file():
@@ -230,13 +258,38 @@ def resolve_weights(key_or_path: str | Path, weights_dir: str | Path | None = No
     found = find_weights(spec, weights_dir, callbacks)
     if found is not None:
         return found
-    if allow_download and spec.url is not None:
-        return download(spec, callbacks=callbacks)
     looked = ", ".join(str(d) for d in search_dirs(weights_dir))
+    if allow_download and spec.url is not None:
+        try:
+            return download(spec, callbacks=callbacks)
+        except WeightsUnavailableError as exc:
+            raise FileNotFoundError(f"weights for {spec.name} not found locally (looked in: {looked}) "
+                                    f"and not downloaded: {exc}") from exc
     raise FileNotFoundError(
         f"weights for {spec.name} ({spec.filename}) not found; looked in: {looked}. "
         f"Place the file in one of these folders or set {ENV_WEIGHTS}."
     )
+
+
+def download_missing(keys: list[str] | None = None, callbacks: Callbacks | None = None) -> dict[str, str]:
+    """Download every model (or *keys*) without a verified local copy into the per-user folder.
+
+    Returns ``key -> outcome`` ("installed: <path>", "downloaded: <path>" or the reason it failed);
+    one failure does not stop the others.
+    """
+    cb = coerce(callbacks)
+    out: dict[str, str] = {}
+    for key in keys or list(MODELS):
+        spec = get_spec(key)
+        found = find_weights(spec, callbacks=cb)
+        if found is not None:
+            out[spec.key] = f"installed: {found}"
+            continue
+        try:
+            out[spec.key] = f"downloaded: {download(spec, callbacks=cb)}"
+        except (WeightsUnavailableError, RuntimeError) as exc:
+            out[spec.key] = str(exc)
+    return out
 
 
 def available_models(weights_dir: str | Path | None = None) -> dict[str, Path | None]:

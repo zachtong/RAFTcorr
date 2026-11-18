@@ -19,10 +19,14 @@ button measures the motion of your sequence with s8 and picks the finest model t
 ## Install
 
 Windows: run `install.bat` (creates the conda environment `raftcorr-app`, installs the PyTorch
-build that matches your NVIDIA driver, then RAFTcorr), put the four model files
-`RAFTcorr-s1.pth` ... `RAFTcorr-s8.pth` in `models/`, and start with `run.bat`.
+build that matches your NVIDIA driver, then RAFTcorr and the model files), and start with
+`run.bat`.
 
-> TODO: where to download the model files (to be published with the release).
+The model files `RAFTcorr-s1.pth` ... `RAFTcorr-s8.pth` are assets of the release
+[`weights-v1`](https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1), published together
+with the RAFTcorr paper. A model is downloaded the first time it is used (or all at once with
+`raftcorr models --download`) and checked against its SHA-256; without an internet connection,
+put the files in `models/` yourself.
 
 Any platform:
 
@@ -31,6 +35,7 @@ conda env create -f environment.yml
 conda activate raftcorr-app
 pip install torch --index-url https://download.pytorch.org/whl/cu126   # match your GPU, or /cpu
 pip install -e ".[all]"
+raftcorr models --download   # fetch the model files (otherwise on first use)
 raftcorr models      # where the weights are looked for
 raftcorr selftest    # every installed model on a synthetic pair
 raftcorr             # start the application
