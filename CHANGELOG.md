@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 (2026-11-18)
 
 A rewrite. One Python process replaces the Flask server and the React front end.
 
