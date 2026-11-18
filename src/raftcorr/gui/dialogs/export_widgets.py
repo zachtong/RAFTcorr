@@ -411,7 +411,7 @@ class UnitsBox(QGroupBox):
         phys_row = QHBoxLayout()
         self.pixel_size_spin = LocaleSafeDoubleSpinBox()
         self.pixel_size_spin.setRange(1e-6, 1e6)
-        self.pixel_size_spin.setDecimals(6)
+        self.pixel_size_spin.setDecimals(4)   # as the main window and pyALDIC
         self.pixel_size_spin.setValue(hint.pixel_size if hint.pixel_size > 0 else 1.0)
         self.pixel_size_spin.setFixedWidth(100)
         phys_row.addWidget(self.pixel_size_spin)

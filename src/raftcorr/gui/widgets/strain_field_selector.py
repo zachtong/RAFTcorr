@@ -302,7 +302,8 @@ class StrainFieldSelector(QWidget):
     ) -> None:
         btn = QPushButton(field_label(name))
         btn.setCheckable(True)
-        btn.setFixedHeight(28)
+        # The theme's height (36 px): pyALDIC fixed 28 px, below the theme's minimum, and its
+        # buttons were drawn 36 px tall over the next row anyway.
         grid.addWidget(btn, row, col, 1, col_span)
         self._group.addButton(btn)
         self._buttons[name] = btn
@@ -322,14 +323,13 @@ class StrainFieldSelector(QWidget):
         for name, btn in self._buttons.items():
             active = name == self._current
             if active:
-                # min-height and padding fit the fixed 28 px (the theme's button rule needs 36)
                 themed(btn,
-                    "min-height: 0px; padding: 2px 6px; background: {ACCENT}; color: white; "
+                    "background: {ACCENT}; color: white; "
                     "border: none; border-radius: 4px; font-weight: bold;"
                 )
             else:
                 themed(btn,
-                    "min-height: 0px; padding: 2px 6px; background: {BG_INPUT}; "
+                    "background: {BG_INPUT}; "
                     "color: {TEXT_SECONDARY}; "
                     "border: 1px solid {BORDER}; border-radius: 4px;"
                 )

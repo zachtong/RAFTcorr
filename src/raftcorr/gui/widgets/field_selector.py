@@ -27,7 +27,6 @@ class FieldSelector(QWidget):
                                          ("disp_magnitude", self.tr("Magnitude")), ("residual", self.tr("Residual")))):
             btn = QPushButton(text)
             btn.setCheckable(True)
-            btn.setFixedHeight(28)
             btn.setToolTip(tips[key])
             btn.clicked.connect(lambda _c=False, k=key: self._select(k))
             layout.addWidget(btn, i // 2, i % 2)
@@ -53,9 +52,8 @@ class FieldSelector(QWidget):
     def _update_styles(self) -> None:
         for btn in self._buttons.values():
             if btn.isChecked():
-                # min-height and padding fit the fixed 28 px (the theme's button rule needs 36)
-                themed(btn, "min-height: 0px; padding: 2px 6px; background: {ACCENT}; color: white; "
+                themed(btn, "background: {ACCENT}; color: white; "
                             "border: none; border-radius: 4px; font-weight: bold;")
             else:
-                themed(btn, "min-height: 0px; padding: 2px 6px; background: {BG_INPUT}; color: {TEXT_SECONDARY}; "
+                themed(btn, "background: {BG_INPUT}; color: {TEXT_SECONDARY}; "
                             "border: 1px solid {BORDER}; border-radius: 4px;")
