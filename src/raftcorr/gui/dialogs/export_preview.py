@@ -253,6 +253,9 @@ class ExportPreview(QWidget):
 
         self._vmax_spin = FieldRow._range_spin(1.0, True)
         self._vmax_spin.valueChanged.connect(self._on_appearance_changed)
+        for spin in (self._vmin_spin, self._vmax_spin):   # the table rows' width is fixed; here they fill the column
+            spin.setMinimumWidth(0)
+            spin.setMaximumWidth(16777215)
         aform.addRow(QCoreApplication.translate("ExportDialog", "Max"), self._vmax_spin)
 
         self._opacity_spin = LocaleSafeDoubleSpinBox()
