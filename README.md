@@ -20,7 +20,8 @@ button measures the motion of your sequence with s8 and picks the finest model t
 
 **Windows 10/11 (64-bit):** download
 [`RAFTcorr-Windows-Setup.exe`](https://github.com/zachtong/RAFTcorr/releases/latest/download/RAFTcorr-Windows-Setup.exe)
-and run it; no administrator rights are needed. The installer is small and needs an internet
+and run it; no administrator rights are needed (the installer is not code-signed, so Windows
+SmartScreen may ask first: **More info > Run anyway**). The installer is small and needs an internet
 connection once: it installs the PyTorch build that matches your NVIDIA driver (CUDA 12.8, 12.6
 or 11.8; the CPU build without an NVIDIA GPU), RAFTcorr and the model files. Start RAFTcorr from
 the Start menu; with the option **Add the "raftcorr" command to PATH**, `raftcorr` works in any new
