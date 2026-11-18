@@ -70,43 +70,6 @@ def unescape(text: str) -> str:
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     # ===== AdvancedPanel (ADVANCED: tiling and correlation implementation) =====
-    "Margin = model reach": {
-        "zh_CN": "边距 = 模型量程",
-        "zh_TW": "邊距 = 模型量程",
-        "ja":    "マージン = モデルの到達範囲",
-        "ko":    "마진 = 모델 도달 범위",
-        "de":    "Rand = Modellreichweite",
-        "fr":    "Marge = portée du modèle",
-        "es":    "Margen = alcance del modelo",
-    },
-    "Extra image context around the ROI so that displaced points stay inside\n"
-    "the window given to the network. Automatic: the model's reach (32 s px).": {
-        "zh_CN": "在 ROI 周围额外保留的图像范围，使发生位移的点仍位于\n送入网络的窗口内。自动：取模型量程（32 s px）。",
-        "zh_TW": "在 ROI 周圍額外保留的影像範圍，使發生位移的點仍位於\n送入網路的視窗內。自動：取模型量程（32 s px）。",
-        "ja":    "変位した点がネットワークに渡すウィンドウ内に収まるよう、ROI の周囲に\n追加で含める画像範囲です。自動：モデルの到達範囲（32 s px）。",
-        "ko":    "변위된 점이 네트워크에 입력되는 창 안에 머물도록 ROI 주위에\n추가로 포함하는 이미지 영역입니다. 자동: 모델 도달 범위(32 s px).",
-        "de":    "Zusätzlicher Bildbereich um die ROI, damit verschobene Punkte innerhalb\ndes Fensters bleiben, das das Netzwerk erhält. Automatisch: die Modellreichweite (32 s px).",
-        "fr":    "Contexte d'image supplémentaire autour de la ROI, pour que les points déplacés restent\ndans la fenêtre fournie au réseau. Automatique : la portée du modèle (32 s px).",
-        "es":    "Contexto de imagen adicional alrededor de la ROI para que los puntos desplazados queden\ndentro de la ventana que recibe la red. Automático: el alcance del modelo (32 s px).",
-    },
-    "Must cover the largest displacement of the ROI.": {
-        "zh_CN": "必须覆盖 ROI 内的最大位移。",
-        "zh_TW": "必須涵蓋 ROI 內的最大位移。",
-        "ja":    "ROI 内の最大変位をカバーする必要があります。",
-        "ko":    "ROI 내 최대 변위를 포함해야 합니다.",
-        "de":    "Muss die größte Verschiebung in der ROI abdecken.",
-        "fr":    "Doit couvrir le plus grand déplacement de la ROI.",
-        "es":    "Debe cubrir el mayor desplazamiento de la ROI.",
-    },
-    "GPU memory": {
-        "zh_CN": "GPU 显存",
-        "zh_TW": "GPU 記憶體",
-        "ja":    "GPU メモリ",
-        "ko":    "GPU 메모리",
-        "de":    "GPU-Speicher",
-        "fr":    "Mémoire GPU",
-        "es":    "Memoria GPU",
-    },
     "Fraction of the free GPU memory one window may use.\nLarge regions are cut into tiles to fit it.": {
         "zh_CN": "单个窗口可使用的空闲 GPU 显存比例。\n较大的区域会被切分成多个分块以满足该限制。",
         "zh_TW": "單一視窗可使用的閒置 GPU 記憶體比例。\n較大的區域會被切分成多個分塊以符合此限制。",
@@ -115,15 +78,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de":    "Anteil des freien GPU-Speichers, den ein Fenster nutzen darf.\nGroße Bereiche werden passend dazu in Kacheln zerlegt.",
         "fr":    "Fraction de la mémoire GPU libre qu'une fenêtre peut utiliser.\nLes grandes régions sont découpées en tuiles pour s'y conformer.",
         "es":    "Fracción de la memoria GPU libre que puede usar una ventana.\nLas regiones grandes se dividen en teselas para ajustarse a ella.",
-    },
-    "Tile blending": {
-        "zh_CN": "分块融合",
-        "zh_TW": "分塊融合",
-        "ja":    "タイルのブレンド",
-        "ko":    "타일 블렌딩",
-        "de":    "Kachelüberblendung",
-        "fr":    "Fondu des tuiles",
-        "es":    "Fusión de teselas",
     },
     "Width of the feathered overlap between neighbouring tiles.": {
         "zh_CN": "相邻分块之间羽化重叠区的宽度。",
@@ -143,24 +97,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de":    "Automatisch",
         "fr":    "Automatique",
         "es":    "Automático",
-    },
-    "On demand": {
-        "zh_CN": "按需计算",
-        "zh_TW": "隨需計算",
-        "ja":    "オンデマンド",
-        "ko":    "필요 시 계산",
-        "de":    "Bei Bedarf",
-        "fr":    "À la demande",
-        "es":    "Bajo demanda",
-    },
-    "Stored volume": {
-        "zh_CN": "预存相关体",
-        "zh_TW": "預存相關體",
-        "ja":    "ボリューム保持",
-        "ko":    "볼륨 저장",
-        "de":    "Gespeichertes Volumen",
-        "fr":    "Volume stocké",
-        "es":    "Volumen almacenado",
     },
     "How the correlation lookup is computed; the results are identical.\n"
     "Automatic: stored volume for s8 (fast), on demand for s1-s4\n"
@@ -243,24 +179,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
 
     # ===== CanvasArea (ROI editing banner) =====================================
-    "Editing the ROI of frame 1 (the reference)": {
-        "zh_CN": "正在编辑第 1 帧（参考帧）的 ROI",
-        "zh_TW": "正在編輯第 1 影格（參考影格）的 ROI",
-        "ja":    "フレーム 1（参照）の ROI を編集中",
-        "ko":    "프레임 1(참조)의 ROI 편집 중",
-        "de":    "ROI von Bild 1 (Referenz) wird bearbeitet",
-        "fr":    "Modification de la ROI de l'image 1 (la référence)",
-        "es":    "Editando la ROI del fotograma 1 (la referencia)",
-    },
-    "Editing the mask of frame %1 (regions left out are excluded)": {
-        "zh_CN": "正在编辑第 %1 帧的掩模（未包含的区域将被排除）",
-        "zh_TW": "正在編輯第 %1 影格的遮罩（未包含的區域將被排除）",
-        "ja":    "フレーム %1 のマスクを編集中（含まれない領域は除外されます）",
-        "ko":    "프레임 %1의 마스크 편집 중(포함되지 않은 영역은 제외됨)",
-        "de":    "Maske von Bild %1 wird bearbeitet (ausgesparte Bereiche werden ausgeschlossen)",
-        "fr":    "Modification du masque de l'image %1 (les zones laissées de côté sont exclues)",
-        "es":    "Editando la máscara del fotograma %1 (las zonas que quedan fuera se excluyen)",
-    },
 
     # ===== ExportDialog ========================================================
     "Preview": {
@@ -954,34 +872,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Iteraciones de refinamiento de la red (predeterminado: 20).",
     },
     # Spin-box special value (0 px): no smoothing, the raw network output.
-    "off (raw)": {
-        "zh_CN": "关闭（原始）",
-        "zh_TW": "關閉（原始）",
-        "ja":    "オフ（生データ）",
-        "ko":    "끔(원본)",
-        "de":    "aus (roh)",
-        "fr":    "désactivé (brut)",
-        "es":    "desactivado (bruto)",
-    },
-    "Smoothing σ": {
-        "zh_CN": "平滑 σ",
-        "zh_TW": "平滑 σ",
-        "ja":    "平滑化 σ",
-        "ko":    "평활화 σ",
-        "de":    "Glättung σ",
-        "fr":    "Lissage σ",
-        "es":    "Suavizado σ",
-    },
-    "Gaussian smoothing of the displacement (standard deviation).\n"
-    "Off by default: smoothing coarsens the spatial resolution.": {
-        "zh_CN": "位移的高斯平滑（标准差）。\n默认关闭：平滑会降低空间分辨率。",
-        "zh_TW": "位移的高斯平滑（標準差）。\n預設關閉：平滑會降低空間解析度。",
-        "ja":    "変位のガウス平滑化（標準偏差）です。\n既定ではオフ：平滑化すると空間分解能が粗くなります。",
-        "ko":    "변위의 가우스 평활화(표준편차)입니다.\n기본값은 끔: 평활화하면 공간 분해능이 낮아집니다.",
-        "de":    "Gaußsche Glättung der Verschiebung (Standardabweichung).\nStandardmäßig aus: Glättung vergröbert die räumliche Auflösung.",
-        "fr":    "Lissage gaussien du déplacement (écart-type).\nDésactivé par défaut : le lissage dégrade la résolution spatiale.",
-        "es":    "Suavizado gaussiano del desplazamiento (desviación típica).\nDesactivado por defecto: el suavizado empeora la resolución espacial.",
-    },
     "Device": {
         "zh_CN": "设备",
         "zh_TW": "裝置",
@@ -1259,25 +1149,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr":    "Espacement de sortie",
         "es":    "Espaciado de salida",
     },
-    "Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured "
-    "displacement as it is (default).": {
-        "zh_CN": "拟合前对位移进行高斯平滑（σ 以像素计）。关闭（0）时直接对测得的位移求导（默认）。",
-        "zh_TW": "擬合前對位移進行高斯平滑（σ 以像素計）。關閉（0）時直接對測得的位移求導（預設）。",
-        "ja":    "フィット前の変位のガウス平滑化（σ はピクセル単位）です。オフ（0）では計測した変位をそのまま微分します（既定値）。",
-        "ko":    "피팅 전 변위의 가우스 평활화(σ는 픽셀 단위)입니다. 끔(0)이면 측정된 변위를 그대로 미분합니다(기본값).",
-        "de":    "Gaußsche Glättung (σ in Pixeln) der Verschiebung vor der Anpassung. Aus (0) differenziert die gemessene Verschiebung unverändert (Standard).",
-        "fr":    "Lissage gaussien (σ en pixels) du déplacement avant l'ajustement. Désactivé (0) dérive le déplacement mesuré tel quel (par défaut).",
-        "es":    "Suavizado gaussiano (σ en píxeles) del desplazamiento antes del ajuste. Desactivado (0) deriva el desplazamiento medido tal cual (predeterminado).",
-    },
-    "Displacement smoothing": {
-        "zh_CN": "位移平滑",
-        "zh_TW": "位移平滑",
-        "ja":    "変位の平滑化",
-        "ko":    "변위 평활화",
-        "de":    "Verschiebungsglättung",
-        "fr":    "Lissage du déplacement",
-        "es":    "Suavizado del desplazamiento",
-    },
     "Never fit across cracks or holes": {
         "zh_CN": "拟合不跨越裂纹或孔洞",
         "zh_TW": "擬合不跨越裂紋或孔洞",
@@ -1319,17 +1190,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de":    "Das Feld dort zeichnen, wo sich die Materialpunkte im aktuellen Bild befinden, oder an ihren Positionen im Referenzbild.",
         "fr":    "Tracer le champ là où se trouvent les points matériels dans l'image courante, ou à leurs positions dans l'image de référence.",
         "es":    "Dibujar el campo donde están los puntos materiales en el fotograma actual, o en sus posiciones en el fotograma de referencia.",
-    },
-    "Leave points without a result transparent, for example material that left the field of view, instead of "
-    "filling them with the nearest value inside the region of interest (reference frame view). Data files always "
-    "keep NaN there.": {
-        "zh_CN": "让没有结果的点（例如已移出视场的材料）保持透明，而不是用感兴趣区域内最近的值填充（参考帧视图）。数据文件中这些点始终为 NaN。",
-        "zh_TW": "讓沒有結果的點（例如已移出視野的材料）保持透明，而不是以感興趣區域內最近的值填滿（參考影格檢視）。資料檔中這些點一律為 NaN。",
-        "ja":    "結果のない点（視野の外に出た材料など）を、関心領域内の最も近い値で埋めずに透明のままにします（参照フレーム表示）。データファイルでは、これらの点は常に NaN のままです。",
-        "ko":    "결과가 없는 점(예: 시야 밖으로 나간 재료)을 관심 영역 안의 가장 가까운 값으로 채우지 않고 투명하게 둡니다(참조 프레임 보기). 데이터 파일에서는 이 점들이 항상 NaN으로 유지됩니다.",
-        "de":    "Punkte ohne Ergebnis, etwa Material, das das Sichtfeld verlassen hat, bleiben transparent, statt mit dem nächstgelegenen Wert innerhalb der Region of Interest gefüllt zu werden (Ansicht im Referenzbild). In Datendateien steht dort immer NaN.",
-        "fr":    "Laisser transparents les points sans résultat, par exemple le matériau sorti du champ de vision, au lieu de les remplir avec la valeur la plus proche dans la région d'intérêt (vue sur l'image de référence). Les fichiers de données y gardent toujours NaN.",
-        "es":    "Deja transparentes los puntos sin resultado, por ejemplo el material que salió del campo de visión, en lugar de rellenarlos con el valor más cercano dentro de la región de interés (vista en el fotograma de referencia). Los archivos de datos siempre conservan NaN en ellos.",
     },
 
     # ===== StrainWindow ========================================================
@@ -1463,15 +1323,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de":    "Modell",
         "fr":    "Modèle",
         "es":    "Modelo",
-    },
-    "Suggest a model": {
-        "zh_CN": "推荐模型",
-        "zh_TW": "建議模型",
-        "ja":    "モデルを提案",
-        "ko":    "모델 추천",
-        "de":    "Modell vorschlagen",
-        "fr":    "Suggérer un modèle",
-        "es":    "Sugerir un modelo",
     },
     "Measure the motion of the sequence quickly with s8 and pick the\nfinest model whose reach covers it.": {
         "zh_CN": "先用 s8 快速测量序列的运动，再选出量程足以\n覆盖该运动的最精细模型。",
@@ -1824,16 +1675,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Proyecto abierto: %1",
     },
     # %1 model key (twice), %2 displacement in px, %3 1-based frame list, %4 reach in px.
-    "Suggested: RAFTcorr-%1. Largest displacement of the ROI about %2 px (99th percentile over frames %3); "
-    "RAFTcorr-%1 reaches %4 px.": {
-        "zh_CN": "推荐：RAFTcorr-%1。ROI 内最大位移约 %2 px（在第 %3 帧上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。",
-        "zh_TW": "建議：RAFTcorr-%1。ROI 內最大位移約 %2 px（在第 %3 影格上取第 99 百分位數）；RAFTcorr-%1 的量程為 %4 px。",
-        "ja":    "推奨：RAFTcorr-%1。ROI の最大変位は約 %2 px（フレーム %3 での 99 パーセンタイル）、RAFTcorr-%1 の到達範囲は %4 px です。",
-        "ko":    "추천: RAFTcorr-%1. ROI의 최대 변위는 약 %2 px(프레임 %3에서의 99번째 백분위수)이며, RAFTcorr-%1의 도달 범위는 %4 px입니다.",
-        "de":    "Vorschlag: RAFTcorr-%1. Größte Verschiebung der ROI etwa %2 px (99. Perzentil über die Bilder %3); RAFTcorr-%1 reicht %4 px weit.",
-        "fr":    "Suggestion : RAFTcorr-%1. Plus grand déplacement de la ROI d'environ %2 px (99e centile sur les images %3) ; la portée de RAFTcorr-%1 est de %4 px.",
-        "es":    "Sugerencia: RAFTcorr-%1. Mayor desplazamiento de la ROI de unos %2 px (percentil 99 sobre los fotogramas %3); RAFTcorr-%1 alcanza %4 px.",
-    },
     "This exceeds even the reach of RAFTcorr-s8: use incremental tracking.": {
         "zh_CN": "这甚至超出了 RAFTcorr-s8 的量程：请使用增量追踪。",
         "zh_TW": "這甚至超出了 RAFTcorr-s8 的量程：請使用增量追蹤。",
@@ -1897,15 +1738,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "El análisis falló",
     },
     # Log line; %1 lists 1-based frame numbers, as everywhere on screen.
-    "Reference frames without their own ROI carry the ROI of frame 1 forward: %1": {
-        "zh_CN": "没有自己 ROI 的参考帧沿用第 1 帧的 ROI：%1",
-        "zh_TW": "沒有自己 ROI 的參考影格沿用第 1 影格的 ROI：%1",
-        "ja":    "独自の ROI がない参照フレームはフレーム 1 の ROI を引き継ぎます：%1",
-        "ko":    "자체 ROI가 없는 참조 프레임은 프레임 1의 ROI를 이어서 사용합니다: %1",
-        "de":    "Referenzbilder ohne eigene ROI übernehmen die ROI von Bild 1: %1",
-        "fr":    "Les images de référence sans ROI propre reprennent la ROI de l'image 1 : %1",
-        "es":    "Los fotogramas de referencia sin ROI propia arrastran la ROI del fotograma 1: %1",
-    },
     "Starting...": {
         "zh_CN": "开始中…",
         "zh_TW": "開始中…",
@@ -1942,15 +1774,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr":    "Aucune image n'a été calculée ; les résultats précédents sont conservés.",
         "es":    "No se calculó ningún fotograma; se conservan los resultados anteriores.",
     },
-    "Tracking quality": {
-        "zh_CN": "追踪质量",
-        "zh_TW": "追蹤品質",
-        "ja":    "追跡品質",
-        "ko":    "추적 품질",
-        "de":    "Tracking-Qualität",
-        "fr":    "Qualité du suivi",
-        "es":    "Calidad del seguimiento",
-    },
     "Part of the sequence may not be tracked correctly.": {
         "zh_CN": "序列中的部分内容可能未被正确追踪。",
         "zh_TW": "序列中的部分內容可能未被正確追蹤。",
@@ -1961,15 +1784,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es":    "Es posible que parte de la secuencia no se haya seguido correctamente.",
     },
     # 'Residual' is the main window's field button (FieldSelector).
-    "Show the 'Residual' field to see where the images do not match after the displacement is applied.": {
-        "zh_CN": "显示“残差”场，即可查看施加位移后图像在哪些位置不匹配。",
-        "zh_TW": "顯示「殘差」場，即可查看套用位移後影像在哪些位置不相符。",
-        "ja":    "「残差」の場を表示すると、変位を適用した後に画像が一致しない場所を確認できます。",
-        "ko":    "'잔차' 필드를 표시하면 변위를 적용한 뒤 이미지가 일치하지 않는 곳을 볼 수 있습니다.",
-        "de":    "Zeigen Sie das Feld „Residuum“ an, um zu sehen, wo die Bilder nach Anwenden der Verschiebung nicht übereinstimmen.",
-        "fr":    "Affichez le champ « Résidu » pour voir où les images ne correspondent pas une fois le déplacement appliqué.",
-        "es":    "Muestre el campo «Residuo» para ver dónde no coinciden las imágenes tras aplicar el desplazamiento.",
-    },
 
     # --- StrainController (progress label while computing strain) ---
     "Strain frame %1/%2": {
@@ -2016,6 +1830,233 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "ADVANCED": {
         "zh_CN": "高级", "zh_TW": "進階", "ja": "詳細設定", "ko": "고급 설정",
         "de": "ERWEITERT", "fr": "AVANCÉ", "es": "AVANZADO",
+    },
+
+    # --- Blocks B-E (2026-11-18): run feedback, wording, project files, left sidebar ---
+    "Must cover the largest displacement of the region of interest.": {
+        "zh_CN": "必须覆盖感兴趣区域内的最大位移。",
+        "zh_TW": "必須涵蓋感興趣區域內的最大位移。",
+        "ja":    "関心領域内の最大変位をカバーする必要があります。",
+        "ko":    "관심 영역 내 최대 변위를 포함해야 합니다.",
+        "de":    "Muss die größte Verschiebung in der Region of Interest abdecken.",
+        "fr":    "Doit couvrir le plus grand déplacement de la région d'intérêt.",
+        "es":    "Debe cubrir el mayor desplazamiento de la región de interés.",
+    },
+    "GPU Memory": {
+        "zh_CN": "GPU 显存", "zh_TW": "GPU 記憶體", "ja": "GPU メモリ", "ko": "GPU 메모리",
+        "de": "GPU-Speicher", "fr": "Mémoire GPU", "es": "Memoria GPU",
+    },
+    "Tile Blending": {
+        "zh_CN": "分块融合", "zh_TW": "分塊融合", "ja": "タイルのブレンド", "ko": "타일 블렌딩",
+        "de": "Kachelüberblendung", "fr": "Fondu des tuiles", "es": "Fusión de teselas",
+    },
+    "On Demand": {
+        "zh_CN": "按需计算", "zh_TW": "隨需計算", "ja": "オンデマンド", "ko": "필요 시 계산",
+        "de": "Bei Bedarf", "fr": "À la demande", "es": "Bajo demanda",
+    },
+    "Stored Volume": {
+        "zh_CN": "预存相关体", "zh_TW": "預存相關體", "ja": "ボリューム保持", "ko": "볼륨 저장",
+        "de": "Gespeichertes Volumen", "fr": "Volume stocké", "es": "Volumen almacenado",
+    },
+    "Use the Model Reach": {
+        "zh_CN": "使用模型量程", "zh_TW": "使用模型量程", "ja": "モデルの到達範囲を使う", "ko": "모델 도달 범위 사용",
+        "de": "Modellreichweite verwenden", "fr": "Utiliser la portée du modèle", "es": "Usar el alcance del modelo",
+    },
+    "Suggest a Model": {
+        "zh_CN": "推荐模型", "zh_TW": "建議模型", "ja": "モデルを提案", "ko": "모델 추천",
+        "de": "Modell vorschlagen", "fr": "Suggérer un modèle", "es": "Sugerir un modelo",
+    },
+    "Smoothing": {
+        "zh_CN": "平滑", "zh_TW": "平滑", "ja": "平滑化", "ko": "평활화",
+        "de": "Glättung", "fr": "Lissage", "es": "Suavizado",
+    },
+    "Gaussian smoothing (σ in pixels) of the tracked displacement, kept in the results.\n"
+    "Off by default: smoothing coarsens the spatial resolution.": {
+        "zh_CN": "对追踪得到的位移进行高斯平滑（σ 以像素计），平滑后的位移保存在结果中。\n默认关闭：平滑会降低空间分辨率。",
+        "zh_TW": "對追蹤得到的位移進行高斯平滑（σ 以像素計），平滑後的位移保存在結果中。\n預設關閉：平滑會降低空間解析度。",
+        "ja":    "追跡した変位のガウス平滑化（σ はピクセル単位）で、結果に保存されます。\n既定ではオフ：平滑化すると空間分解能が粗くなります。",
+        "ko":    "추적한 변위의 가우스 평활화(σ는 픽셀 단위)이며, 결과에 저장됩니다.\n기본값은 끔: 평활화하면 공간 분해능이 낮아집니다.",
+        "de":    "Gaußsche Glättung (σ in Pixeln) der verfolgten Verschiebung, in den Ergebnissen gespeichert.\nStandardmäßig aus: Glättung vergröbert die räumliche Auflösung.",
+        "fr":    "Lissage gaussien (σ en pixels) du déplacement suivi, conservé dans les résultats.\nDésactivé par défaut : le lissage dégrade la résolution spatiale.",
+        "es":    "Suavizado gaussiano (σ en píxeles) del desplazamiento seguido, guardado en los resultados.\nDesactivado por defecto: el suavizado empeora la resolución espacial.",
+    },
+    "Extra image context around the region of interest so that displaced points stay inside\n"
+    "the window given to the network. Automatic: the model's reach (32 s px).": {
+        "zh_CN": "在感兴趣区域周围额外保留的图像范围，使发生位移的点仍位于\n送入网络的窗口内。自动：取模型量程（32 s px）。",
+        "zh_TW": "在感興趣區域周圍額外保留的影像範圍，使發生位移的點仍位於\n送入網路的視窗內。自動：取模型量程（32 s px）。",
+        "ja":    "変位した点がネットワークに渡すウィンドウ内に収まるよう、関心領域の周囲に\n追加で含める画像範囲です。自動：モデルの到達範囲（32 s px）。",
+        "ko":    "변위된 점이 네트워크에 입력되는 창 안에 머물도록 관심 영역 주위에\n추가로 포함하는 이미지 영역입니다. 자동: 모델 도달 범위(32 s px).",
+        "de":    "Zusätzlicher Bildbereich um die Region of Interest, damit verschobene Punkte innerhalb\ndes Fensters bleiben, das das Netzwerk erhält. Automatisch: die Modellreichweite (32 s px).",
+        "fr":    "Contexte d'image supplémentaire autour de la région d'intérêt, pour que les points déplacés restent\ndans la fenêtre fournie au réseau. Automatique : la portée du modèle (32 s px).",
+        "es":    "Contexto de imagen adicional alrededor de la región de interés para que los puntos desplazados queden\ndentro de la ventana que recibe la red. Automático: el alcance del modelo (32 s px).",
+    },
+    "Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile "
+    "over frames %3); RAFTcorr-%1 reaches %4 px.": {
+        "zh_CN": "推荐：RAFTcorr-%1。感兴趣区域内最大位移约 %2 px（在第 %3 帧上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。",
+        "zh_TW": "建議：RAFTcorr-%1。感興趣區域內最大位移約 %2 px（在第 %3 影格上取第 99 百分位數）；RAFTcorr-%1 的量程為 %4 px。",
+        "ja":    "推奨：RAFTcorr-%1。関心領域の最大変位は約 %2 px（フレーム %3 での 99 パーセンタイル）、RAFTcorr-%1 の到達範囲は %4 px です。",
+        "ko":    "추천: RAFTcorr-%1. 관심 영역의 최대 변위는 약 %2 px(프레임 %3에서의 99번째 백분위수)이며, RAFTcorr-%1의 도달 범위는 %4 px입니다.",
+        "de":    "Vorschlag: RAFTcorr-%1. Größte Verschiebung der Region of Interest etwa %2 px (99. Perzentil über die Bilder %3); RAFTcorr-%1 reicht %4 px weit.",
+        "fr":    "Suggestion : RAFTcorr-%1. Plus grand déplacement de la région d'intérêt d'environ %2 px (99e centile sur les images %3) ; la portée de RAFTcorr-%1 est de %4 px.",
+        "es":    "Sugerencia: RAFTcorr-%1. Mayor desplazamiento de la región de interés de unos %2 px (percentil 99 sobre los fotogramas %3); RAFTcorr-%1 alcanza %4 px.",
+    },
+    "Reference frames without a Region of Interest of their own carry the one of frame 1 forward: %1": {
+        "zh_CN": "没有自己感兴趣区域的参考帧沿用第 1 帧的感兴趣区域：%1",
+        "zh_TW": "沒有自己感興趣區域的參考影格沿用第 1 影格的感興趣區域：%1",
+        "ja":    "独自の関心領域がない参照フレームはフレーム 1 の関心領域を引き継ぎます：%1",
+        "ko":    "자체 관심 영역이 없는 참조 프레임은 프레임 1의 관심 영역을 이어서 사용합니다: %1",
+        "de":    "Referenzbilder ohne eigene Region of Interest übernehmen die von Bild 1: %1",
+        "fr":    "Les images de référence sans région d'intérêt propre reprennent celle de l'image 1 : %1",
+        "es":    "Los fotogramas de referencia sin región de interés propia arrastran la del fotograma 1: %1",
+    },
+    "An unexpected error occurred. The application may not behave correctly from here on, so saving your "
+    "project and restarting is recommended.": {
+        "zh_CN": "发生了意外错误。程序此后可能无法正常运行，建议保存项目并重新启动。",
+        "zh_TW": "發生了意外錯誤。程式此後可能無法正常運作，建議儲存專案並重新啟動。",
+        "ja":    "予期しないエラーが発生しました。これ以降アプリケーションが正しく動作しない可能性があるため、プロジェクトを保存して再起動することをお勧めします。",
+        "ko":    "예기치 않은 오류가 발생했습니다. 이후 애플리케이션이 올바르게 동작하지 않을 수 있으므로 프로젝트를 저장하고 다시 시작하는 것을 권장합니다.",
+        "de":    "Ein unerwarteter Fehler ist aufgetreten. Die Anwendung verhält sich danach möglicherweise nicht mehr korrekt; es wird empfohlen, das Projekt zu speichern und neu zu starten.",
+        "fr":    "Une erreur inattendue s'est produite. L'application risque de ne plus fonctionner correctement ; il est recommandé d'enregistrer le projet et de redémarrer.",
+        "es":    "Se ha producido un error inesperado. Es posible que la aplicación no funcione correctamente a partir de ahora; se recomienda guardar el proyecto y reiniciar.",
+    },
+    "EDITING REGION OF INTEREST FOR FRAME %1": {
+        "zh_CN": "正在编辑第 %1 帧的感兴趣区域",
+        "zh_TW": "正在編輯第 %1 影格的感興趣區域",
+        "ja":    "フレーム %1 の関心領域を編集中",
+        "ko":    "프레임 %1의 관심 영역 편집 중",
+        "de":    "REGION OF INTEREST VON BILD %1 WIRD BEARBEITET",
+        "fr":    "MODIFICATION DE LA RÉGION D'INTÉRÊT DE L'IMAGE %1",
+        "es":    "EDITANDO LA REGIÓN DE INTERÉS DEL FOTOGRAMA %1",
+    },
+    "Load the images first: a project keeps the images, the regions of interest, the settings and the "
+    "results together.": {
+        "zh_CN": "请先加载图像：项目会把图像、感兴趣区域、设置和结果保存在一起。",
+        "zh_TW": "請先載入影像：專案會把影像、感興趣區域、設定與結果保存在一起。",
+        "ja":    "先に画像を読み込んでください：プロジェクトは画像、関心領域、設定、結果をまとめて保存します。",
+        "ko":    "먼저 이미지를 불러오세요. 프로젝트는 이미지, 관심 영역, 설정, 결과를 함께 저장합니다.",
+        "de":    "Laden Sie zuerst die Bilder: Ein Projekt speichert Bilder, Regions of Interest, Einstellungen und Ergebnisse zusammen.",
+        "fr":    "Chargez d'abord les images : un projet réunit les images, les régions d'intérêt, les réglages et les résultats.",
+        "es":    "Cargue primero las imágenes: un proyecto guarda juntas las imágenes, las regiones de interés, los ajustes y los resultados.",
+    },
+    "Include Results?": {
+        "zh_CN": "包含结果？", "zh_TW": "包含結果？", "ja": "結果を含めますか？", "ko": "결과를 포함할까요?",
+        "de": "Ergebnisse einschließen?", "fr": "Inclure les résultats ?", "es": "¿Incluir los resultados?",
+    },
+    "Include the computed results in this project?": {
+        "zh_CN": "在此项目中包含计算结果吗？",
+        "zh_TW": "在此專案中包含計算結果嗎？",
+        "ja":    "このプロジェクトに計算結果を含めますか？",
+        "ko":    "이 프로젝트에 계산 결과를 포함할까요?",
+        "de":    "Die berechneten Ergebnisse in dieses Projekt aufnehmen?",
+        "fr":    "Inclure les résultats calculés dans ce projet ?",
+        "es":    "¿Incluir los resultados calculados en este proyecto?",
+    },
+    "Including results (about %1 uncompressed) lets you reopen the project without recomputing. Choose No "
+    "to save a small settings-only file for sharing.": {
+        "zh_CN": "包含结果（未压缩约 %1）后，重新打开项目时无需重新计算。选择“否”则只保存设置，文件小、便于分享。",
+        "zh_TW": "包含結果（未壓縮約 %1）後，重新開啟專案時無需重新計算。選擇「否」則只儲存設定，檔案小、便於分享。",
+        "ja":    "結果（非圧縮で約 %1）を含めると、再計算せずにプロジェクトを開き直せます。「いいえ」を選ぶと、共有用に設定だけの小さなファイルを保存します。",
+        "ko":    "결과(압축하지 않으면 약 %1)를 포함하면 다시 계산하지 않고 프로젝트를 다시 열 수 있습니다. 공유용으로 설정만 담은 작은 파일을 저장하려면 '아니요'를 선택하세요.",
+        "de":    "Mit den Ergebnissen (unkomprimiert etwa %1) lässt sich das Projekt ohne Neuberechnung wieder öffnen. Wählen Sie „Nein“, um eine kleine Datei nur mit den Einstellungen zum Weitergeben zu speichern.",
+        "fr":    "Inclure les résultats (environ %1 non compressés) permet de rouvrir le projet sans recalcul. Choisissez Non pour enregistrer un petit fichier de réglages seulement, à partager.",
+        "es":    "Incluir los resultados (unos %1 sin comprimir) permite volver a abrir el proyecto sin recalcular. Elija No para guardar un archivo pequeño, solo con los ajustes, para compartir.",
+    },
+    "Tracking Quality Warning": {
+        "zh_CN": "追踪质量警告", "zh_TW": "追蹤品質警告", "ja": "追跡品質の警告", "ko": "추적 품질 경고",
+        "de": "Warnung zur Tracking-Qualität", "fr": "Avertissement sur la qualité du suivi",
+        "es": "Advertencia de calidad del seguimiento",
+    },
+    "The tracking quality drops from frame %1 on: the intensity residual rises to %2 grey levels, against %3 "
+    "before.": {
+        "zh_CN": "从第 %1 帧起追踪质量下降：灰度残差升至 %2 个灰度级，此前为 %3。",
+        "zh_TW": "從第 %1 影格起追蹤品質下降：灰度殘差升至 %2 個灰階，先前為 %3。",
+        "ja":    "フレーム %1 以降で追跡品質が低下しています：輝度残差が %2 階調に上がりました（それ以前は %3）。",
+        "ko":    "프레임 %1부터 추적 품질이 떨어집니다. 밝기 잔차가 %2 회색 단계로 올라갔습니다(이전에는 %3).",
+        "de":    "Die Tracking-Qualität sinkt ab Bild %1: Das Intensitätsresiduum steigt auf %2 Graustufen, gegenüber %3 davor.",
+        "fr":    "La qualité du suivi chute à partir de l'image %1 : le résidu d'intensité monte à %2 niveaux de gris, contre %3 auparavant.",
+        "es":    "La calidad del seguimiento cae a partir del fotograma %1: el residuo de intensidad sube a %2 niveles de gris, frente a %3 antes.",
+    },
+    "The displacement from frame 1 may exceed the reach of the model. Try incremental tracking, or a model "
+    "with a larger s.": {
+        "zh_CN": "相对第 1 帧的位移可能超出了模型的量程。请尝试增量式追踪，或换用 s 更大的模型。",
+        "zh_TW": "相對第 1 影格的位移可能超出了模型的量程。請嘗試增量式追蹤，或改用 s 更大的模型。",
+        "ja":    "フレーム 1 からの変位がモデルの到達範囲を超えている可能性があります。逐次式の追跡か、s の大きいモデルを試してください。",
+        "ko":    "프레임 1로부터의 변위가 모델의 도달 범위를 넘었을 수 있습니다. 증분형 추적이나 s가 더 큰 모델을 사용해 보세요.",
+        "de":    "Die Verschiebung gegenüber Bild 1 übersteigt möglicherweise die Reichweite des Modells. Versuchen Sie inkrementelles Tracking oder ein Modell mit größerem s.",
+        "fr":    "Le déplacement depuis l'image 1 dépasse peut-être la portée du modèle. Essayez le suivi incrémental, ou un modèle avec un s plus grand.",
+        "es":    "El desplazamiento desde el fotograma 1 puede superar el alcance del modelo. Pruebe el seguimiento incremental o un modelo con una s mayor.",
+    },
+    "The step between reference frames may exceed the reach of the model. Use more reference frames, or a "
+    "model with a larger s.": {
+        "zh_CN": "参考帧之间的位移步长可能超出了模型的量程。请使用更多参考帧，或换用 s 更大的模型。",
+        "zh_TW": "參考影格之間的位移步長可能超出了模型的量程。請使用更多參考影格，或改用 s 更大的模型。",
+        "ja":    "参照フレーム間の変位がモデルの到達範囲を超えている可能性があります。参照フレームを増やすか、s の大きいモデルを使ってください。",
+        "ko":    "참조 프레임 사이의 변위가 모델의 도달 범위를 넘었을 수 있습니다. 참조 프레임을 늘리거나 s가 더 큰 모델을 사용하세요.",
+        "de":    "Der Schritt zwischen Referenzbildern übersteigt möglicherweise die Reichweite des Modells. Verwenden Sie mehr Referenzbilder oder ein Modell mit größerem s.",
+        "fr":    "Le pas entre images de référence dépasse peut-être la portée du modèle. Utilisez plus d'images de référence, ou un modèle avec un s plus grand.",
+        "es":    "El paso entre fotogramas de referencia puede superar el alcance del modelo. Use más fotogramas de referencia o un modelo con una s mayor.",
+    },
+    "Frames with a high residual: %1": {
+        "zh_CN": "残差偏高的帧：%1", "zh_TW": "殘差偏高的影格：%1", "ja": "残差の大きいフレーム：%1",
+        "ko": "잔차가 큰 프레임: %1", "de": "Bilder mit hohem Residuum: %1", "fr": "Images à résidu élevé : %1",
+        "es": "Fotogramas con residuo alto: %1",
+    },
+    "Show the Residual field to see where the images do not match after the displacement is applied.": {
+        "zh_CN": "显示“残差”场，即可查看施加位移后图像在哪些位置不匹配。",
+        "zh_TW": "顯示「殘差」場，即可查看套用位移後影像在哪些位置不相符。",
+        "ja":    "「残差」の場を表示すると、変位を適用した後に画像が一致しない場所を確認できます。",
+        "ko":    "'잔차' 필드를 표시하면 변위를 적용한 뒤 이미지가 일치하지 않는 곳을 볼 수 있습니다.",
+        "de":    "Zeigen Sie das Feld „Residuum“ an, um zu sehen, wo die Bilder nach Anwenden der Verschiebung nicht übereinstimmen.",
+        "fr":    "Affichez le champ « Résidu » pour voir où les images ne correspondent pas une fois le déplacement appliqué.",
+        "es":    "Muestre el campo «Residuo» para ver dónde no coinciden las imágenes tras aplicar el desplazamiento.",
+    },
+    "Leave points without a result transparent, for example material that left the field of view, instead "
+    "of filling them with the nearest value inside the region of interest. Also used for exported images and "
+    "animations; data files always keep NaN there.": {
+        "zh_CN": "让没有结果的点保持透明（例如移出视野的材料），而不是用感兴趣区域内最近的值填充。导出的图像和动画同样遵守此设置；数据文件中这些点始终为 NaN。",
+        "zh_TW": "讓沒有結果的點保持透明（例如移出視野的材料），而不是以感興趣區域內最近的值填充。匯出的影像與動畫同樣遵守此設定；資料檔案中這些點始終為 NaN。",
+        "ja":    "結果のない点（視野の外に出た材料など）を、関心領域内で最も近い値で埋めずに透明のままにします。エクスポートした画像・アニメーションにも適用されます。データファイルではこれらの点は常に NaN です。",
+        "ko":    "결과가 없는 점(시야 밖으로 나간 재료 등)을 관심 영역 안의 가장 가까운 값으로 채우지 않고 투명하게 둡니다. 내보낸 이미지와 애니메이션에도 적용되며, 데이터 파일에서는 항상 NaN입니다.",
+        "de":    "Punkte ohne Ergebnis (etwa Material, das das Sichtfeld verlassen hat) transparent lassen, statt sie mit dem nächstgelegenen Wert innerhalb der Region of Interest zu füllen. Gilt auch für exportierte Bilder und Animationen; Datendateien behalten dort immer NaN.",
+        "fr":    "Laisser transparents les points sans résultat (par exemple la matière sortie du champ de vision) au lieu de les remplir avec la valeur la plus proche dans la région d'intérêt. S'applique aussi aux images et animations exportées ; les fichiers de données y gardent toujours NaN.",
+        "es":    "Dejar transparentes los puntos sin resultado (por ejemplo, el material que salió del campo de visión) en lugar de rellenarlos con el valor más cercano dentro de la región de interés. También se aplica a las imágenes y animaciones exportadas; los archivos de datos siempre conservan NaN en ellos.",
+    },
+    "Pre-fit smoothing": {
+        "zh_CN": "拟合前平滑", "zh_TW": "擬合前平滑", "ja": "フィット前の平滑化", "ko": "피팅 전 평활화",
+        "de": "Glättung vor der Anpassung", "fr": "Lissage avant l'ajustement", "es": "Suavizado previo al ajuste",
+    },
+    "Gaussian smoothing (σ in pixels) of the displacement used by the strain fit only; the displacement "
+    "results are not changed. Off (0) differentiates the measured displacement as it is (default).": {
+        "zh_CN": "仅对用于应变拟合的位移做高斯平滑（σ 以像素计），位移结果本身不变。关闭（0）时直接对测得的位移求导（默认）。",
+        "zh_TW": "僅對用於應變擬合的位移做高斯平滑（σ 以像素計），位移結果本身不變。關閉（0）時直接對測得的位移求導（預設）。",
+        "ja":    "ひずみのフィットに使う変位だけをガウス平滑化します（σ はピクセル単位）。変位の結果は変わりません。オフ（0）では計測した変位をそのまま微分します（既定値）。",
+        "ko":    "변형률 피팅에 쓰는 변위만 가우스 평활화합니다(σ는 픽셀 단위). 변위 결과는 바뀌지 않습니다. 끔(0)이면 측정된 변위를 그대로 미분합니다(기본값).",
+        "de":    "Gaußsche Glättung (σ in Pixeln) nur der Verschiebung, die die Dehnungsanpassung verwendet; die Verschiebungsergebnisse bleiben unverändert. Aus (0) differenziert die gemessene Verschiebung unverändert (Standard).",
+        "fr":    "Lissage gaussien (σ en pixels) du seul déplacement utilisé par l'ajustement de la déformation ; les résultats de déplacement ne changent pas. Désactivé (0) dérive le déplacement mesuré tel quel (par défaut).",
+        "es":    "Suavizado gaussiano (σ en píxeles) solo del desplazamiento que usa el ajuste de la deformación; los resultados de desplazamiento no cambian. Desactivado (0) deriva el desplazamiento medido tal cual (predeterminado).",
+    },
+    "e.g. 5, 10, 20": {
+        "zh_CN": "例如 5, 10, 20", "zh_TW": "例如 5, 10, 20", "ja": "例：5, 10, 20", "ko": "예: 5, 10, 20",
+        "de": "z. B. 5, 10, 20", "fr": "p. ex. 5, 10, 20", "es": "p. ej., 5, 10, 20",
+    },
+    "Frame numbers (as in the image list) to use as reference frames, separated by commas. Frame 1 is always "
+    "the first reference.": {
+        "zh_CN": "用作参考帧的帧号（与图像列表一致），以逗号分隔。第 1 帧始终是第一个参考帧。",
+        "zh_TW": "用作參考影格的影格編號（與影像清單一致），以逗號分隔。第 1 影格始終是第一個參考影格。",
+        "ja":    "参照フレームにするフレーム番号（画像リストと同じ）をコンマ区切りで指定します。フレーム 1 は常に最初の参照です。",
+        "ko":    "참조 프레임으로 쓸 프레임 번호(이미지 목록과 같음)를 쉼표로 구분해 입력합니다. 프레임 1은 항상 첫 번째 참조입니다.",
+        "de":    "Bildnummern (wie in der Bildliste) der Referenzbilder, durch Kommas getrennt. Bild 1 ist immer die erste Referenz.",
+        "fr":    "Numéros des images (comme dans la liste d'images) à utiliser comme références, séparés par des virgules. L'image 1 est toujours la première référence.",
+        "es":    "Números de fotograma (como en la lista de imágenes) que se usan como referencia, separados por comas. El fotograma 1 es siempre la primera referencia.",
+    },
+    "Invalid reference frames: use frame numbers from 1 on, separated by commas.": {
+        "zh_CN": "参考帧无效：请使用从 1 开始的帧号，以逗号分隔。",
+        "zh_TW": "參考影格無效：請使用從 1 開始的影格編號，以逗號分隔。",
+        "ja":    "参照フレームが無効です：1 以上のフレーム番号をコンマ区切りで指定してください。",
+        "ko":    "참조 프레임이 잘못되었습니다. 1부터 시작하는 프레임 번호를 쉼표로 구분해 입력하세요.",
+        "de":    "Ungültige Referenzbilder: Bildnummern ab 1 verwenden, durch Kommas getrennt.",
+        "fr":    "Images de référence non valides : utilisez des numéros d'image à partir de 1, séparés par des virgules.",
+        "es":    "Fotogramas de referencia no válidos: use números de fotograma desde 1, separados por comas.",
     },
 
     # --- StrainParamPanel: strain measure (one name with README and exports) ---
@@ -2171,6 +2212,10 @@ CONTEXTUAL: dict[tuple[str, str], dict[str, str]] = {
 
 # Calls that pass a disambiguation comment: (source, comment).
 DISAMBIGUATED: dict[tuple[str, str], dict[str, str]] = {
+    ("Off", "Displacement smoothing"): {
+        "zh_CN": "关闭", "zh_TW": "關閉", "ja": "オフ", "ko": "끔",
+        "de": "Aus", "fr": "Désactivé", "es": "Desactivado",
+    },
     # Export dialog frame range: [From] <spin> [to] <spin>.
     ("From", "Frame range: starting frame"): {
         "zh_CN": "从",

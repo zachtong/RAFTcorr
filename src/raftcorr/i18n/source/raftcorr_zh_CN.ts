@@ -4,71 +4,71 @@
 <context>
     <name>AdvancedPanel</name>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="116"/>
-        <source>Margin = model reach</source>
-        <translation>边距 = 模型量程</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="119"/>
-        <source>Extra image context around the ROI so that displaced points stay inside
-the window given to the network. Automatic: the model&apos;s reach (32 s px).</source>
-        <translation>在 ROI 周围额外保留的图像范围，使发生位移的点仍位于
-送入网络的窗口内。自动：取模型量程（32 s px）。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="127"/>
+        <location filename="../../gui/widgets/param_panel.py" line="148"/>
         <source>Margin</source>
         <translation>边距</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="128"/>
-        <source>Must cover the largest displacement of the ROI.</source>
-        <translation>必须覆盖 ROI 内的最大位移。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="135"/>
-        <source>GPU memory</source>
-        <translation>GPU 显存</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="136"/>
+        <location filename="../../gui/widgets/param_panel.py" line="167"/>
         <source>Fraction of the free GPU memory one window may use.
 Large regions are cut into tiles to fit it.</source>
         <translation>单个窗口可使用的空闲 GPU 显存比例。
 较大的区域会被切分成多个分块以满足该限制。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="143"/>
-        <source>Tile blending</source>
+        <location filename="../../gui/widgets/param_panel.py" line="149"/>
+        <source>Must cover the largest displacement of the region of interest.</source>
+        <translation>必须覆盖感兴趣区域内的最大位移。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="152"/>
+        <source>Use the Model Reach</source>
+        <translation>使用模型量程</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="155"/>
+        <source>Extra image context around the region of interest so that displaced points stay inside
+the window given to the network. Automatic: the model&apos;s reach (32 s px).</source>
+        <translation>在感兴趣区域周围额外保留的图像范围，使发生位移的点仍位于
+送入网络的窗口内。自动：取模型量程（32 s px）。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="166"/>
+        <source>GPU Memory</source>
+        <translation>GPU 显存</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="174"/>
+        <source>Tile Blending</source>
         <translation>分块融合</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="144"/>
+        <location filename="../../gui/widgets/param_panel.py" line="175"/>
         <source>Width of the feathered overlap between neighbouring tiles.</source>
         <translation>相邻分块之间羽化重叠区的宽度。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="147"/>
+        <location filename="../../gui/widgets/param_panel.py" line="178"/>
         <source>Automatic</source>
         <translation>自动</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="148"/>
-        <source>On demand</source>
+        <location filename="../../gui/widgets/param_panel.py" line="179"/>
+        <source>On Demand</source>
         <translation>按需计算</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="149"/>
-        <source>Stored volume</source>
+        <location filename="../../gui/widgets/param_panel.py" line="180"/>
+        <source>Stored Volume</source>
         <translation>预存相关体</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="151"/>
+        <location filename="../../gui/widgets/param_panel.py" line="182"/>
         <source>Correlation</source>
         <translation>相关计算</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="152"/>
+        <location filename="../../gui/widgets/param_panel.py" line="183"/>
         <source>How the correlation lookup is computed; the results are identical.
 Automatic: stored volume for s8 (fast), on demand for s1-s4
 (memory linear in the image size).</source>
@@ -766,7 +766,7 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
 <context>
     <name>App</name>
     <message>
-        <location filename="../../gui/app.py" line="713"/>
+        <location filename="../../gui/app.py" line="746"/>
         <source>Run DIC first -- no displacement results to post-process.</source>
         <translation>请先运行 DIC —— 当前没有可后处理的位移结果。</translation>
     </message>
@@ -774,17 +774,17 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
 <context>
     <name>Application</name>
     <message>
-        <location filename="../../gui/app.py" line="846"/>
+        <location filename="../../gui/app.py" line="879"/>
         <source>RAFTcorr has hit an error</source>
         <translation>RAFTcorr 发生错误</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="847"/>
-        <source>An unexpected error occurred. The application may not behave correctly from here on, so saving your session and restarting is recommended.</source>
-        <translation>发生了意外错误。应用程序之后的行为可能不正常，建议保存会话并重新启动。</translation>
+        <location filename="../../gui/app.py" line="880"/>
+        <source>An unexpected error occurred. The application may not behave correctly from here on, so saving your project and restarting is recommended.</source>
+        <translation>发生了意外错误。程序此后可能无法正常运行，建议保存项目并重新启动。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="857"/>
+        <location filename="../../gui/app.py" line="890"/>
         <source>Details were written to %1</source>
         <translation>详细信息已写入 %1</translation>
     </message>
@@ -932,49 +932,44 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
 <context>
     <name>CanvasArea</name>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1222"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1223"/>
         <source>Fit</source>
         <translation>适配</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1223"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1224"/>
         <source>Fit image to viewport</source>
         <translation>将图像适配到视口</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1227"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1228"/>
         <source>100%</source>
         <translation>100%</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1228"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1229"/>
         <source>Zoom to 100% (1:1)</source>
         <translation>缩放到 100%（1:1）</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1231"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1232"/>
         <source>Zoom in</source>
         <translation>放大</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1236"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1237"/>
         <source>–</source>
         <translation>–</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1237"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1238"/>
         <source>Zoom out</source>
         <translation>缩小</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1327"/>
-        <source>Editing the ROI of frame 1 (the reference)</source>
-        <translation>正在编辑第 1 帧（参考帧）的 ROI</translation>
-    </message>
-    <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1328"/>
-        <source>Editing the mask of frame %1 (regions left out are excluded)</source>
-        <translation>正在编辑第 %1 帧的掩模（未包含的区域将被排除）</translation>
+        <location filename="../../gui/panels/canvas_area.py" line="1329"/>
+        <source>EDITING REGION OF INTEREST FOR FRAME %1</source>
+        <translation>正在编辑第 %1 帧的感兴趣区域</translation>
     </message>
 </context>
 <context>
@@ -1741,10 +1736,11 @@ tracking failed.</source>
     </message>
     <message>
         <location filename="../../gui/widgets/field_selector.py" line="27"/>
-        <source>|U|</source>
-        <translation>|U|</translation>
+        <source>Magnitude</source>
+        <translation>位移大小</translation>
     </message>
     <message>
+        <location filename="../../gui/controllers/viz_controller.py" line="150"/>
         <location filename="../../gui/widgets/field_selector.py" line="27"/>
         <source>Residual</source>
         <translation>残差</translation>
@@ -1804,12 +1800,12 @@ tracking failed.</source>
 <context>
     <name>ImageCanvas</name>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1066"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1067"/>
         <source>Load images first before drawing a Region of Interest.</source>
         <translation>请先加载图像，再绘制感兴趣区域。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/canvas_area.py" line="1085"/>
+        <location filename="../../gui/panels/canvas_area.py" line="1086"/>
         <source>The three points are nearly collinear — pick points spread around the circle&apos;s edge.</source>
         <translation>三个点几乎共线 — 请在圆周上分散地选取三个点。</translation>
     </message>
@@ -2115,12 +2111,17 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="423"/>
+        <location filename="../../gui/app.py" line="363"/>
+        <source>Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile over frames %3); RAFTcorr-%1 reaches %4 px.</source>
+        <translation>推荐：RAFTcorr-%1。感兴趣区域内最大位移约 %2 px（在第 %3 帧上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="456"/>
         <source>Language changed</source>
         <translation>语言已切换</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="594"/>
+        <location filename="../../gui/app.py" line="627"/>
         <source>All Files</source>
         <translation>所有文件</translation>
     </message>
@@ -2130,12 +2131,12 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
         <translation>选择图像文件夹</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="289"/>
+        <location filename="../../gui/app.py" line="322"/>
         <source>File Association Failed</source>
         <translation>文件关联失败</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="292"/>
+        <location filename="../../gui/app.py" line="325"/>
         <source>File Association</source>
         <translation>文件关联</translation>
     </message>
@@ -2151,7 +2152,8 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
     </message>
     <message>
         <location filename="../../gui/app.py" line="149"/>
-        <location filename="../../gui/app.py" line="233"/>
+        <location filename="../../gui/app.py" line="230"/>
+        <location filename="../../gui/app.py" line="237"/>
         <source>Save Project</source>
         <translation>保存项目</translation>
     </message>
@@ -2187,14 +2189,14 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
     </message>
     <message>
         <location filename="../../gui/app.py" line="193"/>
-        <location filename="../../gui/app.py" line="359"/>
-        <location filename="../../gui/app.py" line="361"/>
+        <location filename="../../gui/app.py" line="392"/>
+        <location filename="../../gui/app.py" line="394"/>
         <source>Self-test</source>
         <translation>自检</translation>
     </message>
     <message>
         <location filename="../../gui/app.py" line="194"/>
-        <location filename="../../gui/app.py" line="366"/>
+        <location filename="../../gui/app.py" line="399"/>
         <source>About RAFTcorr</source>
         <translation>关于 RAFTcorr</translation>
     </message>
@@ -2204,169 +2206,184 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="245"/>
+        <location filename="../../gui/app.py" line="231"/>
+        <source>Load the images first: a project keeps the images, the regions of interest, the settings and the results together.</source>
+        <translation>请先加载图像：项目会把图像、感兴趣区域、设置和结果保存在一起。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="252"/>
         <source>Project saved: %1</source>
         <translation>项目已保存：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="247"/>
+        <location filename="../../gui/app.py" line="254"/>
         <source>Saving the project</source>
         <translation>正在保存项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="250"/>
+        <location filename="../../gui/app.py" line="268"/>
+        <source>Include Results?</source>
+        <translation>包含结果？</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="269"/>
+        <source>Include the computed results in this project?</source>
+        <translation>在此项目中包含计算结果吗？</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="271"/>
+        <source>Including results (about %1 uncompressed) lets you reopen the project without recomputing. Choose No to save a small settings-only file for sharing.</source>
+        <translation>包含结果（未压缩约 %1）后，重新打开项目时无需重新计算。选择“否”则只保存设置，文件小、便于分享。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="283"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="257"/>
+        <location filename="../../gui/app.py" line="290"/>
         <source>Opening the project</source>
         <translation>正在打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="265"/>
+        <location filename="../../gui/app.py" line="298"/>
         <source>Images not found</source>
         <translation>未找到图像</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="266"/>
+        <location filename="../../gui/app.py" line="299"/>
         <source>The image folder of this project was not found. Choose its new location.</source>
         <translation>未找到此项目的图像文件夹。请选择它的新位置。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="267"/>
+        <location filename="../../gui/app.py" line="300"/>
         <source>Image folder of the project</source>
         <translation>项目的图像文件夹</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="274"/>
+        <location filename="../../gui/app.py" line="307"/>
         <source>Cannot open the project</source>
         <translation>无法打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="280"/>
+        <location filename="../../gui/app.py" line="313"/>
         <source>Project opened: %1</source>
         <translation>已打开项目：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="290"/>
+        <location filename="../../gui/app.py" line="323"/>
         <source>Could not register .raftcorr files: </source>
         <translation>无法注册 .raftcorr 文件：</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="293"/>
+        <location filename="../../gui/app.py" line="326"/>
         <source>Done. Double-clicking a .raftcorr file will now open RAFTcorr and restore that project.</source>
         <translation>完成。现在双击 .raftcorr 文件即可打开 RAFTcorr 并恢复该项目。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="298"/>
+        <location filename="../../gui/app.py" line="331"/>
         <source>Load at least two images first.</source>
         <translation>请先加载至少两张图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="301"/>
+        <location filename="../../gui/app.py" line="334"/>
         <source>Wait for the running task to finish.</source>
         <translation>请等待当前任务完成。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="330"/>
-        <source>Suggested: RAFTcorr-%1. Largest displacement of the ROI about %2 px (99th percentile over frames %3); RAFTcorr-%1 reaches %4 px.</source>
-        <translation>推荐：RAFTcorr-%1。ROI 内最大位移约 %2 px（在第 %3 帧上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="334"/>
+        <location filename="../../gui/app.py" line="367"/>
         <source>This exceeds even the reach of RAFTcorr-s8: use incremental tracking.</source>
         <translation>这甚至超出了 RAFTcorr-s8 的量程：请使用增量追踪。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="339"/>
+        <location filename="../../gui/app.py" line="372"/>
         <source>Measuring the motion with RAFTcorr-s8</source>
         <translation>正在用 RAFTcorr-s8 测量运动</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="348"/>
+        <location filename="../../gui/app.py" line="381"/>
         <source>%1  (s = %2, reach %3 px): %4</source>
         <translation>%1  （s = %2，量程 %3 px）：%4</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="349"/>
+        <location filename="../../gui/app.py" line="382"/>
         <source>not installed</source>
         <translation>未安装</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="351"/>
+        <location filename="../../gui/app.py" line="384"/>
         <source>Searched:</source>
         <translation>搜索位置：</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="352"/>
+        <location filename="../../gui/app.py" line="385"/>
         <source>Installed Models</source>
         <translation>已安装的模型</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="367"/>
+        <location filename="../../gui/app.py" line="400"/>
         <source>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;Learned digital image correlation with the RAFTcorr-s1, -s2, -s4 and -s8 models.&lt;br&gt;&lt;br&gt;Displacements: reference to deformed, +u right, +v down, in pixels, frame-1 (Lagrangian) coordinates.&lt;br&gt;&lt;br&gt;Interface derived from pyALDIC.&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</source>
         <translation>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;基于学习的数字图像相关，使用 RAFTcorr-s1、-s2、-s4 和 -s8 模型。&lt;br&gt;&lt;br&gt;位移：从参考到变形，+u 向右，+v 向下，单位为像素，采用第 1 帧（拉格朗日）坐标。&lt;br&gt;&lt;br&gt;界面源自 pyALDIC。&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="426"/>
+        <location filename="../../gui/app.py" line="459"/>
         <source>Language set to %1. Please restart RAFTcorr for all widgets to pick up the new language.</source>
         <translation>语言已切换至 %1。请重启 RAFTcorr 以让所有界面生效。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="561"/>
+        <location filename="../../gui/app.py" line="594"/>
         <source>Frame %1 has no Region of Interest of its own — frame 1&apos;s is used for computation. Switch to frame 1 to edit it, or import a mask to give this frame its own.</source>
         <translation>帧 %1 没有自己的感兴趣区域 — 计算时使用帧 1 的感兴趣区域。请切换到帧 1 编辑，或导入掩模为此帧单独指定。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="572"/>
+        <location filename="../../gui/app.py" line="605"/>
         <source>No Region of Interest to save — load images first.</source>
         <translation>没有可保存的感兴趣区域 — 请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="579"/>
+        <location filename="../../gui/app.py" line="612"/>
         <source>Region of Interest mask is empty.</source>
         <translation>感兴趣区域掩模为空。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="591"/>
+        <location filename="../../gui/app.py" line="624"/>
         <source>Save Region of Interest Mask</source>
         <translation>保存感兴趣区域掩模</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="593"/>
+        <location filename="../../gui/app.py" line="626"/>
         <source>PNG Images</source>
         <translation>PNG 图像</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="602"/>
+        <location filename="../../gui/app.py" line="635"/>
         <source>Mask saved to %1</source>
         <translation>掩模已保存至 %1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="611"/>
+        <location filename="../../gui/app.py" line="644"/>
         <source>No Region of Interest to invert — load images first.</source>
         <translation>没有可反选的感兴趣区域 — 请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="634"/>
+        <location filename="../../gui/app.py" line="667"/>
         <source>Load images first.</source>
         <translation>请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="670"/>
+        <location filename="../../gui/app.py" line="703"/>
         <source>  Imported mask for frame %1</source>
         <translation>  已导入帧 %1 的掩模</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="676"/>
+        <location filename="../../gui/app.py" line="709"/>
         <source>Batch import: %n mask(s) loaded</source>
         <translation>
             <numerusform>批量导入：已加载 %n 个掩模</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="703"/>
+        <location filename="../../gui/app.py" line="736"/>
         <source>Imported Region of Interest for %n frame(s)</source>
         <translation>
             <numerusform>为 %n 帧导入了感兴趣区域</numerusform>
@@ -2376,44 +2393,46 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
 <context>
     <name>ParamPanel</name>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="65"/>
+        <location filename="../../gui/widgets/param_panel.py" line="90"/>
         <source>Iterations</source>
+        <extracomment>The label column is as wide as its longest label in the current language, never narrower than the English layout and, past about 28 characters of the label font, wrapped rather than squeezing the inputs (pyALDIC&apos;s ParamPanel).</extracomment>
         <translation>迭代次数</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="73"/>
-        <source>off (raw)</source>
-        <translation>关闭（原始）</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="75"/>
-        <source>Smoothing σ</source>
-        <translation>平滑 σ</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/param_panel.py" line="66"/>
+        <location filename="../../gui/widgets/param_panel.py" line="91"/>
         <source>Refinement iterations of the network (default: 20).</source>
         <translation>网络的迭代细化次数（默认：20）。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="76"/>
-        <source>Gaussian smoothing of the displacement (standard deviation).
+        <location filename="../../gui/widgets/param_panel.py" line="98"/>
+        <source>Off</source>
+        <comment>Displacement smoothing</comment>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="101"/>
+        <source>Smoothing</source>
+        <translation>平滑</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/param_panel.py" line="102"/>
+        <source>Gaussian smoothing (σ in pixels) of the tracked displacement, kept in the results.
 Off by default: smoothing coarsens the spatial resolution.</source>
-        <translation>位移的高斯平滑（标准差）。
+        <translation>对追踪得到的位移进行高斯平滑（σ 以像素计），平滑后的位移保存在结果中。
 默认关闭：平滑会降低空间分辨率。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="80"/>
+        <location filename="../../gui/widgets/param_panel.py" line="106"/>
         <source>Automatic</source>
         <translation>自动</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="84"/>
+        <location filename="../../gui/widgets/param_panel.py" line="110"/>
         <source>Device</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/param_panel.py" line="85"/>
+        <location filename="../../gui/widgets/param_panel.py" line="111"/>
         <source>Automatic uses the GPU when PyTorch sees one.</source>
         <translation>选择“自动”时，只要 PyTorch 检测到 GPU 就使用 GPU。</translation>
     </message>
@@ -2421,42 +2440,42 @@ Off by default: smoothing coarsens the spatial resolution.</source>
 <context>
     <name>PhysicalUnitsWidget</name>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="54"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="56"/>
         <source>Use physical units</source>
         <translation>使用物理单位</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="65"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="67"/>
         <source>Physical size of one image pixel</source>
         <translation>单个图像像素对应的物理尺寸</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="83"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="85"/>
         <source>/ px</source>
         <translation>/ px</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="86"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="88"/>
         <source>Pixel size</source>
         <translation>像素尺寸</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="96"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="98"/>
         <source>Acquisition frame rate (used for velocity field)</source>
         <translation>采集帧率（用于速度场）</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="97"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="100"/>
         <source>Frame rate</source>
         <translation>帧率</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="165"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="168"/>
         <source>Disp: %1  Velocity: %2/s</source>
         <translation>位移：%1  速度：%2/s</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/physical_units_widget.py" line="170"/>
+        <location filename="../../gui/widgets/physical_units_widget.py" line="173"/>
         <source>Disp: px  Velocity: px/fr</source>
         <translation>位移：px  速度：px/帧</translation>
     </message>
@@ -2481,43 +2500,28 @@ Off by default: smoothing coarsens the spatial resolution.</source>
     </message>
     <message>
         <location filename="../../gui/controllers/pipeline_controller.py" line="164"/>
-        <source>Reference frames without their own ROI carry the ROI of frame 1 forward: %1</source>
-        <translation>没有自己 ROI 的参考帧沿用第 1 帧的 ROI：%1</translation>
+        <source>Reference frames without a Region of Interest of their own carry the one of frame 1 forward: %1</source>
+        <translation>没有自己感兴趣区域的参考帧沿用第 1 帧的感兴趣区域：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="183"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="185"/>
         <source>Starting...</source>
         <translation>开始中…</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="209"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="211"/>
         <source>The images changed: the running analysis is cancelled.</source>
         <translation>图像已更改：正在运行的分析已取消。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="233"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="235"/>
         <source>The images changed during the run: its results are discarded.</source>
         <translation>运行期间图像发生了变化：本次结果已丢弃。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="246"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="248"/>
         <source>No frame was computed; the previous results are kept.</source>
         <translation>没有计算任何帧；保留之前的结果。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="260"/>
-        <source>Tracking quality</source>
-        <translation>追踪质量</translation>
-    </message>
-    <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="261"/>
-        <source>Part of the sequence may not be tracked correctly.</source>
-        <translation>序列中的部分内容可能未被正确追踪。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="263"/>
-        <source>Show the &apos;Residual&apos; field to see where the images do not match after the displacement is applied.</source>
-        <translation>显示“残差”场，即可查看施加位移后图像在哪些位置不匹配。</translation>
     </message>
 </context>
 <context>
@@ -2565,71 +2569,106 @@ Off by default: smoothing coarsens the spatial resolution.</source>
     </message>
     <message>
         <location filename="../../gui/controllers/pipeline_messages.py" line="102"/>
+        <source>Tracking Quality Warning</source>
+        <translation>追踪质量警告</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="105"/>
+        <source>Part of the sequence may not be tracked correctly.</source>
+        <translation>序列中的部分内容可能未被正确追踪。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="110"/>
+        <source>The tracking quality drops from frame %1 on: the intensity residual rises to %2 grey levels, against %3 before.</source>
+        <translation>从第 %1 帧起追踪质量下降：灰度残差升至 %2 个灰度级，此前为 %3。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="116"/>
+        <source>The displacement from frame 1 may exceed the reach of the model. Try incremental tracking, or a model with a larger s.</source>
+        <translation>相对第 1 帧的位移可能超出了模型的量程。请尝试增量式追踪，或换用 s 更大的模型。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="119"/>
+        <source>The step between reference frames may exceed the reach of the model. Use more reference frames, or a model with a larger s.</source>
+        <translation>参考帧之间的位移步长可能超出了模型的量程。请使用更多参考帧，或换用 s 更大的模型。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="123"/>
+        <source>Frames with a high residual: %1</source>
+        <translation>残差偏高的帧：%1</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="126"/>
+        <source>Show the Residual field to see where the images do not match after the displacement is applied.</source>
+        <translation>显示“残差”场，即可查看施加位移后图像在哪些位置不匹配。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="132"/>
         <source>Cannot start analysis</source>
         <translation>无法开始分析</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="106"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="136"/>
         <source>Need at least 2 images. Load an image folder in the %1 section before running DIC.</source>
         <translation>至少需要 2 张图像。请先在“%1”部分加载图像文件夹，再运行 DIC。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="111"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="141"/>
         <source>Define a Region of Interest first: draw or import one for frame 1 in the %1 section.</source>
         <translation>请先定义感兴趣区域：在“%1”部分为第 1 帧绘制或导入一个。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="116"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="146"/>
         <source>The Region of Interest of frame 1 is empty (no pixels selected). Draw it again in the %1 section.</source>
         <translation>第 1 帧的感兴趣区域为空（未选中任何像素）。请在“%1”部分重新绘制。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="121"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="151"/>
         <source>Region of Interest too small</source>
         <translation>感兴趣区域过小</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="127"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="157"/>
         <source>The Region of Interest is %1×%2 px, but the current %3 (%4) needs at least %5×%5 px. Enlarge the Region of Interest or reduce %3.</source>
         <translation>感兴趣区域为 %1×%2 px，但当前的%3（%4）至少需要 %5×%5 px。请扩大感兴趣区域或减小%3。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="133"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="163"/>
         <source>Starting Points required</source>
         <translation>需要种子点</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="137"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="167"/>
         <source>Place at least one Starting Point on the canvas before running: click “%1” or “%2” in the %3 section.</source>
         <translation>运行前请在画布上放置至少一个种子点：点击“%3”部分中的“%1”或“%2”。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="143"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="173"/>
         <source>Invalid Starting Points</source>
         <translation>种子点无效</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="147"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="177"/>
         <source>One or more Starting Points do not lie in any part of the Region of Interest. Click “%1” in the %2 section, then place the Starting Points again.</source>
         <translation>有一个或多个种子点不在感兴趣区域的任何部分内。请点击“%2”部分中的“%1”，然后重新放置种子点。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="155"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="185"/>
         <source>DIC analysis failed</source>
         <translation>DIC 分析失败</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="158"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="188"/>
         <source>Failed to start analysis</source>
         <translation>启动分析失败</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="161"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="191"/>
         <source>Failed to process results</source>
         <translation>处理结果失败</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="166"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="196"/>
         <source>The analysis stopped with a runtime error:
 
 %1
@@ -2642,7 +2681,7 @@ See the console log for the full traceback.</source>
 完整的回溯信息请参见控制台日志。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="172"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="202"/>
         <source>%1
 
 See the console log for the full traceback.</source>
@@ -2651,19 +2690,19 @@ See the console log for the full traceback.</source>
 完整的回溯信息请参见控制台日志。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="177"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="207"/>
         <source>Incomplete Region of Interest Coverage</source>
         <translation>感兴趣区域覆盖不完整</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/controllers/pipeline_messages.py" line="182"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="212"/>
         <source>This incremental run has %n reference frame(s) with no Region of Interest of their own: frame(s) %1.</source>
         <translation>
             <numerusform>本次增量追踪运行中有 %n 个参考帧没有自己的感兴趣区域：帧 %1。</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/controllers/pipeline_messages.py" line="188"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="218"/>
         <source>%1 and %n more</source>
         <comment>List of frame numbers cut short: %1 = the frame numbers shown, %n = how many more frames there are</comment>
         <translation>
@@ -2671,17 +2710,17 @@ See the console log for the full traceback.</source>
         </translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="194"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="224"/>
         <source>A reference frame without a Region of Interest of its own reuses frame 1&apos;s region unchanged: nothing moves the region with the specimen. Where the specimen has moved out of that region, the part outside it is not measured from such a frame, and the nodes there stop being tracked or have their displacement copied from the nearest measured node. The run reports these nodes when it finishes.</source>
         <translation>没有自己感兴趣区域的参考帧会原样沿用第 1 帧的区域：该区域不会随试样移动。试样移出该区域后，区域外的部分不会以这类参考帧为基准进行测量，位于其中的节点将不再被追踪，或其位移从最近的已测量节点复制。运行结束时会报告这些节点。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="204"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="234"/>
         <source>To measure the whole specimen, give each reference frame its own Region of Interest that covers the specimen in that frame (Batch Import can assign Regions of Interest to many frames at once). A reference frame with a region of its own is measured on a grid that covers that region.</source>
         <translation>要测量整个试样，请为每个参考帧单独指定一个覆盖该帧中试样的感兴趣区域（批量导入可一次为多帧指定感兴趣区域）。拥有自己区域的参考帧会在覆盖该区域的测量网格上进行测量。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_messages.py" line="211"/>
+        <location filename="../../gui/controllers/pipeline_messages.py" line="241"/>
         <source>Continue with frame 1&apos;s region?</source>
         <translation>是否沿用第 1 帧的区域继续？</translation>
     </message>
@@ -2689,22 +2728,23 @@ See the console log for the full traceback.</source>
 <context>
     <name>ROIHint</name>
     <message>
-        <location filename="../../gui/widgets/roi_hint.py" line="63"/>
+        <location filename="../../gui/widgets/roi_hint.py" line="67"/>
         <source>Load images first, then draw a Region of Interest on frame 1.</source>
+        <extracomment>The same card for other hints of the left sidebar (the model advice).</extracomment>
         <translation>请先加载图像，再在第 1 帧上绘制感兴趣区域。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/roi_hint.py" line="70"/>
+        <location filename="../../gui/widgets/roi_hint.py" line="74"/>
         <source>&lt;b&gt;Accumulative mode&lt;/b&gt; — only frame 1 needs a Region of Interest. All later frames are compared against it directly.</source>
         <translation>&lt;b&gt;累积模式&lt;/b&gt; — 只有第 1 帧需要感兴趣区域。后续帧都直接与其比较。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/roi_hint.py" line="83"/>
+        <location filename="../../gui/widgets/roi_hint.py" line="87"/>
         <source>&lt;b&gt;Incremental&lt;/b&gt; — only frame 1 needs a Region of Interest. RAFTcorr carries it to the reference frames (&lt;b&gt;%1&lt;/b&gt;) with the measured displacement. Draw on another frame only to replace that region or to leave out cracks and holes.</source>
         <translation>&lt;b&gt;增量模式&lt;/b&gt; — 只有第 1 帧需要感兴趣区域。RAFTcorr 会按测得的位移将其带到各参考帧（&lt;b&gt;%1&lt;/b&gt;）。仅在需要替换该帧的区域、或排除裂纹和孔洞时，才在其他帧上绘制。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/roi_hint.py" line="92"/>
+        <location filename="../../gui/widgets/roi_hint.py" line="96"/>
         <source>Draw a Region of Interest on frame 1.</source>
         <translation>请在第 1 帧绘制感兴趣区域。</translation>
     </message>
@@ -2857,173 +2897,173 @@ See the console log for the full traceback.</source>
 <context>
     <name>RightSidebar</name>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="75"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="76"/>
         <source>Run DIC Analysis</source>
         <translation>运行 DIC 分析</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="88"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="89"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="93"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="94"/>
         <source>Cancel the current analysis. Frames already computed are kept so you can review or export the partial run.</source>
         <translation>取消当前分析。已计算的帧会被保留，你可以查看或导出这部分结果。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="101"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="102"/>
         <source>Export Results</source>
         <translation>导出结果</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="109"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="110"/>
         <source>Open Strain Window</source>
         <translation>打开应变窗口</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="112"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="113"/>
         <source>Compute and visualize strain in a separate post-processing window. Requires displacement results from a completed Run.</source>
         <translation>在独立的后处理窗口中计算并可视化应变。需先完成一次运行以获得位移结果。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="121"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="122"/>
         <source>PROGRESS</source>
         <translation>进度</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="130"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="434"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="131"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="435"/>
         <source>Ready</source>
         <translation>就绪</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="138"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="436"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="536"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="139"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="437"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="537"/>
         <source>ELAPSED  %1</source>
         <translation>已用时间  %1</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="143"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="438"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="544"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="548"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="144"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="439"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="545"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="549"/>
         <source>REMAINING  %1</source>
         <translation>剩余时间  %1</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="151"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="152"/>
         <source>FIELD</source>
         <translation>场变量</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="160"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="161"/>
         <source>Show on</source>
         <translation>显示于</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="165"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="166"/>
         <source>Deformed frame</source>
         <translation>变形帧</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="166"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="167"/>
         <source>Reference frame</source>
         <translation>参考帧</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="168"/>
-        <source>Plot the field at the deformed node positions, or at their positions in the reference frame.</source>
-        <translation>将场绘制在变形后的节点位置，或绘制在其在参考帧中的位置。</translation>
+        <location filename="../../gui/panels/right_sidebar.py" line="169"/>
+        <source>Plot the field where the material points are in the current frame, or at their positions in the reference frame.</source>
+        <translation>将场绘制在材料点在当前帧中的位置，或绘制在其在参考帧中的位置。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="176"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="215"/>
+        <source>Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest. Also used for exported images and animations; data files always keep NaN there.</source>
+        <translation>让没有结果的点保持透明（例如移出视野的材料），而不是用感兴趣区域内最近的值填充。导出的图像和动画同样遵守此设置；数据文件中这些点始终为 NaN。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/panels/right_sidebar.py" line="177"/>
         <source>Show background image</source>
         <translation>显示背景图像</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="179"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="180"/>
         <source>Uncheck to show the field on its own, with no speckle image behind it.</source>
         <translation>取消勾选可仅显示场，其后不显示散斑图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="190"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="196"/>
         <source>Hidden background</source>
         <translation>隐藏背景填充</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="197"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="198"/>
         <source>White</source>
         <translation>白色</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="198"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
         <source>Black</source>
         <translation>黑色</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="199"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="200"/>
         <source>Transparent</source>
         <translation>透明</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="202"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="203"/>
         <source>What replaces the image when it is hidden. Transparency is kept for PNG and TIFF on export; other formats get white.</source>
         <translation>背景隐藏时用什么替代图像。导出时 PNG 和 TIFF 会保留透明度，其他格式改用白色。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="211"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="212"/>
         <source>Hide untracked regions</source>
         <translation>隐藏未追踪区域</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="214"/>
-        <source>Leave areas without a tracked node transparent, for example material that left the field of view, instead of filling them with values copied from distant nodes. Also used for exported images and animations; data files always keep NaN there.</source>
-        <translation>让没有已追踪节点的区域（例如已移出视场的材料）保持透明，而不是用从远处节点复制的值填充。导出的图像和动画也采用此设置；数据文件中这些区域始终为 NaN。</translation>
-    </message>
-    <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="224"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="225"/>
         <source>VISUALIZATION</source>
         <translation>可视化</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="229"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="230"/>
         <source>Colormap</source>
         <translation>颜色映射</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="248"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="249"/>
         <source>Opacity</source>
         <translation>不透明度</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="255"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="256"/>
         <source>Overlay opacity (0 = transparent, 100 = opaque)</source>
         <translation>叠加图不透明度（0 = 透明，100 = 不透明）</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="261"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="262"/>
         <source>PHYSICAL UNITS</source>
         <translation>物理单位</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="267"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="268"/>
         <source>LOG</source>
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="273"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="274"/>
         <source>Clear</source>
         <translation>清除</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="403"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="404"/>
         <source>Place at least one Starting Point in each red region before running (red = needs a Starting Point).</source>
         <translation>运行前请在每个红色区域放置至少一个种子点（红色 = 需要种子点）。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="519"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="520"/>
         <source>%1  —  Frame %2</source>
         <translation>%1  —  第 %2 帧</translation>
     </message>
@@ -3239,11 +3279,6 @@ Trimmed points are empty (NaN) in exported data files.</source>
         <translation>关闭</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/strain_param_panel.py" line="191"/>
-        <source>Gaussian smoothing (σ in pixels) of the displacement before the fit. Off (0) differentiates the measured displacement as it is (default).</source>
-        <translation>拟合前对位移进行高斯平滑（σ 以像素计）。关闭（0）时直接对测得的位移求导（默认）。</translation>
-    </message>
-    <message>
         <location filename="../../gui/widgets/strain_param_panel.py" line="89"/>
         <source>Quadratic fitting</source>
         <translation>二次拟合</translation>
@@ -3307,9 +3342,14 @@ Trimmed points are empty (NaN) in exported data files.</source>
         <translation>输出间距</translation>
     </message>
     <message>
+        <location filename="../../gui/widgets/strain_param_panel.py" line="191"/>
+        <source>Gaussian smoothing (σ in pixels) of the displacement used by the strain fit only; the displacement results are not changed. Off (0) differentiates the measured displacement as it is (default).</source>
+        <translation>仅对用于应变拟合的位移做高斯平滑（σ 以像素计），位移结果本身不变。关闭（0）时直接对测得的位移求导（默认）。</translation>
+    </message>
+    <message>
         <location filename="../../gui/widgets/strain_param_panel.py" line="195"/>
-        <source>Displacement smoothing</source>
-        <translation>位移平滑</translation>
+        <source>Pre-fit smoothing</source>
+        <translation>拟合前平滑</translation>
     </message>
     <message>
         <location filename="../../gui/widgets/strain_param_panel.py" line="198"/>
@@ -3428,8 +3468,8 @@ Trimmed points are empty (NaN) in exported data files.</source>
     </message>
     <message>
         <location filename="../../gui/widgets/strain_viz_panel.py" line="154"/>
-        <source>Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest (reference frame view). Data files always keep NaN there.</source>
-        <translation>让没有结果的点（例如已移出视场的材料）保持透明，而不是用感兴趣区域内最近的值填充（参考帧视图）。数据文件中这些点始终为 NaN。</translation>
+        <source>Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest. Also used for exported images and animations; data files always keep NaN there.</source>
+        <translation>让没有结果的点保持透明（例如移出视野的材料），而不是用感兴趣区域内最近的值填充。导出的图像和动画同样遵守此设置；数据文件中这些点始终为 NaN。</translation>
     </message>
     <message>
         <location filename="../../gui/widgets/strain_viz_panel.py" line="81"/>
@@ -3706,22 +3746,22 @@ Trimmed points are empty (NaN) in exported data files.</source>
 <context>
     <name>WorkflowTypePanel</name>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="56"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="59"/>
         <source>Incremental</source>
         <translation>增量式</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="55"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="58"/>
         <source>Accumulative</source>
         <translation>累积式</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="70"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="73"/>
         <source>Tracking Mode</source>
         <translation>追踪模式</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="61"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="64"/>
         <source>Accumulative: every frame is compared directly with frame 1.
 Preferred whenever the motion stays within the model&apos;s reach:
 no error accumulates from frame to frame.
@@ -3740,39 +3780,39 @@ adds its error.</source>
 都会引入自己的误差。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="82"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="85"/>
         <source>finest spatial resolution; small displacements</source>
         <translation>空间分辨率最高；适合小位移</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="83"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="86"/>
         <source>fine resolution, several times faster than s1; small to moderate displacements</source>
         <translation>分辨率高，速度是 s1 的数倍；适合小到中等位移</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="84"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="87"/>
         <source>balanced resolution and capture range</source>
         <translation>分辨率与量程均衡</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="85"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="88"/>
         <source>largest capture range, coarsest resolution; large motion and rotation</source>
         <translation>量程最大，分辨率最粗；适合大运动和大转动</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="89"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="92"/>
         <source>%1: %2.
 Reach (nominal lookup radius 32 s): %3 px.</source>
         <translation>%1：%2。
 量程（名义查找半径 32 s）：%3 px。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="92"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="95"/>
         <source>Weights not installed.</source>
         <translation>权重文件未安装。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="97"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="100"/>
         <source>RAFTcorr model. A smaller s resolves finer detail; a larger s
 reaches further (the coarsest correlation level looks 32 s px away).
 
@@ -3787,39 +3827,54 @@ s4：均衡。
 s8：大运动或大转动，或无先验信息。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="104"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="107"/>
         <source>Model</source>
         <translation>模型</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="110"/>
-        <source>Suggest a model</source>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="114"/>
+        <source>Suggest a Model</source>
         <translation>推荐模型</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="112"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="173"/>
+        <source>e.g. 5, 10, 20</source>
+        <translation>例如 5, 10, 20</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="175"/>
+        <source>Frame numbers (as in the image list) to use as reference frames, separated by commas. Frame 1 is always the first reference.</source>
+        <translation>用作参考帧的帧号（与图像列表一致），以逗号分隔。第 1 帧始终是第一个参考帧。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="272"/>
+        <source>Invalid reference frames: use frame numbers from 1 on, separated by commas.</source>
+        <translation>参考帧无效：请使用从 1 开始的帧号，以逗号分隔。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="118"/>
         <source>Measure the motion of the sequence quickly with s8 and pick the
 finest model whose reach covers it.</source>
         <translation>先用 s8 快速测量序列的运动，再选出量程足以
 覆盖该运动的最精细模型。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="134"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="140"/>
         <source>Every Frame</source>
         <translation>每帧</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="135"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="141"/>
         <source>Every N Frames</source>
         <translation>每 N 帧</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="136"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="142"/>
         <source>Custom Frames</source>
         <translation>自定义帧</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="139"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="145"/>
         <source>When the reference frame refreshes during incremental tracking.
 Every Frame: reset reference every frame (smallest per-step displacement,
 most robust for large deformation).
@@ -3832,27 +3887,22 @@ Custom Frames: user-defined list of reference frame indices.</source>
 自定义帧：由用户指定参考帧索引列表。</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="148"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="154"/>
         <source>Reference Update</source>
         <translation>参考帧更新</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="158"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="164"/>
         <source>Update reference every N frames</source>
         <translation>每 N 帧更新一次参考帧</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="160"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="166"/>
         <source>Interval</source>
         <translation>间隔</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="169"/>
-        <source>Comma-separated frame indices to use as reference frames (0-based)</source>
-        <translation>用作参考帧的帧索引列表（0 为起始），用逗号分隔</translation>
-    </message>
-    <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="173"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="179"/>
         <source>Reference Frames</source>
         <translation>参考帧列表</translation>
     </message>
