@@ -600,3 +600,19 @@ def test_the_residual_colormap_is_offered():
     from raftcorr.gui.support.colormaps import COLORMAP_NAMES
 
     assert _default_colormap("residual") in COLORMAP_NAMES
+
+
+def test_parameter_labels_share_a_column_and_the_checkbox_sits_under_the_inputs(qtbot):
+    from PySide6.QtWidgets import QLabel
+
+    from raftcorr.gui.widgets.param_panel import AdvancedPanel
+
+    panel = AdvancedPanel()
+    qtbot.addWidget(panel)
+    panel.resize(320, 200)
+    panel.show()
+    qtbot.waitExposed(panel)
+    widths = {lbl.minimumWidth() for lbl in panel.findChildren(QLabel) if lbl.minimumWidth() > 0}
+    assert len(widths) == 1 and widths.pop() >= 120
+    left = lambda w: w.mapTo(panel, w.rect().topLeft()).x()   # noqa: E731
+    assert abs(left(panel._margin_auto) - left(panel._margin)) <= 2

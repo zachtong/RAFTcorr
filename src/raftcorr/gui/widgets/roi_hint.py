@@ -30,6 +30,10 @@ _HINT_STYLE = (
 )
 
 
+#: The same card for other hints of the left sidebar (the model advice).
+HINT_STYLE = _HINT_STYLE
+
+
 class ROIHint(QLabel):
     """Info line showing which frames need a Region of Interest.
 

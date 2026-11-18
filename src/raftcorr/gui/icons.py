@@ -166,6 +166,11 @@ def _stroke_icon(body: str) -> QIcon:
     )
 
 
+def icon_suggest() -> QIcon:
+    """A four-point sparkle: let RAFTcorr pick (Suggest a Model)."""
+    return _stroke_icon('<path d="M12 3l1.8 5.7L19.5 10.5l-5.7 1.8L12 18l-1.8-5.7L4.5 10.5l5.7-1.8z"/>')
+
+
 def icon_probe_point() -> QIcon:
     """Ringed cross, open at the centre -- the canvas's point marker."""
     return _stroke_icon(

@@ -1,8 +1,8 @@
 """Workflow-type parameter panel.
 
 Holds the parameters that define WHAT kind of analysis the user is
-running — which images are compared against which, which solver runs,
-and how often the reference frame refreshes. These choices constrain
+running — which images are compared against which, which model
+tracks them, and how often the reference frame refreshes. These choices constrain
 the rest of the workflow: accumulative mode compares every frame to
 frame 1, so only frame 1 needs a Region of Interest; incremental mode
 with a Reference Update schedule needs a Region of Interest at every
@@ -14,7 +14,7 @@ the user sees which regions are required BEFORE they start drawing.
 Exposes:
 * ``tracking_mode`` -> AppState.tracking_mode  ("incremental" or
   "accumulative")
-* ``use_admm`` / ``admm_max_iter`` -> ``AppState`` (Solver choice)
+* ``model`` -> AppState.model (with Suggest a Model and its advice card)
 * ``inc_ref_mode``   -> AppState.inc_ref_mode
 * ``inc_ref_interval``, ``inc_custom_refs`` -> AppState
 """
@@ -34,6 +34,9 @@ from PySide6.QtWidgets import (
 )
 
 from raftcorr.gui.app_state import AppState
+from raftcorr.gui.icons import icon_suggest
+from raftcorr.gui.theme_manager import set_icon, themed
+from raftcorr.gui.widgets.roi_hint import HINT_STYLE
 from raftcorr.i18n import tr_args
 
 
@@ -85,7 +88,7 @@ class WorkflowTypePanel(QWidget):
             "s8": self.tr("largest capture range, coarsest resolution; large motion and rotation"),
         }
         for key, spec in MODELS.items():
-            self._model.addItem(f"RAFTcorr-{key}  ({spec.lookup_radius_px} px)", key)
+            self._model.addItem(f"RAFTcorr-{key} ({spec.lookup_radius_px} px)", key)
             tip = tr_args(self.tr("%1: %2.\nReach (nominal lookup radius 32 s): %3 px."),
                           spec.name, summaries.get(key, spec.summary), spec.lookup_radius_px)
             if avail.get(key) is None:
@@ -107,7 +110,10 @@ class WorkflowTypePanel(QWidget):
         model_row.addWidget(self._model)
         layout.addLayout(model_row)
 
-        self._suggest_btn = QPushButton(self.tr("Suggest a model"))
+        # A sidebar button as pyALDIC's (Title Case, fixed height, icon).
+        self._suggest_btn = QPushButton(self.tr("Suggest a Model"))
+        self._suggest_btn.setFixedHeight(30)
+        set_icon(self._suggest_btn, icon_suggest)
         self._suggest_btn.setToolTip(self.tr(
             "Measure the motion of the sequence quickly with s8 and pick the\n"
             "finest model whose reach covers it."
@@ -116,7 +122,7 @@ class WorkflowTypePanel(QWidget):
         layout.addWidget(self._suggest_btn)
         self._advice = QLabel("")
         self._advice.setWordWrap(True)
-        self._advice.setStyleSheet("font-size: 11px;")
+        themed(self._advice, HINT_STYLE)      # the card of the Region of Interest hint
         self._advice.setVisible(False)
         layout.addWidget(self._advice)
 

@@ -188,11 +188,11 @@ class StrainParamPanel(QWidget):
         self._smooth_spin.setSuffix(" px")
         self._smooth_spin.setSpecialValueText(self.tr("Off", "Strain smoothing preset"))
         self._smooth_spin.setToolTip(self.tr(
-            "Gaussian smoothing (σ in pixels) of the displacement before the "
-            "fit. Off (0) differentiates the measured displacement as it is "
-            "(default)."
+            "Gaussian smoothing (σ in pixels) of the displacement used by the "
+            "strain fit only; the displacement results are not changed. Off (0) "
+            "differentiates the measured displacement as it is (default)."
         ))
-        adv.addRow(self.tr("Displacement smoothing"), self._smooth_spin)
+        adv.addRow(self.tr("Pre-fit smoothing"), self._smooth_spin)
 
         # --- Crack-aware fitting ---
         self._crack_check = QCheckBox(self.tr("Never fit across cracks or holes"))
