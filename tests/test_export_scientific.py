@@ -393,3 +393,47 @@ def test_series_statistics_empty_and_out_of_range(series: DisplacementSeries) ->
     assert stats["U"]["count"] == 0 and np.isnan(stats["U"]["mean"])
     with pytest.raises(IndexError):
         series_statistics(series, T)
+
+
+# -- NPZ per frame ------------------------------------------------------------------------------
+
+
+def test_npz_per_frame_round_trip(tmp_path: Path, series: DisplacementSeries, strain: StrainSeries) -> None:
+    from raftcorr.export.scientific import export_npz_frames, npz_frame_paths
+
+    folder = tmp_path / "npz"
+    seen: list[float] = []
+    wanted = ["U", "V", "exx", "X", "Y", "ROI", "Done", "X_strain", "Y_strain"]
+    written = export_npz_frames(folder, series, strain, variables=wanted, first_number=1,
+                                callbacks=lambda f, _msg: seen.append(f))
+    assert [p.name for p in written] == ["frame_0001.npz", "frame_0002.npz"]       # frame 3 not computed
+    assert written == npz_frame_paths(folder, series, first_number=1)
+    assert sorted(p.name for p in folder.iterdir()) == [p.name for p in written]  # no temporary file left
+    assert seen == [pytest.approx(0.5), pytest.approx(1.0)]
+    u, v = expected_uv(series)
+    for k, path in enumerate(written):
+        data = read_results(path)
+        meta = data["metadata"]
+        assert meta["frame"] == k and meta["shapes"]["U"] == [H, W] and meta["shapes"]["exx"] == [HS, WS]
+        assert set(data) - {"metadata"} == set(wanted)
+        np.testing.assert_array_equal(data["U"], u[k])
+        np.testing.assert_array_equal(data["V"], v[k])
+        np.testing.assert_array_equal(data["exx"], expected_strain(strain, "exx")[k])
+        np.testing.assert_array_equal(data["Done"], series.done.astype(np.uint8))
+        assert data["U"].dtype == np.float32 and data["X"].shape == (H, W)
+
+
+def test_npz_per_frame_overwrite_frames_and_cancel(tmp_path: Path, series: DisplacementSeries) -> None:
+    from raftcorr.export.scientific import export_npz_frames
+
+    folder = tmp_path / "npz"
+    assert [p.name for p in export_npz_frames(folder, series, frames=[1, 2])] == ["frame_0001.npz"]
+    with pytest.raises(FileExistsError):
+        export_npz_frames(folder, series, variables=["U"])
+    with pytest.raises(IndexError):
+        export_npz_frames(folder, series, frames=[T], overwrite=True)
+    calls: list[float] = []
+    with pytest.raises(StopRequested):
+        export_npz_frames(folder, series, overwrite=True, callbacks=FunctionCallbacks(
+            progress=lambda f, _m: calls.append(f), should_stop=lambda: bool(calls)))
+    assert sorted(p.name for p in folder.iterdir()) == ["frame_0000.npz", "frame_0001.npz"]   # nothing half-written

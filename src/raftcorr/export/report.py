@@ -245,7 +245,9 @@ def _number(x: float) -> str:
 def _thumbnail_style(style: FrameStyle | None, key: str, images: Any) -> FrameStyle:
     base = style if style is not None else FrameStyle(field=key)
     background = "none" if images is None else base.background
-    return replace(base, field=key, background=background, dpi=_THUMB_DPI, title=True)
+    # The thumbnails are embedded without alpha: a transparent hidden background is white there.
+    hidden = "white" if base.hidden_background == "transparent" else base.hidden_background
+    return replace(base, field=key, background=background, dpi=_THUMB_DPI, title=True, hidden_background=hidden)
 
 
 def _picture(provider: FieldProvider, images: Any, k: int, style: FrameStyle, units: Units, rng: ColorRange,
