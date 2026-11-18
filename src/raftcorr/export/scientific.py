@@ -40,6 +40,8 @@ and the name / shape / unit of every exported variable.
 * NPZ: one ``.npy`` entry per variable, streamed frame by frame into the deflated ZIP (so the
   export never holds a whole series in memory either); the metadata JSON is the 0-d string array
   ``metadata_json``. ``numpy.load`` reads each array fully into memory when it is accessed.
+* NPZ per frame (:func:`export_npz_frames`): one such file per computed frame, ``frame_<n>.npz``,
+  with the time axis dropped and the frame's index in the metadata (``frame``).
 
 The module also holds three small file helpers shared with :mod:`raftcorr.export.tables` and
 :mod:`raftcorr.io.project`: :func:`atomic_output`, :func:`to_json` and the ``.npy``-in-ZIP
@@ -75,7 +77,9 @@ __all__ = [
     "STRAIN_COORDINATES",
     "PhysicalUnits",
     "available_variables",
+    "export_npz_frames",
     "export_results",
+    "npz_frame_paths",
     "read_results",
 ]
 
@@ -208,6 +212,61 @@ def export_results(
         else:
             _write_hdf5(tmp, plan, cb, mat=fmt == "mat")
     return path
+
+
+def npz_frame_paths(folder: str | Path, series: DisplacementSeries, frames: Iterable[int] | None = None,
+                    first_number: int = 0) -> list[Path]:
+    """The files :func:`export_npz_frames` would write, in writing order."""
+    return [Path(folder) / f"frame_{k + first_number:04d}.npz" for k in _computed_frames(series, frames)]
+
+
+def export_npz_frames(
+    folder: str | Path,
+    series: DisplacementSeries,
+    strain: StrainSeries | None = None,
+    variables: Iterable[str] | None = None,
+    units: PhysicalUnits | None = None,
+    frames: Iterable[int] | None = None,
+    overwrite: bool = False,
+    callbacks: object = None,
+    first_number: int = 0,
+) -> list[Path]:
+    """One NPZ per computed frame of ``frames`` (default: every computed frame), ``frame_<n>.npz``.
+
+    ``n`` is the 4-digit frame number: the 0-based image index by default, 1-based with
+    ``first_number=1`` as the GUI numbers frames. Each file holds the variables of
+    :func:`export_results` with the time axis dropped (``U`` is ``(h, w)``), the static arrays
+    unchanged (``X``, ``Y``, ``ROI``, ``Done``, strain coordinates) and the metadata JSON with the
+    key ``frame`` (the 0-based image index); :func:`read_results` reads it back. Raises like
+    :func:`export_results`; ``should_stop()`` cancels between files, keeping the files already
+    written and never leaving the one being written behind half-done.
+    """
+    if strain is not None:
+        _check_strain(series, strain)
+    names = _resolve_variables(variables, strain, series)
+    shapes = _variable_shapes(series, strain, names)
+    todo = _computed_frames(series, frames)
+    paths = npz_frame_paths(folder, series, todo, first_number)
+    if not overwrite:
+        existing = [p for p in paths if p.exists()]
+        if existing:
+            raise FileExistsError(f"{existing[0]} already exists (pass overwrite=True to replace it)")
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    frame_shapes = {n: s[1:] if len(s) == 3 else s for n, s in shapes.items()}
+    metadata = _metadata(series, strain, units or PhysicalUnits(), names, frame_shapes, "npz")
+    plan = _Plan(series, strain, names, shapes, metadata)
+    static = _static_values(plan)
+    cb = coerce(callbacks)
+    written: list[Path] = []
+    for i, (k, path) in enumerate(zip(todo, paths)):
+        check_stop(cb)
+        with atomic_output(path) as tmp:
+            _write_npz_frame(tmp, {**metadata, "frame": int(k)}, static, _frame_values(plan, k, plan.per_frame))
+        written.append(path)
+        cb.progress((i + 1) / len(todo), f"npz: frame {i + 1}/{len(todo)}")
+    if not todo:
+        cb.progress(1.0, "npz: no computed frame")
+    return written
 
 
 def read_results(path: str | Path) -> dict[str, Any]:
@@ -616,6 +675,33 @@ def _write_npz(tmp: Path, plan: _Plan, cb: Callbacks) -> None:
             write_npy_entry(zf, f"{name}.npy", plan.shapes[name], np.float32, frames)
         if not plan.per_frame:
             cb.progress(1.0, "export: done")
+
+
+def _write_npz_frame(tmp: Path, metadata: dict[str, Any], static: dict[str, np.ndarray],
+                     values: dict[str, np.ndarray]) -> None:
+    """One frame's NPZ (see :func:`export_npz_frames`)."""
+    with zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=_NPZ_LEVEL,
+                         allowZip64=True) as zf:
+        meta = np.array(to_json(metadata))
+        write_npy_entry(zf, "metadata_json.npy", meta.shape, meta.dtype, [meta])
+        names = np.array(metadata["frame_names"], dtype=str)
+        write_npy_entry(zf, "frame_names.npy", names.shape, names.dtype, [names])
+        for name, arr in {**static, **values}.items():
+            write_npy_entry(zf, f"{name}.npy", arr.shape, arr.dtype, [arr])
+
+
+def _computed_frames(series: DisplacementSeries, frames: Iterable[int] | None) -> list[int]:
+    """The computed frames of ``frames`` (default: all), in order; IndexError when out of range."""
+    if frames is None:
+        return series.completed_frames
+    out = []
+    for k in frames:
+        k = int(k)
+        if not 0 <= k < series.n_frames:
+            raise IndexError(f"frame {k} out of range [0, {series.n_frames - 1}]")
+        if bool(series.done[k]):
+            out.append(k)
+    return out
 
 
 def _npz_frames(plan: _Plan, name: str, cb: Callbacks, offset: int, total: int) -> Iterator[np.ndarray]:

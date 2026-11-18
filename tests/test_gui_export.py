@@ -144,7 +144,7 @@ def test_dialog_has_pyaldic_tabs_and_follows_the_results(dialog):
     from raftcorr.gui.dialogs.export_dialog import mp4_available
 
     tabs = [dialog._tabs.tabText(i) for i in range(dialog._tabs.count())]
-    assert tabs == ["Data", "Images", "Animation", "Report", "Preview"]
+    assert tabs == ["Data", "Images", "Animation", "Report", "Preview && Colorbar"]   # "&&" shows one "&"
     assert dialog._data_strain_checks["strain_exx"].isEnabled()
     assert dialog._data_disp_checks["residual"].isEnabled()
     assert [r.field_name for r in dialog._img_field_rows if r.get_config().enabled] == \
@@ -355,7 +355,8 @@ def test_report_is_self_contained_html(qtbot, dialog, tmp_path):
 
 # --------------------------------------------------------------------------- cancel / overwrite
 def _blocking_export_frames(started: threading.Event):
-    def fake(folder, provider, images, frames, style, units, fmt=".png", prefix=None, callbacks=None, first_number=0):
+    def fake(folder, provider, images, frames, style, units, fmt=".png", prefix=None, callbacks=None, first_number=0,
+             **_options):
         started.set()
         deadline = time.monotonic() + 30
         while not callbacks.should_stop() and time.monotonic() < deadline:
@@ -437,6 +438,136 @@ def test_existing_files_are_replaced_only_after_asking(qtbot, dialog, tmp_path, 
     run(qtbot, dialog, "data")
     assert len(asked) == 2
     assert "U" in read_results(npz)
+
+
+# ------------------------------------------------------------------------- pyALDIC's extra options
+def test_npz_one_file_per_frame(qtbot, dialog, loaded, tmp_path):
+    per_frame = dialog._npz_per_frame_check
+    assert per_frame.isEnabled() and not per_frame.isChecked()
+    dialog._npz_check.setChecked(False)
+    assert not per_frame.isEnabled()                    # only meaningful with NPZ
+    dialog._npz_check.setChecked(True)
+    per_frame.setChecked(True)
+    assert dialog.data_job().npz_per_frame
+    run(qtbot, dialog, "data")
+    out = out_dir(tmp_path)
+    assert not (out / f"imgs_results_{TS}.npz").exists() and (out / f"imgs_results_{TS}.mat").exists()
+    files = sorted((out / f"imgs_npz_{TS}").iterdir())
+    assert [p.name for p in files] == ["frame_0001.npz", "frame_0002.npz", "frame_0003.npz"]   # computed frames
+    assert "Exported 5 file(s)" in dialog._controls["data"].status_lbl.text()   # JSON + MAT + 3 frames
+    u, _ = expected_uv(loaded.results)
+    data = read_results(files[1])
+    assert data["metadata"]["frame"] == 1 and {"X", "Y", "ROI", "Done", "exx"} <= set(data)
+    np.testing.assert_array_equal(data["U"], u[1].astype(np.float32))
+
+
+def test_resolution_presets_and_jpeg_quality(qtbot, dialog, tmp_path):
+    texts = [dialog._img_res_combo.itemText(i) for i in range(dialog._img_res_combo.count())]
+    assert texts == ["1024 px", "768 px", "512 px", "1536 px", "2048 px", "Full resolution"]
+    assert dialog._img_res_combo.currentData() == 0                 # pictures: the size the DPI gives
+    assert dialog._anim_res_combo.currentData() == 1024
+    quality = dialog._img_quality_spin
+    assert quality.value() == 92 and not quality.isEnabled()        # PNG
+    only_fields(dialog._img_field_rows, {"disp_u"})
+    dialog._img_fmt_combo.setCurrentIndex(dialog._img_fmt_combo.findData(".jpg"))
+    assert quality.isEnabled()
+    quality.setValue(70)
+    dialog._img_res_combo.setCurrentIndex(dialog._img_res_combo.findData(512))
+    job = dialog.images_job()
+    assert (job.fmt, job.max_side, job.jpeg_quality) == (".jpg", 512, 70)
+    run(qtbot, dialog, "img")
+    for path in (out_dir(tmp_path) / f"imgs_images_{TS}" / "disp_u").iterdir():
+        with Image.open(path) as im:
+            assert max(im.size) == 512 and im.mode == "RGB"
+
+
+def test_animation_resolution_cap(qtbot, dialog, tmp_path):
+    only_fields(dialog._anim_field_rows, {"disp_u"})
+    dialog._anim_fmt_combo.setCurrentIndex(dialog._anim_fmt_combo.findData(".gif"))
+    dialog._anim_res_combo.setCurrentIndex(dialog._anim_res_combo.findData(512))
+    assert dialog.animation_job().max_side == 512
+    run(qtbot, dialog, "anim")
+    with Image.open(out_dir(tmp_path) / f"imgs_animation_{TS}" / "disp_u.gif") as im:
+        assert max(im.size) == 512
+
+
+def test_colorbar_style_reaches_every_export_and_the_preview(qtbot, dialog):
+    from raftcorr.export.figure_layout import ColorbarStyle
+
+    dialog.show()
+    dialog._tabs.setCurrentIndex(dialog._preview_tab_index)
+    preview, look = dialog._preview, dialog._preview.look
+    assert dialog._tabs.tabText(dialog._preview_tab_index) == "Preview && Colorbar"
+    assert look.colorbar_style() == ColorbarStyle()                  # the look of the pictures so far
+    before = preview.preview_image()
+    look.position_combo.setCurrentIndex(look.position_combo.findData("top"))
+    look.font_spin.setValue(14)
+    look.font_combo.setCurrentIndex(look.font_combo.findData("serif"))
+    look.thickness_spin.setValue(0.1)
+    look.background_combo.setCurrentIndex(look.background_combo.findData("black"))
+    look.margin_spin.setValue(0.05)
+    look.margin_color_combo.setCurrentIndex(look.margin_color_combo.findData("black"))
+    want = ColorbarStyle(position="top", font_size=14, font_family="serif", thickness=0.1, background="black")
+    for job in (dialog.images_job(), dialog.animation_job(), dialog.report_job()):
+        s = job.fields[0].style
+        assert (s.colorbar_style, s.margin, s.margin_color) == (want, 0.05, "black")
+    after = preview.preview_image()
+    assert after.shape[0] > before.shape[0]                          # the bar now sits on top
+    assert tuple(after[0, 0]) == (0, 0, 0, 255)                      # black margin
+
+
+def test_hint_starts_hidden_background_and_hide_untracked(qtbot, loaded):
+    from raftcorr.gui.dialogs.export_dialog import ExportDialog, VizExportHint
+
+    dlg = ExportDialog(loaded.results, None, VizExportHint(hidden_bg_color="black", hide_untracked=False))
+    qtbot.addWidget(dlg)
+    assert dlg._preview.look.hidden_background() == "black"
+    assert not dlg._img_hide_check.isChecked() and not dlg._anim_hide_check.isChecked()
+    for job in (dlg.images_job(), dlg.animation_job()):
+        s = job.fields[0].style
+        assert (s.hidden_background, s.hide_untracked) == ("black", False)
+    default = ExportDialog(loaded.results, None, VizExportHint())
+    qtbot.addWidget(default)
+    assert default._preview.look.hidden_background() == "white" and default._img_hide_check.isChecked()
+
+
+def test_transparent_hidden_background_in_files_and_preview(qtbot, dialog, tmp_path):
+    dialog.show()
+    dialog._tabs.setCurrentIndex(dialog._preview_tab_index)
+    only_fields(dialog._img_field_rows, {"disp_u"})
+    dialog._preview.activate()
+    dialog._img_bg_check.setChecked(False)
+    look = dialog._preview.look
+    look.hidden_bg_combo.setCurrentIndex(look.hidden_bg_combo.findData("transparent"))
+    shown = dialog._preview.preview_image()
+    assert shown[..., 3].min() == 0                                  # PNG keeps the transparency
+    run(qtbot, dialog, "img")
+    png = sorted((out_dir(tmp_path) / f"imgs_images_{TS}" / "disp_u").glob("*.png"))[1]   # frame 2, as shown
+    with Image.open(png) as im:
+        written = np.asarray(im)
+    assert im.mode == "RGBA" and written[..., 3].min() == 0
+    # The same picture at another DPI: same layout, so the same transparent share.
+    assert written.shape[1] / written.shape[0] == pytest.approx(shown.shape[1] / shown.shape[0], rel=0.01)
+    assert (written[..., 3] == 0).mean() == pytest.approx((shown[..., 3] == 0).mean(), abs=0.02)
+    dialog._img_fmt_combo.setCurrentIndex(dialog._img_fmt_combo.findData(".jpg"))
+    assert dialog._preview.preview_image()[..., 3].min() == 255      # JPEG: white instead
+
+
+def test_hide_untracked_reaches_the_pictures(qtbot, dialog):
+    """make_series leaves u[1, 3, 4] untracked inside the ROI: filled only with the box off."""
+    dialog.show()
+    dialog._tabs.setCurrentIndex(dialog._preview_tab_index)
+    dialog._img_geom_combo.setCurrentIndex(1)                          # reference frame
+    dialog._img_bg_check.setChecked(False)
+    preview = dialog._preview
+    preview.frame_slider.setValue(1)
+    hidden = preview.preview_image()
+    dialog._img_hide_check.setChecked(False)
+    assert not dialog.images_job().fields[0].style.hide_untracked
+    filled = preview.preview_image()
+    assert not np.array_equal(hidden, filled)
+    dialog._anim_hide_check.setChecked(False)
+    assert not dialog.animation_job().fields[0].style.hide_untracked
 
 
 # ------------------------------------------------------------------------------------- preview

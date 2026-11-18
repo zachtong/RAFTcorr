@@ -60,6 +60,10 @@ HEADER_WIDTHS: tuple[int, ...] = (50, 100, 100, 120, 95)
 
 DEFAULT_ENABLED = {"disp_u", "disp_v", "strain_exx", "strain_eyy", "strain_exy"}
 
+#: Long-edge presets (pixels) of the "Resolution (long edge)" combos, in pyALDIC's order; the
+#: last entry, "Full resolution", is 0 (no cap).
+RESOLUTION_PRESETS: tuple[int, ...] = (1024, 768, 512, 1536, 2048)
+
 #: Older names that share a field's colour state.
 _STATE_ALIASES: dict[str, tuple[str, ...]] = {"disp_magnitude": ("disp_magnitude", "disp_mag")}
 
@@ -82,11 +86,10 @@ def color_state(field_name: str):
 class VizExportHint:
     """Snapshot of the current window's visualisation settings.
 
+    ``hidden_bg_color`` ("white", "black" or "transparent": what replaces a hidden background
+    image) and ``hide_untracked`` start the dialog's controls of the same name.
     ``fill_trimmed_edges`` is the strain window's "Fill trimmed edges (display only)": exported
     images and animations fill the edge-trimmed strain band as the view does (data files never).
-    ``hidden_bg_color`` and ``hide_untracked`` are accepted for the callers ported from pyALDIC;
-    RAFTcorr pictures always leave untracked points transparent and draw on white when the
-    background image is hidden.
     """
     colormap: str = "turbo"
     auto_range: bool = True
@@ -277,6 +280,16 @@ def build_field_rows_scroll(fields: tuple[str, ...], hint: VizExportHint,
 
     scroll.setWidget(container)
     return scroll, rows
+
+
+def resolution_combo(default: int) -> QComboBox:
+    """Long-edge cap presets (data: pixels, 0 = full resolution); the pixel counts stay literal."""
+    combo = QComboBox()
+    for px in RESOLUTION_PRESETS:
+        combo.addItem(f"{px} px", px)
+    combo.addItem(QCoreApplication.translate("ExportDialog", "Full resolution"), 0)
+    combo.setCurrentIndex(max(0, combo.findData(int(default))))
+    return combo
 
 
 def make_select_all_none(checks: dict[str, QCheckBox]) -> tuple[QPushButton, QPushButton]:

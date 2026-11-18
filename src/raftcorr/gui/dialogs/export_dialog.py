@@ -1,13 +1,17 @@
 """Export dialog for RAFTcorr results -- pyALDIC's tab layout on RAFTcorr's exporters.
 
 Tabs:
-  - Data Tab:      Parameters JSON (always) + NPZ / MATLAB v7.3 / HDF5 with per-variable
-                   checkboxes (raftcorr.export.export_results), and per-frame CSV tables.
-  - Images Tab:    Per-field rows -> one picture per frame (PNG / TIFF / JPEG / PDF / SVG).
+  - Data Tab:      Parameters JSON (always) + NPZ (one merged file, or one per frame) /
+                   MATLAB v7.3 / HDF5 with per-variable checkboxes (raftcorr.export.export_results),
+                   and per-frame CSV tables.
+  - Images Tab:    Per-field rows -> one picture per frame (PNG / TIFF / JPEG / PDF / SVG), with
+                   a long-edge resolution cap and the JPEG quality.
   - Animation Tab: Per-field rows -> GIF (MP4 when imageio-ffmpeg is installed) animations.
   - Report Tab:    Run parameters + field statistics + sample images -> self-contained HTML.
-  - Preview Tab:   One frame drawn exactly as the Images tab writes it, plus the field's
-                   colormap / range / opacity (two-way synced with its Images-tab row).
+  - Preview & Colorbar Tab: One frame drawn exactly as the Images tab writes it, the field's
+                   colormap / range / opacity (two-way synced with its Images-tab row), and the
+                   COLORBAR STYLE of every picture: bar position / font / thickness / background,
+                   margin, and the fill of a hidden background image (white, black, transparent).
 
 UX design (pyALDIC):
   - All export actions are QPushButton (non-AcceptRole); dialog stays open.
@@ -20,7 +24,9 @@ UX design (pyALDIC):
   - Field labels match the main window / strain window naming (U, V, εxx, ...); each row
     starts from that field's colour state in the main window (WYSIWYG).
   - Pictures: drawn on the deformed or the reference configuration, over the matching
-    photo (deformed: each frame's own; reference: frame 1) or on white.
+    photo (deformed: each frame's own; reference: frame 1) or on the hidden-background fill;
+    "Hide untracked regions" starts from the window's setting (off: untracked points inside the
+    region of interest get the nearest value, as on the canvas).
 
 Pictures come from raftcorr.export.figures (the renderer of the GUI canvas, framed by matplotlib
 with the colour bar), data from raftcorr.export.scientific; see export_jobs for file names.
@@ -58,7 +64,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from raftcorr.export.figures import FrameStyle
+from raftcorr.export.figures import FrameStyle, style_for_format
 from raftcorr.gui.app_state import AppState
 from raftcorr.gui.dialogs import export_jobs as jobs
 from raftcorr.gui.dialogs.export_preview import ExportPreview
@@ -74,6 +80,7 @@ from raftcorr.gui.dialogs.export_widgets import (
     check_group,
     field_header,
     field_label,
+    resolution_combo,
 )
 from raftcorr.gui.support.fields import provider_key
 from raftcorr.gui.theme_manager import themed
@@ -109,6 +116,12 @@ _DATA_VARIABLE: dict[str, str] = {
 
 _IMAGE_FORMATS: tuple[tuple[str, str], ...] = (
     ("PNG", ".png"), ("TIFF", ".tif"), ("JPEG", ".jpg"), ("PDF", ".pdf"), ("SVG", ".svg"))
+
+#: Long-edge caps the tabs start from (pixels, 0 = full resolution): pictures keep the size their
+#: DPI gives, animations start at pyALDIC's 1024 px.
+_IMG_DEFAULT_MAX_SIDE = 0
+_ANIM_DEFAULT_MAX_SIDE = 1024
+_JPEG_QUALITY = (60, 100, 92)   # min, max, default (pyALDIC's)
 
 
 # How long closing the dialog waits for a running export to notice the stop request. Export
@@ -220,7 +233,10 @@ class ExportDialog(QDialog):
         self._tabs.addTab(self._build_images_tab(), self.tr("Images"))
         self._tabs.addTab(self._build_animation_tab(), self.tr("Animation"))
         self._tabs.addTab(self._build_report_tab(), self.tr("Report"))
-        self._preview_tab_index = self._tabs.addTab(self._build_preview_tab(), self.tr("Preview"))
+        # A tab label turns "&" into a keyboard mnemonic ("Preview _Colorbar"); doubling it shows
+        # the ampersand, in every translation.
+        self._preview_tab_index = self._tabs.addTab(
+            self._build_preview_tab(), self.tr("Preview & Colorbar").replace("&", "&&"))
         # Render the preview lazily the first time the tab is opened.
         self._tabs.currentChanged.connect(self._on_tab_changed)
 
@@ -315,7 +331,13 @@ class ExportDialog(QDialog):
         self._csv_check.setToolTip(self.tr(
             "One table per computed frame, one row per point of the region of interest.\n"
             "Dense fields make large files: a 1000 x 1000 px region is a million rows per frame."))
-        for chk in (self._npz_check, self._mat_check, self._h5_check, self._csv_check):
+        self._npz_per_frame_check = QCheckBox(self.tr("NPZ: one file per frame (default: single merged file)"))
+        self._npz_per_frame_check.setChecked(False)
+        self._npz_per_frame_check.setToolTip(self.tr(
+            "One .npz per computed frame, in a folder of its own: that frame's variables, the grid "
+            "coordinates, the ROI and the metadata."))
+        self._npz_check.toggled.connect(self._npz_per_frame_check.setEnabled)
+        for chk in (self._npz_check, self._mat_check, self._h5_check, self._csv_check, self._npz_per_frame_check):
             fmt_layout.addWidget(chk)
         layout.addWidget(fmt_group)
 
@@ -344,8 +366,11 @@ class ExportDialog(QDialog):
         layout.addStretch()
         return w
 
-    def _render_as_row(self) -> tuple[QHBoxLayout, QComboBox, QCheckBox]:
-        """Where the field is drawn and whether an image sits behind it: one control each."""
+    def _render_as_row(self, bg_tip: str) -> tuple[QHBoxLayout, QComboBox, QCheckBox]:
+        """Where the field is drawn and whether an image sits behind it: one control each.
+
+        ``bg_tip`` is the tooltip of "Show background image" when the run's images are available.
+        """
         row = QHBoxLayout()
         geom = QComboBox()
         geom.addItem(self.tr("Deformed frame"), True)
@@ -359,11 +384,21 @@ class ExportDialog(QDialog):
         has_images = self._images is not None
         bg.setChecked(self._hint.show_background and has_images)
         bg.setEnabled(has_images)
-        bg.setToolTip(self.tr("Uncheck to export the field on its own, on white, with no speckle image behind it.")
-                      if has_images else self.tr("The images of this run are not available."))
+        bg.setToolTip(bg_tip if has_images else self.tr("The images of this run are not available."))
         row.addWidget(bg)
         row.addStretch()
         return row, geom, bg
+
+    def _hide_untracked_check(self) -> QCheckBox:
+        """The "Hide untracked regions" box, starting from the window the dialog was opened from."""
+        chk = QCheckBox(self.tr("Hide untracked regions"))
+        chk.setChecked(self._hint.hide_untracked)
+        chk.setToolTip(self.tr(
+            "Leave points without a result transparent in the pictures, for "
+            "example material that left the field of view, instead of filling "
+            "them with the nearest value inside the region of interest. Data "
+            "files always keep NaN there."))
+        return chk
 
     def _build_images_tab(self) -> QWidget:
         w = QWidget()
@@ -382,9 +417,33 @@ class ExportDialog(QDialog):
         self._img_fmt_combo = QComboBox()
         for name, ext in _IMAGE_FORMATS:   # file-format names stay literal per glossary
             self._img_fmt_combo.addItem(name, ext)
+        self._img_fmt_combo.currentIndexChanged.connect(self._on_image_format_changed)
         fmt_row.addWidget(self._img_fmt_combo)
         fmt_row.addStretch()
         img_form.addRow(self.tr("Format"), fmt_row)
+
+        # Output resolution cap: the value is the long edge (max of W/H), kept literal; only the
+        # "Full resolution" option + tooltip are translated.
+        res_row = QHBoxLayout()
+        self._img_res_combo = resolution_combo(_IMG_DEFAULT_MAX_SIDE)
+        self._img_res_combo.setToolTip(self.tr(
+            "Cap the long edge of each written image (the larger of width/height, in pixels; the "
+            "aspect ratio and layout are kept).\nLower = faster and much smaller on disk; for PDF and "
+            "SVG it caps the embedded picture. 'Full resolution' writes the size set by DPI."))
+        res_row.addWidget(self._img_res_combo)
+        res_row.addStretch()
+        img_form.addRow(self.tr("Resolution (long edge)"), res_row)
+
+        quality_row = QHBoxLayout()
+        self._img_quality_spin = QSpinBox()
+        self._img_quality_spin.setRange(_JPEG_QUALITY[0], _JPEG_QUALITY[1])
+        self._img_quality_spin.setValue(_JPEG_QUALITY[2])
+        self._img_quality_spin.setFixedWidth(70)
+        self._img_quality_spin.setToolTip(self.tr(
+            "JPEG quality (higher = larger file). Ignored for the other formats."))
+        quality_row.addWidget(self._img_quality_spin)
+        quality_row.addStretch()
+        img_form.addRow(self.tr("JPEG quality"), quality_row)
 
         dpi_row = QHBoxLayout()
         self._img_dpi_spin = QSpinBox()
@@ -392,12 +451,12 @@ class ExportDialog(QDialog):
         self._img_dpi_spin.setValue(150)
         self._img_dpi_spin.setFixedWidth(70)
         self._img_dpi_spin.setToolTip(self.tr(
-            "Resolution of the written figure: about 8.6 x 7 inches at this many dots per inch."))
+            "Resolution of the written figure: about 8.6 x 7 inches at this many dots per inch.\n"
+            "A resolution cap (long edge) lowers it."))
         dpi_row.addWidget(self._img_dpi_spin)
-        dpi_row.addStretch()
-        img_form.addRow(self.tr("DPI"), dpi_row)
-
-        range_row = QHBoxLayout()
+        # Auto range shares the DPI row: one row less keeps the dialog within a 1080-pixel screen.
+        dpi_row.addSpacing(24)
+        dpi_row.addWidget(QLabel(self.tr("Auto range")))
         self._img_range_combo = QComboBox()
         self._img_range_combo.addItem(self.tr("Each frame"), "frame")
         self._img_range_combo.addItem(self.tr("Whole sequence"), "sequence")
@@ -405,26 +464,33 @@ class ExportDialog(QDialog):
             "How Auto picks the colour range: from each frame's own values (like the main window),\n"
             "or one range from every exported frame, so a colour means the same value in every image."))
         self._img_range_combo.currentIndexChanged.connect(self._schedule_preview)
-        range_row.addWidget(self._img_range_combo)
-        range_row.addStretch()
-        img_form.addRow(self.tr("Auto range"), range_row)
+        dpi_row.addWidget(self._img_range_combo)
+        dpi_row.addStretch()
+        img_form.addRow(self.tr("DPI"), dpi_row)
 
         self._img_colorbar_check = QCheckBox(self.tr("Include colorbar"))
         self._img_colorbar_check.setChecked(True)
-        self._img_colorbar_check.setToolTip(self.tr("Add a vertical colorbar to the right of each image."))
+        self._img_colorbar_check.setToolTip(self.tr(
+            "Add a colorbar to each image; its position and style are set on the Preview & Colorbar tab."))
         self._img_colorbar_check.toggled.connect(self._schedule_preview)
         img_form.addRow(self._img_colorbar_check)
 
-        config_row, self._img_geom_combo, self._img_bg_check = self._render_as_row()
+        config_row, self._img_geom_combo, self._img_bg_check = self._render_as_row(self.tr(
+            "Uncheck to export the field on its own, with no speckle image "
+            "behind it. Pick the fill on the Preview & Colorbar tab."))
         self._img_geom_combo.currentIndexChanged.connect(self._schedule_preview)
         self._img_bg_check.toggled.connect(self._schedule_preview)
-        img_form.addRow(self.tr("Render as"), config_row)
-
         self._img_crop_check = QCheckBox(self.tr("Crop to ROI"))
         self._img_crop_check.setToolTip(self.tr("Cut the picture to the region of interest plus a small margin."))
         self._img_crop_check.toggled.connect(self._schedule_preview)
-        img_form.addRow(self._img_crop_check)
+        config_row.insertWidget(config_row.count() - 1, self._img_crop_check)   # before the stretch
+        img_form.addRow(self.tr("Render as"), config_row)
+
+        self._img_hide_check = self._hide_untracked_check()
+        self._img_hide_check.toggled.connect(self._schedule_preview)
+        img_form.addRow(self._img_hide_check)
         layout.addWidget(img_group)
+        self._on_image_format_changed()
 
         self._img_range_box = FrameRangeBox(self._results.n_frames)
         layout.addWidget(self._img_range_box)
@@ -463,6 +529,19 @@ class ExportDialog(QDialog):
         fmt_row.addStretch()
         anim_form.addRow(self.tr("Format"), fmt_row)
 
+        # Output resolution cap (crucial for GIF: a 4K GIF is hundreds of MB).
+        # The value is the long edge (max of W/H); numbers stay literal.
+        anim_res_row = QHBoxLayout()
+        self._anim_res_combo = resolution_combo(_ANIM_DEFAULT_MAX_SIDE)
+        self._anim_res_combo.setToolTip(self.tr(
+            "Cap the animation's long edge (the larger of width/height).\n"
+            "Lower = faster and much smaller. Strongly recommended for GIF, "
+            "whose size explodes at native resolution. 'Full resolution' draws "
+            "the images at their own pixel size."))
+        anim_res_row.addWidget(self._anim_res_combo)
+        anim_res_row.addStretch()
+        anim_form.addRow(self.tr("Resolution (long edge)"), anim_res_row)
+
         fps_row = QHBoxLayout()
         self._anim_fps_spin = QSpinBox()
         self._anim_fps_spin.setRange(1, 60)
@@ -489,15 +568,20 @@ class ExportDialog(QDialog):
 
         self._anim_colorbar_check = QCheckBox(self.tr("Include colorbar"))
         self._anim_colorbar_check.setChecked(True)
-        self._anim_colorbar_check.setToolTip(self.tr("Add a vertical colorbar to the right of each frame."))
+        self._anim_colorbar_check.setToolTip(self.tr(
+            "Add a colorbar to each frame; its position and style are set on the Preview & Colorbar tab."))
         anim_form.addRow(self._anim_colorbar_check)
 
-        anim_config_row, self._anim_geom_combo, self._anim_bg_check = self._render_as_row()
-        anim_form.addRow(self.tr("Render as"), anim_config_row)
-
+        anim_config_row, self._anim_geom_combo, self._anim_bg_check = self._render_as_row(self.tr(
+            "Uncheck to export the field on its own, with no speckle image "
+            "behind it. GIF and MP4 cannot store transparency, so a "
+            "transparent fill is written as white."))
         self._anim_crop_check = QCheckBox(self.tr("Crop to ROI"))
         self._anim_crop_check.setToolTip(self.tr("Cut the frames to the region of interest plus a small margin."))
-        anim_form.addRow(self._anim_crop_check)
+        anim_config_row.insertWidget(anim_config_row.count() - 1, self._anim_crop_check)   # before the stretch
+        anim_form.addRow(self.tr("Render as"), anim_config_row)
+        self._anim_hide_check = self._hide_untracked_check()
+        anim_form.addRow(self._anim_hide_check)
 
         range_note = QLabel(self.tr(
             "Auto range: one range for the whole animation, so a colour means the same value in every frame."))
@@ -566,15 +650,23 @@ class ExportDialog(QDialog):
         layout.addStretch()
         return w
 
-    # -- Preview tab -------------------------------------------------------
+    # -- Preview & Colorbar tab ---------------------------------------------
 
     def _build_preview_tab(self) -> QWidget:
-        """WYSIWYG preview of one exported frame + the field's appearance."""
+        """WYSIWYG preview of one exported frame + the field's appearance + the colorbar style."""
         self._preview = ExportPreview(
             self._provider, self._images, self._img_field_rows, self._anim_field_rows,
-            style_for=lambda cfg: self._image_style(cfg, self._img_settings()), units=self._units,
-            frames_for=lambda key: self._frames_for(key, "img"))
+            style_for=self._preview_style, units=self._units,
+            frames_for=lambda key: self._frames_for(key, "img"), hidden_background=self._hint.hidden_bg_color)
         return self._preview
+
+    def _preview_style(self, cfg: FieldImageConfig) -> FrameStyle:
+        """The style the Images tab writes *cfg* with, in its chosen format."""
+        return style_for_format(self._image_style(cfg, self._img_settings()), self._img_fmt_combo.currentData())
+
+    def _on_image_format_changed(self) -> None:
+        self._img_quality_spin.setEnabled(self._img_fmt_combo.currentData() == ".jpg")
+        self._schedule_preview()   # a transparent fill is white in formats without alpha
 
     def _on_tab_changed(self, idx: int) -> None:
         if idx == getattr(self, "_preview_tab_index", -1):
@@ -609,15 +701,18 @@ class ExportDialog(QDialog):
     def _img_settings(self) -> dict:
         return dict(deformed=bool(self._img_geom_combo.currentData()), background=self._img_bg_check.isChecked(),
                     colorbar=self._img_colorbar_check.isChecked(), crop=self._img_crop_check.isChecked(),
-                    range_mode=self._img_range_combo.currentData(), dpi=self._img_dpi_spin.value())
+                    range_mode=self._img_range_combo.currentData(), dpi=self._img_dpi_spin.value(),
+                    hide_untracked=self._img_hide_check.isChecked())
 
     def _anim_settings(self) -> dict:
         return dict(deformed=bool(self._anim_geom_combo.currentData()), background=self._anim_bg_check.isChecked(),
                     colorbar=self._anim_colorbar_check.isChecked(), crop=self._anim_crop_check.isChecked(),
-                    range_mode="sequence", dpi=100)
+                    range_mode="sequence", dpi=100, hide_untracked=self._anim_hide_check.isChecked())
 
     def _image_style(self, cfg: FieldImageConfig, settings: dict) -> FrameStyle:
+        """A field's style from its row, a tab's settings and the shared COLORBAR STYLE box."""
         fixed = not cfg.auto_range
+        look = self._preview.look
         return FrameStyle(
             field=provider_key(cfg.field_name),
             configuration="deformed" if settings["deformed"] else "reference",
@@ -626,6 +721,8 @@ class ExportDialog(QDialog):
             vmin=float(cfg.vmin) if fixed else None, vmax=float(cfg.vmax) if fixed else None,
             range_mode=settings["range_mode"], colorbar=settings["colorbar"], title=False,
             crop_to_roi=settings["crop"], dpi=int(settings["dpi"]),
+            colorbar_style=look.colorbar_style(), margin=look.margin(), margin_color=look.margin_color(),
+            hidden_background=look.hidden_background(), hide_untracked=bool(settings["hide_untracked"]),
             fill_trimmed_edges=bool(self._hint.fill_trimmed_edges))
 
     def _field_outputs(self, rows: list[FieldRow], settings: dict, prefix: str,
@@ -658,14 +755,17 @@ class ExportDialog(QDialog):
             return self.tr("Select at least one variable to export.")
         return jobs.DataJob(self._names(), self._results, self._strain, formats=formats,
                             csv=self._csv_check.isChecked(), variables=variables,
-                            units=self._units_box.physical_units())
+                            units=self._units_box.physical_units(),
+                            npz_per_frame=self._npz_per_frame_check.isChecked())
 
     def images_job(self) -> jobs.ImagesJob | str:
         fields, reason = self._field_outputs(self._img_field_rows, self._img_settings(), "img")
         if not fields:
             return reason
         return jobs.ImagesJob(self._names(), self._results, self._strain, self._images, tuple(fields),
-                              units=self._units(), fmt=self._img_fmt_combo.currentData())
+                              units=self._units(), fmt=self._img_fmt_combo.currentData(),
+                              max_side=int(self._img_res_combo.currentData()),
+                              jpeg_quality=self._img_quality_spin.value())
 
     def animation_job(self) -> jobs.AnimationJob | str:
         step = self._anim_step_spin.value()
@@ -674,7 +774,8 @@ class ExportDialog(QDialog):
             return reason
         return jobs.AnimationJob(self._names(), self._results, self._strain, self._images, tuple(fields),
                                  units=self._units(), ext=self._anim_fmt_combo.currentData(),
-                                 fps=self._anim_fps_spin.value() / step)
+                                 fps=self._anim_fps_spin.value() / step,
+                                 max_side=int(self._anim_res_combo.currentData()))
 
     def report_job(self) -> jobs.ReportJob | str:
         wanted = [k for k, chk in {**self._report_disp_checks, **self._report_strain_checks}.items()

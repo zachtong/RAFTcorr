@@ -11,6 +11,7 @@ Output names follow pyALDIC, ``{prefix}_{kind}_{timestamp}`` in the output folde
 =====================================  =================================================
 ``{p}_parameters_{t}.json``            run parameters (always written with the data)
 ``{p}_results_{t}.npz / .mat / .h5``   data files (:func:`raftcorr.export.export_results`)
+``{p}_npz_{t}/frame_0003.npz``         NPZ per frame (:func:`raftcorr.export.scientific.export_npz_frames`)
 ``{p}_csv_{t}/frame_0003.csv``         per-frame tables (:mod:`raftcorr.export.frame_csv`)
 ``{p}_images_{t}/<field>/frame_0003.png``  pictures (:func:`raftcorr.export.figures.export_frames`)
 ``{p}_animation_{t}/<field>.gif``      animations (:func:`raftcorr.export.figures.export_animation`)
@@ -38,7 +39,14 @@ from raftcorr.export.figures import FrameStyle, export_animation, export_frames
 from raftcorr.export.frame_csv import DISPLACEMENT_COLUMNS, export_frame_csv, frame_csv_paths
 from raftcorr.export.params import export_params
 from raftcorr.export.report import export_html_report
-from raftcorr.export.scientific import STRAIN_COORDINATES, PhysicalUnits, available_variables, export_results
+from raftcorr.export.scientific import (
+    STRAIN_COORDINATES,
+    PhysicalUnits,
+    available_variables,
+    export_npz_frames,
+    export_results,
+    npz_frame_paths,
+)
 from raftcorr.results import DisplacementSeries, StrainSeries
 from raftcorr.viz.fields import FieldProvider, Units
 
@@ -87,6 +95,9 @@ class OutputNames:
     def csv_folder(self) -> Path:
         return self.folder / self._name("csv")
 
+    def npz_folder(self) -> Path:
+        return self.folder / self._name("npz")
+
     def images_folder(self) -> Path:
         return self.folder / self._name("images")
 
@@ -132,7 +143,11 @@ def _without_missing_images(style: FrameStyle, images: Any) -> FrameStyle:
 # ================================================================================== data files
 @dataclass(frozen=True)
 class DataJob:
-    """Parameters JSON, then the data files, then (optionally) the per-frame CSV tables."""
+    """Parameters JSON, then the data files, then (optionally) the per-frame CSV tables.
+
+    With ``npz_per_frame`` the ``.npz`` of ``formats`` is one file per computed frame instead of
+    one merged file.
+    """
 
     names: OutputNames
     series: DisplacementSeries = field(repr=False, compare=False)
@@ -141,6 +156,10 @@ class DataJob:
     csv: bool = False
     variables: tuple[str, ...] = ("U", "V", "Magnitude")   # per-frame variables chosen in the dialog
     units: PhysicalUnits = PhysicalUnits()
+    npz_per_frame: bool = False
+
+    def _per_frame_npz(self, ext: str) -> bool:
+        return ext == ".npz" and self.npz_per_frame
 
     def _strain_used(self) -> StrainSeries | None:
         """The strain series, when a strain variable was chosen (else the files hold none)."""
@@ -161,7 +180,12 @@ class DataJob:
                      if v in DISPLACEMENT_COLUMNS or (strain is not None and v in strain.components))
 
     def targets(self) -> list[Path]:
-        out = [self.names.parameters(), *(self.names.results(ext) for ext in self.formats)]
+        out = [self.names.parameters()]
+        for ext in self.formats:
+            if self._per_frame_npz(ext):
+                out += npz_frame_paths(self.names.npz_folder(), self.series, first_number=GUI_FIRST_FRAME)
+            else:
+                out.append(self.names.results(ext))
         if self.csv:
             out += frame_csv_paths(self.names.csv_folder(), self.series, self._strain_used(), self.table_variables(),
                                    first_number=GUI_FIRST_FRAME)
@@ -177,6 +201,16 @@ class DataJob:
         steps = max(1, len(self.formats) + int(self.csv))
         strain, variables = self._strain_used(), self.file_variables()
         for i, ext in enumerate(self.formats):
+            if self._per_frame_npz(ext):
+                folder = self.names.npz_folder()
+                stage = _Stage(report, should_stop, i / steps, (i + 1) / steps, folder.name, 100)
+                try:
+                    written.extend(export_npz_frames(folder, self.series, strain, variables, self.units,
+                                                     overwrite=True, callbacks=stage, first_number=GUI_FIRST_FRAME))
+                except StopRequested:
+                    written.extend(sorted(folder.glob("frame_*.npz")))
+                    raise
+                continue
             path = self.names.results(ext)
             stage = _Stage(report, should_stop, i / steps, (i + 1) / steps, path.name, 100)
             written.append(export_results(path, self.series, strain, variables, self.units, overwrite=True,
@@ -208,6 +242,8 @@ class ImagesJob:
     fields: tuple[FieldOutput, ...] = ()
     units: Units = Units()
     fmt: str = ".png"
+    max_side: int = 0           # long-edge cap in pixels, 0 = the size set by the DPI
+    jpeg_quality: int = 92
 
     def folder(self, out: FieldOutput) -> Path:
         return self.names.images_folder() / out.name
@@ -228,7 +264,8 @@ class ImagesJob:
             try:
                 written.extend(export_frames(folder, provider, self.images, f.frames,
                                              _without_missing_images(f.style, self.images), self.units, self.fmt,
-                                             prefix="frame", callbacks=stage, first_number=GUI_FIRST_FRAME))
+                                             prefix="frame", callbacks=stage, first_number=GUI_FIRST_FRAME,
+                                             max_side=self.max_side, jpeg_quality=self.jpeg_quality))
             except StopRequested:
                 written.extend(sorted(folder.glob(f"frame_*{self.fmt}")))
                 raise
@@ -248,6 +285,7 @@ class AnimationJob:
     units: Units = Units()
     ext: str = ".gif"
     fps: float = 10.0
+    max_side: int = 1024        # long-edge cap in pixels, 0 = the images' own size
 
     def path(self, out: FieldOutput) -> Path:
         return self.names.animation_folder() / f"{out.name}{self.ext}"
@@ -266,7 +304,8 @@ class AnimationJob:
             stage = _Stage(report, should_stop, done / total, (done + len(f.frames)) / total, f.label, len(f.frames))
             written.append(export_animation(self.path(f), provider, self.images, f.frames,
                                             _without_missing_images(f.style, self.images), self.units,
-                                            fps=self.fps, callbacks=stage, first_number=GUI_FIRST_FRAME))
+                                            fps=self.fps, max_side=self.max_side, callbacks=stage,
+                                            first_number=GUI_FIRST_FRAME))
             done += len(f.frames)
         return list(written)
 
