@@ -164,10 +164,10 @@ class WorkflowTypePanel(QWidget):
         inc_layout.addLayout(self._interval_row)
 
         self._custom_edit = QLineEdit()
-        self._custom_edit.setPlaceholderText("e.g. 0, 5, 10, 20")
+        self._custom_edit.setPlaceholderText(self.tr("e.g. 5, 10, 20"))
         self._custom_edit.setToolTip(self.tr(
-            "Comma-separated frame indices to use as reference frames "
-            "(0-based)"
+            "Frame numbers (as in the image list) to use as reference frames, separated by "
+            "commas. Frame 1 is always the first reference."
         ))
         self._custom_row = QHBoxLayout()
         self._custom_lbl = QLabel(self.tr("Reference Frames"))
@@ -226,6 +226,9 @@ class WorkflowTypePanel(QWidget):
         self._interval_lbl.setVisible(mode == "every_n")
         self._custom_edit.setVisible(mode == "custom")
         self._custom_lbl.setVisible(mode == "custom")
+        shown = ", ".join(str(k + 1) for k in state.inc_custom_refs)   # 1-based, as on screen
+        if not self._custom_edit.hasFocus() and self._custom_edit.text() != shown:
+            self._custom_edit.setText(shown)
         self._advice.setText(state.model_advice)
         self._advice.setVisible(bool(state.model_advice))
 
@@ -247,19 +250,22 @@ class WorkflowTypePanel(QWidget):
         self._custom_lbl.setVisible(mode == "custom")
 
     def _on_custom_refs_changed(self) -> None:
-        """Parse comma-separated frame indices and store in AppState."""
+        """Parse the frame numbers (1-based, as on screen) into 0-based reference indices."""
         state = AppState.instance()
         text = self._custom_edit.text().strip()
         if not text:
             state.inc_custom_refs = []
+            state.params_changed.emit()
             return
         try:
-            refs = [int(x.strip()) for x in text.split(",") if x.strip()]
-            state.inc_custom_refs = sorted(set(refs))
+            numbers = [int(x.strip()) for x in text.split(",") if x.strip()]
         except ValueError:
-            state.log_message.emit(
-                "Invalid frame indices — use comma-separated numbers", "warn"
-            )
+            numbers = []
+        if not numbers or min(numbers) < 1:
+            state.log_message.emit(self.tr(
+                "Invalid reference frames: use frame numbers from 1 on, separated by commas."), "warn")
+            return
+        state.inc_custom_refs = sorted({n - 1 for n in numbers if n > 1})
         state.params_changed.emit()
 
     def eventFilter(self, obj, event):

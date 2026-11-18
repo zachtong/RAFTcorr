@@ -116,7 +116,7 @@ class AdvancedPanel(_WheelGuard):
         self._margin_auto = QCheckBox(self.tr("Margin = model reach"))
         self._margin_auto.setChecked(state.margin_px is None)
         self._margin_auto.setToolTip(self.tr(
-            "Extra image context around the ROI so that displaced points stay inside\n"
+            "Extra image context around the region of interest so that displaced points stay inside\n"
             "the window given to the network. Automatic: the model's reach (32 s px)."))
         layout.addWidget(self._margin_auto)
         self._margin = QSpinBox()
@@ -125,7 +125,7 @@ class AdvancedPanel(_WheelGuard):
         self._margin.setValue(state.margin_px if state.margin_px is not None else 128)
         self._margin.setEnabled(state.margin_px is not None)
         _row(self.tr("Margin"), self._margin, layout,
-             self.tr("Must cover the largest displacement of the ROI."))
+             self.tr("Must cover the largest displacement of the region of interest."))
 
         self._mem = QDoubleSpinBox()
         self._mem.setRange(0.05, 1.0)

@@ -162,7 +162,9 @@ class PipelineController:
         if missing:
             state.log_message.emit(
                 tr_args(QCoreApplication.translate(
-                    "PipelineController", "Reference frames without their own ROI carry the ROI of frame 1 forward: %1"),
+                    "PipelineController",
+                    "Reference frames without a Region of Interest of their own carry the one of frame 1 "
+                    "forward: %1"),
                     ", ".join(str(f + 1) for f in missing[:20])), "info")   # 1-based, as on screen
 
         state.roi_editing = False

@@ -24,7 +24,7 @@ class FieldSelector(QWidget):
                                 "tracking failed."),
         }
         for i, (key, text) in enumerate((("disp_u", self.tr("Disp U")), ("disp_v", self.tr("Disp V")),
-                                         ("disp_magnitude", self.tr("|U|")), ("residual", self.tr("Residual")))):
+                                         ("disp_magnitude", self.tr("Magnitude")), ("residual", self.tr("Residual")))):
             btn = QPushButton(text)
             btn.setCheckable(True)
             btn.setFixedHeight(28)

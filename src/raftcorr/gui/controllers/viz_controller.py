@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QImage, QPixmap
 from scipy import ndimage
 
@@ -142,8 +143,13 @@ class VizController:
 
     @staticmethod
     def _label(display_field: str, unit: str) -> str:
-        name = {"disp_u": "U", "disp_v": "V", "disp_magnitude": "|U|", "residual": "Residual"}.get(display_field,
-                                                                                              display_field)
+        """Colorbar title: the names the strain window and the export use (U, V, Magnitude, Residual)."""
+        from raftcorr.gui.widgets.strain_field_selector import field_label
+
+        if display_field == "residual":
+            name = QCoreApplication.translate("FieldSelector", "Residual")
+        else:
+            name = field_label(display_field)
         return f"{name} ({unit})"
 
     def value_at(self, x: float, y: float) -> tuple[str, float, str] | None:

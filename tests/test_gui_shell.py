@@ -526,3 +526,30 @@ def test_progress_label_shows_the_frame_as_the_engine_reports_it(win):
     assert sidebar._progress_label.text() == "37%  —  Frame 4/10"
     sidebar._on_progress(0.40, "loading")                      # keeps the last frame
     assert sidebar._progress_label.text() == "40%  —  Frame 4/10"
+
+
+def test_custom_reference_frames_are_entered_as_on_screen(win):
+    from raftcorr.gui.widgets.workflow_type_panel import WorkflowTypePanel
+
+    panel = win.findChild(WorkflowTypePanel)
+    st = win._state
+    panel._custom_edit.setText("1, 5, 10")
+    panel._on_custom_refs_changed()
+    assert st.inc_custom_refs == [4, 9]               # 0-based inside; frame 1 is implicit
+    panel._custom_edit.setText("0, 3")
+    panel._on_custom_refs_changed()
+    assert st.inc_custom_refs == [4, 9]               # refused: frame numbers start at 1
+    st.inc_custom_refs = [2, 6]
+    st.params_changed.emit()                          # e.g. a project was opened
+    assert panel._custom_edit.text() == "3, 7"
+
+
+def test_roi_banner_and_colorbar_names(win):
+    from raftcorr.gui.controllers.viz_controller import VizController
+
+    win._canvas_area.set_roi_editing_banner(0)
+    assert win._canvas_area._roi_banner.text() == "EDITING REGION OF INTEREST FOR FRAME 01"
+    win._canvas_area.set_roi_editing_banner(11)
+    assert win._canvas_area._roi_banner.text() == "EDITING REGION OF INTEREST FOR FRAME 12"
+    assert VizController._label("disp_magnitude", "px") == "Magnitude (px)"
+    assert VizController._label("residual", "-") == "Residual (-)"

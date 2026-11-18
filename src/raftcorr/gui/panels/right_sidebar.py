@@ -166,8 +166,8 @@ class RightSidebar(QWidget):
         self._geometry_combo.addItem(self.tr("Deformed frame"), True)
         self._geometry_combo.addItem(self.tr("Reference frame"), False)
         self._geometry_combo.setToolTip(self.tr(
-            "Plot the field at the deformed node positions, or at their "
-            "positions in the reference frame."
+            "Plot the field where the material points are in the current "
+            "frame, or at their positions in the reference frame."
         ))
         self._geometry_combo.currentIndexChanged.connect(
             self._on_geometry_changed)
@@ -212,10 +212,10 @@ class RightSidebar(QWidget):
         self._hide_untracked_cb = QCheckBox(self.tr("Hide untracked regions"))
         self._hide_untracked_cb.setChecked(True)
         self._hide_untracked_cb.setToolTip(self.tr(
-            "Leave areas without a tracked node transparent, for example "
+            "Leave points without a result transparent, for example "
             "material that left the field of view, instead of filling them "
-            "with values copied from distant nodes. Also used for exported "
-            "images and animations; data files always keep NaN there."
+            "with the nearest value inside the region of interest. Also used "
+            "for exported images and animations; data files always keep NaN there."
         ))
         self._hide_untracked_cb.stateChanged.connect(
             self._on_hide_untracked_toggled)

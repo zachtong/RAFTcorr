@@ -327,7 +327,7 @@ class MainWindow(QMainWindow):
 
             frames = ", ".join(str(k + 1) for k, _ in advice.per_frame)   # 1-based, as on screen
             text = tr_args(self.tr(
-                "Suggested: RAFTcorr-%1. Largest displacement of the ROI about %2 px (99th percentile "
+                "Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile "
                 "over frames %3); RAFTcorr-%1 reaches %4 px."),
                 advice.key, f"{advice.max_displacement_px:.1f}", frames, MODELS[advice.key].lookup_radius_px)
             if advice.beyond_reach:
@@ -667,7 +667,7 @@ class MainWindow(QMainWindow):
             state.per_frame_rois[frame_idx] = mask
             state.log_message.emit(
                 tr_args(
-                    self.tr("  Imported mask for frame %1"), frame_idx
+                    self.tr("  Imported mask for frame %1"), frame_idx + 1   # 1-based, as on screen
                 ),
                 "info",
             )

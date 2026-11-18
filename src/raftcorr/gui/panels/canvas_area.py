@@ -59,6 +59,7 @@ from raftcorr.gui.widgets.frame_navigator import FrameNavigator
 from raftcorr.gui.controllers.viz_controller import VizController
 from raftcorr.gui.app_state import DISPLAY_FIELDS
 from raftcorr.gui.panels.strain_canvas import blank_pixmap
+from raftcorr.i18n import tr_args
 
 try:
     from raftcorr.gui.icons import icon_maximize, icon_zoom_in, icon_zoom_out
@@ -1324,9 +1325,8 @@ class CanvasArea(QWidget):
         if frame is None:
             self._roi_banner.setVisible(False)
             return
-        text = (self.tr("Editing the ROI of frame 1 (the reference)") if frame == 0
-                else self.tr("Editing the mask of frame %1 (regions left out are excluded)").replace("%1", str(frame + 1)))
-        self._roi_banner.setText(text)
+        # pyALDIC's banner, translatable; frame numbers as on screen (1-based, two digits)
+        self._roi_banner.setText(tr_args(self.tr("EDITING REGION OF INTEREST FOR FRAME %1"), f"{frame + 1:02d}"))
         self._roi_banner.setVisible(True)
 
     # --- state reactions ---
