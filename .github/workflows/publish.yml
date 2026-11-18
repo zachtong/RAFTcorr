@@ -1,0 +1,81 @@
+name: Publish to PyPI
+
+# Publishes when a version tag is pushed, with PyPI Trusted Publishing (OpenID Connect): no API
+# token to paste, store or rotate.
+#
+# One-time setup on PyPI (Account -> Publishing -> add a pending publisher):
+#   PyPI project name  raftcorr
+#   Owner              zachtong
+#   Repository         RAFTcorr
+#   Workflow           publish.yml
+#   Environment        pypi
+#
+# Release:  git tag -a v2.0.0 -m "..." && git push origin v2.0.0
+#   -> builds, checks and publishes, then attaches the wheel and sdist to the tag's release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:          # re-run, e.g. after a failed publish
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+      - name: Check metadata
+        run: python -m twine check --strict dist/*
+      - name: Verify the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          PKG=$(python -c "import re,pathlib;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',pathlib.Path('src/raftcorr/_version.py').read_text()).group(1))")
+          echo "tag=${GITHUB_REF_NAME#v}  package=$PKG"
+          [ "${GITHUB_REF_NAME#v}" = "$PKG" ] || { echo "::error::Tag does not match the package version $PKG"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write          # Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true  # re-running after a partial publish is safe
+
+  attach:
+    name: Attach the distributions to the GitHub Release
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Upload to the release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"

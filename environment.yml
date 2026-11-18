@@ -1,7 +1,7 @@
 # conda env create -f environment.yml
 # Then install the PyTorch build that matches your GPU (see install.bat / README), e.g.
 #   pip install torch --index-url https://download.pytorch.org/whl/cu126
-# and finally:  pip install -e ".[all]"
+# and finally:  pip install -e .
 name: raftcorr-app
 channels:
   - conda-forge

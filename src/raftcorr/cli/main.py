@@ -60,6 +60,10 @@ def _parser() -> argparse.ArgumentParser:
                    help="download the missing model files (all, or the keys given: s1 s2 s4 s8)")
     st = sub.add_parser("selftest", help="run every installed model on a synthetic pair")
     st.add_argument("--device", default="auto")
+    st.add_argument("--gui", action="store_true",
+                    help="also open and close the main window offscreen (checks the GUI libraries, icons and "
+                         "translations of an installation)")
+    st.add_argument("--no-models", action="store_true", help="skip the models (with --gui: the GUI check only)")
     sub.add_parser("info", help="versions and devices")
     return ap
 
@@ -189,9 +193,17 @@ def _selftest(args) -> int:
     from ..callbacks import ConsoleCallbacks
     from ..selftest import run_selftest
 
-    rep = run_selftest(args.device, ConsoleCallbacks())
-    print(rep.text)
-    return 0 if rep.ok else 1
+    ok = True
+    if args.gui:
+        from ..selftest import gui_selftest
+
+        ok, text = gui_selftest()
+        print(text)
+    if not args.no_models:
+        rep = run_selftest(args.device, ConsoleCallbacks())
+        print(rep.text)
+        ok &= rep.ok
+    return 0 if ok else 1
 
 
 def _info(_args) -> int:

@@ -1,0 +1,5 @@
+# Build environment of the macOS disk image (packaging/build_macos.py), in a clean virtual
+# environment. PyInstaller is pinned: its hooks decide what the bundle contains. PyTorch and the
+# other runtime libraries come with `pip install .` (the macOS PyTorch wheel on PyPI is the
+# CPU/MPS build).
+pyinstaller==6.19.0

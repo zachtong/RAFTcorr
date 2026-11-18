@@ -30,11 +30,16 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Image Processing",
     "Topic :: Scientific/Engineering :: Physics",
-    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "License :: Other/Proprietary License",
+    "Environment :: X11 Applications :: Qt",
 ]
 
-# torch is deliberately not pinned to a CUDA build: install the wheel that matches the GPU
-# from the PyTorch index first (see environment.yml / install.bat), then `pip install -e .`.
+# One `pip install raftcorr` brings the whole application, as pyALDIC's does. torch is not pinned
+# to a CUDA build: for an NVIDIA GPU install the matching wheel from the PyTorch index first
+# (README; the Windows installer and install.bat do it for you).
 dependencies = [
     "numpy>=1.24",
     "scipy>=1.10",
@@ -42,17 +47,22 @@ dependencies = [
     "tifffile>=2023.1",
     "matplotlib>=3.7",
     "torch>=2.1",
+    "PySide6>=6.6",
+    "h5py>=3.8",
+    "imageio>=2.28",
+    "imageio-ffmpeg>=0.4",
 ]
 
 [project.optional-dependencies]
-gui = ["PySide6>=6.6"]
-hdf5 = ["h5py>=3.8"]
-video = ["imageio>=2.28", "imageio-ffmpeg>=0.4"]
 dev = ["pytest>=7.0", "pytest-qt>=4.2", "pytest-cov>=4.0"]
-all = ["PySide6>=6.6", "h5py>=3.8", "imageio>=2.28", "imageio-ffmpeg>=0.4"]
+# Kept so that older instructions (`pip install raftcorr[all]`) still work.
+all = []
 
 [project.urls]
+Homepage = "https://github.com/zachtong/RAFTcorr"
 Repository = "https://github.com/zachtong/RAFTcorr"
+Issues = "https://github.com/zachtong/RAFTcorr/issues"
+Releases = "https://github.com/zachtong/RAFTcorr/releases"
 
 [project.scripts]
 raftcorr = "raftcorr.cli.main:main"

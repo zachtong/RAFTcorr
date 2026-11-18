@@ -18,28 +18,53 @@ button measures the motion of your sequence with s8 and picks the finest model t
 
 ## Install
 
-Windows: run `install.bat` (creates the conda environment `raftcorr-app`, installs the PyTorch
-build that matches your NVIDIA driver, then RAFTcorr and the model files), and start with
-`run.bat`.
+**Windows 10/11 (64-bit):** download
+[`RAFTcorr-Windows-Setup.exe`](https://github.com/zachtong/RAFTcorr/releases/latest/download/RAFTcorr-Windows-Setup.exe)
+and run it; no administrator rights are needed. The installer is small and needs an internet
+connection once: it installs the PyTorch build that matches your NVIDIA driver (CUDA 12.8, 12.6
+or 11.8; the CPU build without an NVIDIA GPU), RAFTcorr and the model files. Start RAFTcorr from
+the Start menu; with the option **Add the "raftcorr" command to PATH**, `raftcorr` works in any new
+terminal. If the setup was interrupted (no connection), run **Repair RAFTcorr** from the Start
+menu; its log is `install.log` in the installation folder.
 
-The model files `RAFTcorr-s1.pth` ... `RAFTcorr-s8.pth` are assets of the release
-[`weights-v1`](https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1), published together
-with the RAFTcorr paper. A model is downloaded the first time it is used (or all at once with
-`raftcorr models --download`) and checked against its SHA-256; without an internet connection,
-put the files in `models/` yourself.
+**macOS (Apple silicon, macOS 14 or later):** download
+[`RAFTcorr-macOS.dmg`](https://github.com/zachtong/RAFTcorr/releases/latest/download/RAFTcorr-macOS.dmg),
+open it and drag RAFTcorr to Applications. The application is not notarised: the first time
+macOS refuses to open it; choose **System Settings > Privacy & Security > Open Anyway**. It runs
+PyTorch on the CPU. The command line is inside the
+application:
 
-Any platform:
+```bash
+alias raftcorr=/Applications/RAFTcorr.app/Contents/MacOS/RAFTcorr   # e.g. in ~/.zshrc
+```
+
+**With pip (any platform, Python 3.10 or later):** on a computer with an NVIDIA GPU, install
+PyTorch from the [PyTorch index](https://pytorch.org/get-started/locally/) first, because the
+PyTorch on PyPI is the CPU build on Windows:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu126   # match your driver; skip on macOS
+pip install raftcorr
+raftcorr             # start the application
+raftcorr models --download   # fetch the model files (otherwise on first use)
+raftcorr selftest    # every installed model on a synthetic pair
+```
+
+**From the source:** `install.bat` on Windows (a conda environment `raftcorr-app` with the PyTorch
+build for your driver; start with `run.bat`), or on any platform:
 
 ```bash
 conda env create -f environment.yml
 conda activate raftcorr-app
 pip install torch --index-url https://download.pytorch.org/whl/cu126   # match your GPU, or /cpu
-pip install -e ".[all]"
-raftcorr models --download   # fetch the model files (otherwise on first use)
-raftcorr models      # where the weights are looked for
-raftcorr selftest    # every installed model on a synthetic pair
-raftcorr             # start the application
+pip install -e ".[dev]"
 ```
+
+The model files `RAFTcorr-s1.pth` ... `RAFTcorr-s8.pth` are assets of the release
+[`weights-v1`](https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1). A model is
+downloaded the first time it is used (or all at once with `raftcorr models --download`) and
+checked against its SHA-256; without an internet connection, put the files in the per-user folder
+below yourself (`raftcorr models` lists where the weights are looked for).
 
 The weights are found in, in order: a path you give, `$RAFTCORR_WEIGHTS`, `models/` of a source
 checkout, and the per-user folder (`%LOCALAPPDATA%\RAFTcorr\models` on Windows,

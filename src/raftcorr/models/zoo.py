@@ -34,14 +34,13 @@ from ..callbacks import Callbacks, coerce
 
 ENV_WEIGHTS = "RAFTCORR_WEIGHTS"
 
-#: The weights are assets of this GitHub release of the public repository (published with the
-#: RAFTcorr paper). Until then a download reports that they are not published yet.
+#: The weights are assets of this GitHub release of the public repository.
 RELEASE_TAG = "weights-v1"
 RELEASE_BASE_URL: str | None = f"https://github.com/zachtong/RAFTcorr/releases/download/{RELEASE_TAG}"
 
 
 class WeightsUnavailableError(RuntimeError):
-    """The weights of a model could not be downloaded (not published yet, or no connection)."""
+    """The weights of a model could not be downloaded (not on the release, or no connection)."""
 
 
 @dataclass(frozen=True)
@@ -201,8 +200,8 @@ def download(spec: ModelSpec, dest_dir: Path | None = None, callbacks: Callbacks
              timeout: float = 60.0) -> Path:
     """Download a model's weights (atomic rename) and verify the hash.
 
-    Raises :class:`WeightsUnavailableError` when the release has no such file (not published yet)
-    or the server cannot be reached, with a message that says where to put the file instead.
+    Raises :class:`WeightsUnavailableError` when the release has no such file or the server
+    cannot be reached, with a message that says where to put the file instead.
     """
     cb = coerce(callbacks)
     dest = (dest_dir or user_weights_dir()) / spec.filename
@@ -226,8 +225,8 @@ def download(spec: ModelSpec, dest_dir: Path | None = None, callbacks: Callbacks
         tmp.unlink(missing_ok=True)
         if exc.code == 404:
             raise WeightsUnavailableError(
-                f"{spec.filename} is not published yet (the model files are released with the RAFTcorr "
-                f"paper); if you have the file, place it in {dest.parent}") from exc
+                f"{spec.filename} is not on the release {RELEASE_TAG} (HTTP 404); if you have the file, "
+                f"place it in {dest.parent}") from exc
         raise WeightsUnavailableError(f"downloading {spec.filename} failed (HTTP {exc.code}); "
                                       f"place the file in {dest.parent}") from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:

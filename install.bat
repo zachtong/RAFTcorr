@@ -49,36 +49,13 @@ if %errorlevel% neq 0 (
 python -m pip install --upgrade pip >> "%LOGFILE%" 2>&1
 
 echo [2/5] Detecting the GPU...
-set CUDA_MAJOR=0
-set CUDA_MINOR=0
-set TORCH_INDEX=https://download.pytorch.org/whl/cpu
-where nvidia-smi >nul 2>&1
-if %errorlevel% equ 0 (
-    for /f "tokens=*" %%L in ('nvidia-smi 2^>nul ^| findstr "CUDA Version"') do set "NV_LINE=%%L"
-    if defined NV_LINE (
-        set "CUDA_PART=!NV_LINE:*CUDA Version: =!"
-        for /f "tokens=1,2 delims=. " %%a in ("!CUDA_PART!") do (
-            set CUDA_MAJOR=%%a
-            set CUDA_MINOR=%%b
-        )
-    )
+:: The same detection as the Windows installer (old and new nvidia-smi headers).
+set TORCH_BUILD=cpu
+for /f "tokens=1,* delims=|" %%A in ('python packaging\windows\setup_runtime.py --detect') do (
+    set TORCH_BUILD=%%A
+    echo   %%B
 )
-set NEED_CU128=0
-for /f "tokens=*" %%G in ('nvidia-smi 2^>nul ^| findstr /i "RTX.50"') do set NEED_CU128=1
-if !CUDA_MAJOR! geq 13 set NEED_CU128=1
-if !CUDA_MAJOR! equ 12 if !CUDA_MINOR! geq 8 set NEED_CU128=1
-if !NEED_CU128! equ 1 (
-    set TORCH_INDEX=https://download.pytorch.org/whl/cu128
-    echo   driver supports CUDA !CUDA_MAJOR!.!CUDA_MINOR!: PyTorch with CUDA 12.8
-) else if !CUDA_MAJOR! equ 12 (
-    set TORCH_INDEX=https://download.pytorch.org/whl/cu126
-    echo   driver supports CUDA !CUDA_MAJOR!.!CUDA_MINOR!: PyTorch with CUDA 12.6
-) else if !CUDA_MAJOR! equ 11 (
-    set TORCH_INDEX=https://download.pytorch.org/whl/cu118
-    echo   driver supports CUDA !CUDA_MAJOR!.!CUDA_MINOR!: PyTorch with CUDA 11.8
-) else (
-    echo   [WARNING] no NVIDIA GPU found: installing the CPU build. RAFTcorr runs, but slowly.
-)
+set TORCH_INDEX=https://download.pytorch.org/whl/!TORCH_BUILD!
 
 echo [3/5] Installing PyTorch (this downloads about 2.5 GB)...
 pip install torch --index-url !TORCH_INDEX! >> "%LOGFILE%" 2>&1
@@ -89,7 +66,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [4/5] Installing RAFTcorr...
-pip install -e ".[all]" >> "%LOGFILE%" 2>&1
+pip install -e . >> "%LOGFILE%" 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] RAFTcorr installation failed, see install.log
     pause

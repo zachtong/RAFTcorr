@@ -46,3 +46,16 @@ A rewrite. One Python process replaces the Flask server and the React front end.
   font, thickness, background, margin), a resolution cap and the JPEG quality.
 - Command line (`raftcorr run | suggest | models | selftest | info`) and Python API
   (`raftcorr.track`, `raftcorr.compute_strain`).
+
+### Distribution
+- `pip install raftcorr` brings the whole application (the GUI, HDF5 and video libraries are no
+  longer extras; `raftcorr[all]` still works). The `raftcorr` command starts the application, and
+  its subcommands are the command line.
+- Windows installer (`RAFTcorr-Windows-Setup.exe`, per user, no administrator rights): installs
+  the PyTorch build that matches the NVIDIA driver (CUDA 12.8, 12.6, 11.8 or the CPU build), RAFTcorr
+  and the model files; Start menu entries for RAFTcorr and "Repair RAFTcorr"; optional `raftcorr`
+  on PATH; `.raftcorr` files open in RAFTcorr.
+- macOS disk image (`RAFTcorr-macOS.dmg`, Apple silicon, macOS 14 or later), self-contained.
+- `raftcorr selftest --gui` also opens the main window offscreen, to check an installation.
+- `install.bat` reads the CUDA version of newer NVIDIA drivers ("CUDA UMD Version"), which it took
+  for no GPU before.

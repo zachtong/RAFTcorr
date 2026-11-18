@@ -62,3 +62,41 @@ def run_selftest(device: str = "auto", callbacks: Callbacks | None = None) -> Se
     if all(r[4] == "not installed" for r in rows):
         ok = False
     return SelfTestReport(ok, tuple(rows))
+
+
+def gui_selftest() -> tuple[bool, str]:
+    """Open and close the main window offscreen: Qt, the icons and the seven translations load.
+
+    For a fresh installation (``raftcorr selftest --gui``); the window never shows on screen.
+    """
+    import os
+    from pathlib import Path
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    lines: list[str] = []
+    try:
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance() or QApplication([])
+        from .gui.app import MainWindow
+        from .gui.icons import icon_app
+
+        win = MainWindow()
+        win.show()
+        app.processEvents()
+        title = win.windowTitle()
+        win.close()
+        app.processEvents()
+        compiled = Path(__file__).resolve().parent / "i18n" / "compiled"
+        catalogs = sorted(p.stem.removeprefix("raftcorr_") for p in compiled.glob("raftcorr_*.qm"))
+        checks = [
+            ("main window", bool(title), title),
+            ("application icon", not icon_app().isNull(), ""),
+            ("translations", len(catalogs) == 7, ", ".join(catalogs)),
+        ]
+    except Exception as exc:  # report, do not raise: this is a diagnostic
+        return False, f"GUI self-test: error: {type(exc).__name__}: {exc}"
+    ok = all(good for _name, good, _detail in checks)
+    for name, good, detail in checks:
+        lines.append(f"  {name:18s} {'ok' if good else 'MISSING'}  {detail}".rstrip())
+    return ok, "GUI self-test: " + ("ok" if ok else "FAILED") + "\n" + "\n".join(lines)

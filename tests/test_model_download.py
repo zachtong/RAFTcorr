@@ -76,9 +76,9 @@ def test_a_corrupted_download_is_refused(spec, isolated, monkeypatch):
     assert not any(isolated.iterdir())
 
 
-def test_not_published_yet_says_so(spec, isolated, monkeypatch):
+def test_a_missing_release_file_says_so(spec, isolated, monkeypatch):
     _serve(monkeypatch, error=urllib.error.HTTPError(spec.url, 404, "Not Found", {}, None))
-    with pytest.raises(zoo.WeightsUnavailableError, match="not published yet"):
+    with pytest.raises(zoo.WeightsUnavailableError, match="not on the release"):
         zoo.download(spec)
     assert not any(isolated.iterdir())
 
@@ -95,7 +95,7 @@ def test_first_use_downloads_and_failures_name_the_folders(spec, isolated, monke
     assert zoo.resolve_weights("s4", allow_download=True) == isolated / spec.filename
     (isolated / spec.filename).unlink()
     _serve(monkeypatch, error=urllib.error.HTTPError(spec.url, 404, "Not Found", {}, None))
-    with pytest.raises(FileNotFoundError, match="not published yet") as info:
+    with pytest.raises(FileNotFoundError, match="not on the release") as info:
         zoo.resolve_weights("s4", allow_download=True)
     assert str(isolated) in str(info.value)
     with pytest.raises(FileNotFoundError, match="Place the file"):
@@ -109,7 +109,7 @@ def test_download_missing_reports_each_model(spec, isolated, monkeypatch):
     assert first["s4"].startswith("downloaded: ")
     assert zoo.download_missing(["s4"])["s4"].startswith("installed: ")
     _serve(monkeypatch, error=urllib.error.HTTPError("u", 404, "Not Found", {}, None))
-    assert "not published yet" in zoo.download_missing(["s8"])["s8"]
+    assert "not on the release" in zoo.download_missing(["s8"])["s8"]
 
 
 def test_cli_models_download_exit_code(spec, isolated, monkeypatch, capsys):
@@ -120,4 +120,4 @@ def test_cli_models_download_exit_code(spec, isolated, monkeypatch, capsys):
     assert main(["models", "--download", "s4"]) == 0
     _serve(monkeypatch, error=urllib.error.HTTPError("u", 404, "Not Found", {}, None))
     assert main(["models", "--download", "s8"]) == 3
-    assert "not published yet" in capsys.readouterr().out
+    assert "not on the release" in capsys.readouterr().out

@@ -1,0 +1,180 @@
+name: Build Installers
+
+# Builds what a user downloads from the release page -- the Windows installer and the macOS (Apple
+# silicon) disk image -- installs each one as a user would, self-tests it, and attaches it to the
+# release. The installers are never committed; they live only as release assets.
+#
+# Asset names carry no version, so README links to releases/latest/download/<name> keep working.
+# Kept out of publish.yml on purpose: an installer failure must never block the PyPI release.
+#
+#   * push a v* tag        -> build, test, attach to that tag's release
+#   * dispatch with a tag  -> the same, e.g. to re-attach after a failed run
+#   * dispatch with no tag -> build and test only, no upload
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag whose release should receive the installers (empty = build and test only)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installers-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
+        shell: bash
+        run: |
+          REF="${{ github.event.inputs.tag || github.ref_name }}"
+          PKG=$(python -c "import re,pathlib;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',pathlib.Path('src/raftcorr/_version.py').read_text()).group(1))")
+          echo "tag=${REF#v}  package=$PKG"
+          [ "${REF#v}" = "$PKG" ] || { echo "::error::Tag $REF does not match the package version $PKG"; exit 1; }
+
+      - name: Make sure Inno Setup is available
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y }
+
+      - name: Build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install --upgrade pip
+          python packaging/build_windows.py
+
+      - name: Install as a user would, self-test, uninstall
+        # The installed copy is tested, not the build folder: Setup installs PyTorch (the CPU build
+        # here, the runner has no NVIDIA GPU), RAFTcorr and the model files. The path has a space.
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "RAFTcorr installed"
+          $log = Join-Path $env:RUNNER_TEMP "setup.log"
+          $p = Start-Process -FilePath "dist-installers\RAFTcorr-Windows-Setup.exe" -Wait -PassThru `
+               -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$dir`"", "/LOG=`"$log`"", "/TASKS=addtopath"
+          if ($p.ExitCode -ne 0) { Get-Content $log; throw "setup exited $($p.ExitCode)" }
+          if (-not (Test-Path (Join-Path $dir "runtime.ok"))) { Get-Content (Join-Path $dir "install.log"); throw "the Python components were not installed" }
+          Get-Content (Join-Path $dir "install.log") -Tail 25
+
+          $raftcorr = Join-Path $dir "bin\raftcorr.cmd"
+          & $raftcorr --version; if ($LASTEXITCODE) { throw "raftcorr --version failed" }
+          $env:QT_QPA_PLATFORM = "offscreen"
+          & $raftcorr selftest --gui --device cpu; if ($LASTEXITCODE) { throw "the installed application failed its self-test" }
+
+          $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+          if ($userPath -notlike "*$dir\bin*") { throw "bin is not on the user PATH: $userPath" }
+          $cmd = (Get-ItemProperty "HKCU:\Software\Classes\RAFTcorr.Project\shell\open\command")."(default)"
+          if ($cmd -ne "`"$dir\python\pythonw.exe`" -m raftcorr gui `"%1`"") { throw ".raftcorr opens with '$cmd'" }
+          $lnk = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\RAFTcorr.lnk"
+          if (-not (Test-Path $lnk)) { throw "no Start menu shortcut" }
+
+          # The uninstaller hands over to a copy of itself in TEMP and returns at once; it deletes
+          # unins000.exe last, so wait for that file to go.
+          Start-Process -FilePath (Join-Path $dir "unins000.exe") -Wait -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"
+          $deadline = (Get-Date).AddSeconds(300)
+          while ((Test-Path (Join-Path $dir "unins000.exe")) -and (Get-Date) -lt $deadline) { Start-Sleep 2 }
+          if (Test-Path (Join-Path $dir "unins000.exe")) { throw "the uninstaller did not finish" }
+          if (Test-Path (Join-Path $dir "python")) { throw "uninstall left the private Python behind" }
+          if (Test-Path $lnk) { throw "uninstall left the Start menu shortcut" }
+          if ([Environment]::GetEnvironmentVariable("Path", "User") -like "*$dir\bin*") { throw "uninstall left the PATH entry" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RAFTcorr-windows
+          path: dist-installers/RAFTcorr-Windows-Setup.exe
+          retention-days: 14
+
+  build-macos:
+    name: macOS disk image (Apple silicon)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
+        run: |
+          REF="${{ github.event.inputs.tag || github.ref_name }}"
+          PKG=$(python -c "import re,pathlib;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',pathlib.Path('src/raftcorr/_version.py').read_text()).group(1))")
+          echo "tag=${REF#v}  package=$PKG"
+          [ "${REF#v}" = "$PKG" ] || { echo "::error::Tag $REF does not match the package version $PKG"; exit 1; }
+
+      - name: Clean build environment
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --upgrade pip
+          pip install . -r packaging/requirements-build-macos.txt
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Build
+        run: python packaging/build_macos.py
+
+      - name: Check the ad-hoc signature is intact
+        run: codesign --verify --deep --strict --verbose=2 build/macos/dist/RAFTcorr.app
+
+      - name: Self-test the app straight from the disk image
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          MNT="$RUNNER_TEMP/RAFTcorr-dmg"
+          hdiutil attach -nobrowse -readonly -mountpoint "$MNT" dist-installers/RAFTcorr-macOS.dmg
+          APP="$MNT/RAFTcorr.app/Contents/MacOS/RAFTcorr"
+          "$APP" --version
+          "$APP" models --download
+          "$APP" selftest --gui --device cpu
+          hdiutil detach "$MNT" || { sleep 5; hdiutil detach -force "$MNT"; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RAFTcorr-macos
+          path: dist-installers/RAFTcorr-macOS.dmg
+          retention-days: 14
+
+  attach:
+    name: Attach the installers to the release
+    needs: [build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-installers/
+          merge-multiple: true
+      - name: Upload to the release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::No release exists for $TAG. Publish the release, then re-run with tag=$TAG."
+            exit 1
+          fi
+          gh release upload "$TAG" dist-installers/* --clobber --repo "$GITHUB_REPOSITORY"
