@@ -616,3 +616,31 @@ def test_parameter_labels_share_a_column_and_the_checkbox_sits_under_the_inputs(
     assert len(widths) == 1 and widths.pop() >= 120
     left = lambda w: w.mapTo(panel, w.rect().topLeft()).x()   # noqa: E731
     assert abs(left(panel._margin_auto) - left(panel._margin)) <= 2
+
+
+def test_no_control_overflows_its_panel(win, qapp, qtbot, tmp_path):
+    """With the theme's sizes (its min-heights), every visible control lies inside its parent:
+    a fixed height under the theme's min-height once pushed a button out of its section."""
+    from PySide6.QtWidgets import QAbstractButton, QAbstractSpinBox, QComboBox
+
+    from raftcorr.gui.strain_window import StrainWindow
+    from raftcorr.gui.theme_manager import theme_manager
+
+    theme_manager(qapp).set_theme("light", persist=False)
+    win._image_ctrl.load_folder(str(_folder(tmp_path)))
+    sw = StrainWindow(win._state)
+    qtbot.addWidget(sw)
+    sw.show()
+    qtbot.waitExposed(sw)
+    qapp.processEvents()
+    bad = []
+    # the sidebars and the strain window's column (its toolbar and navigator are pyALDIC's, as they are)
+    for top in (win._left_sidebar, win._right_sidebar, sw._param_panel, sw._param_panel.advanced_widget(),
+                sw._field_selector, sw._viz_panel):
+        for kind in (QAbstractButton, QComboBox, QAbstractSpinBox):
+            for w in top.findChildren(kind):
+                parent = w.parentWidget()
+                if w.isVisible() and parent is not None and not parent.rect().contains(w.geometry()):
+                    bad.append(f"{type(w).__name__} {getattr(w, 'text', lambda: '')()!r} {w.geometry().getRect()} "
+                               f"outside {type(parent).__name__} {parent.rect().getRect()}")
+    assert not bad, "; ".join(bad)

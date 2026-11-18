@@ -322,13 +322,14 @@ class StrainFieldSelector(QWidget):
         for name, btn in self._buttons.items():
             active = name == self._current
             if active:
+                # min-height and padding fit the fixed 28 px (the theme's button rule needs 36)
                 themed(btn,
-                    "background: {ACCENT}; color: white; "
+                    "min-height: 0px; padding: 2px 6px; background: {ACCENT}; color: white; "
                     "border: none; border-radius: 4px; font-weight: bold;"
                 )
             else:
                 themed(btn,
-                    "background: {BG_INPUT}; "
+                    "min-height: 0px; padding: 2px 6px; background: {BG_INPUT}; "
                     "color: {TEXT_SECONDARY}; "
                     "border: 1px solid {BORDER}; border-radius: 4px;"
                 )

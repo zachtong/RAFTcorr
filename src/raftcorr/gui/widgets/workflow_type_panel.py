@@ -110,9 +110,9 @@ class WorkflowTypePanel(QWidget):
         model_row.addWidget(self._model)
         layout.addLayout(model_row)
 
-        # A sidebar button as pyALDIC's (Title Case, fixed height, icon).
+        # A sidebar button as pyALDIC's (Title Case, icon). No fixed height: the theme's
+        # min-height (36 px) would exceed it and the button would overflow its section.
         self._suggest_btn = QPushButton(self.tr("Suggest a Model"))
-        self._suggest_btn.setFixedHeight(30)
         set_icon(self._suggest_btn, icon_suggest)
         self._suggest_btn.setToolTip(self.tr(
             "Measure the motion of the sequence quickly with s8 and pick the\n"
