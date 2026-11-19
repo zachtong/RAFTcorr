@@ -15,7 +15,7 @@ dependencies:
   - matplotlib>=3.7
   - h5py>=3.8
   - pip:
-      - PySide6>=6.6
+      - PySide6-Essentials>=6.6
       - imageio>=2.28
       - imageio-ffmpeg>=0.4
       - pytest>=7.0

@@ -78,9 +78,26 @@ def test_one_install_brings_the_whole_application():
     tomllib = pytest.importorskip("tomllib")          # Python 3.11+
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     names = {d.split(">")[0].split("=")[0].split("[")[0].strip().lower() for d in project["dependencies"]}
-    assert {"torch", "pyside6", "h5py", "imageio", "imageio-ffmpeg"} <= names
+    assert {"torch", "pyside6-essentials", "h5py", "imageio", "imageio-ffmpeg"} <= names
+    assert "pyside6" not in names        # the full package adds WebEngine and the Addons, unused
     assert project["scripts"]["raftcorr"] == "raftcorr.cli.main:main"
     assert project["optional-dependencies"]["all"] == []       # old instructions keep working
+
+
+def test_every_qt_module_used_is_in_pyside6_essentials():
+    """pip installs PySide6-Essentials only: a module from the Addons would fail on import."""
+    import importlib.metadata as md
+    import re
+
+    try:
+        files = md.files("PySide6-Essentials") or []
+    except md.PackageNotFoundError:
+        pytest.skip("PySide6-Essentials is not installed as its own distribution here")
+    shipped = {m.group(1) for f in files if (m := re.match(r"PySide6/(Qt\w+)\.(?:pyd|abi3\.so|so)$", f.as_posix()))}
+    assert {"QtCore", "QtGui", "QtWidgets"} <= shipped, sorted(shipped)
+    used = {m for p in (ROOT / "src").rglob("*.py")
+            for m in re.findall(r"PySide6\.(Qt\w+)", p.read_text(encoding="utf-8"))}
+    assert used and used <= shipped, f"not in PySide6-Essentials: {sorted(used - shipped)}"
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="the installer script is for Windows")

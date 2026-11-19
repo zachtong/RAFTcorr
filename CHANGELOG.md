@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Distribution
+- pip installs PySide6-Essentials instead of the full PySide6: every Qt module RAFTcorr uses is
+  in it, and the WebEngine, Pdf and Addons packages (about 175 MB on Windows) are no longer
+  downloaded. A test keeps the imports inside Essentials.
+
 ## 2.0.0 (2026-11-18)
 
 A rewrite. One Python process replaces the Flask server and the React front end.

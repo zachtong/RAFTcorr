@@ -51,7 +51,7 @@ raftcorr models --download   # fetch the model files (otherwise on first use)
 raftcorr selftest    # every installed model on a synthetic pair
 ```
 
-On Windows, PySide6 and PyTorch install files up to about 140 characters deep below
+On Windows, PySide6 and PyTorch install files up to about 150 characters deep below
 `site-packages`. If pip stops with "No such file or directory" and a hint about long paths, create
 the environment in a shorter folder (for example `C:\venvs\raftcorr`) or
 [enable long paths](https://pip.pypa.io/warnings/enable-long-paths).

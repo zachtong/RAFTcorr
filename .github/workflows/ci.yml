@@ -55,6 +55,9 @@ jobs:
           source "$RUNNER_TEMP/clean/bin/activate"
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install dist/*.whl
+          if pip list --format=freeze | grep -i -E '^pyside6[-_](addons|webengine|pdf)=='; then
+            echo "::error::the full PySide6 came in; RAFTcorr needs PySide6-Essentials only"; exit 1
+          fi
           cd "$RUNNER_TEMP"
           raftcorr --version
           raftcorr selftest --gui --no-models
