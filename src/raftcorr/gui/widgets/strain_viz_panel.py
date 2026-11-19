@@ -153,8 +153,10 @@ class StrainVizPanel(QWidget):
         self._hide_untracked_check.setToolTip(self.tr(
             "Leave points without a result transparent, for example "
             "material that left the field of view, instead of filling them "
-            "with the nearest value inside the region of interest. Also used "
-            "for exported images and animations; data files always keep NaN there."
+            "with the nearest value inside the region of interest. Applies to "
+            "the Reference frame view only: the Deformed frame view always "
+            "leaves them empty. Also used for exported images and animations; "
+            "data files always keep NaN there."
         ))
         # Field column, under "Fill trimmed edges" (the same group of edge options).
         layout.addRow("", self._hide_untracked_check)

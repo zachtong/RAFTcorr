@@ -45,7 +45,8 @@ added to the mask; a shape picked from \ui{Cut} is removed from it, which is how
 holes, voids and damaged areas. Then draw the shape on the canvas:
 \begin{description}[leftmargin=1.2cm,style=nextline]
   \item[Polygon]
-    Click each vertex in turn; double-click to place the last vertex and close the polygon.
+    Click each vertex in turn; double-click to place the last vertex and close the polygon, or
+    press \kbd{Enter} to close it after the last vertex you clicked.
     A polygon needs at least three vertices; with fewer, nothing is drawn.
   \item[Rectangle]
     Press at one corner, drag to the opposite corner and release.
@@ -62,8 +63,8 @@ holes, voids and damaged areas. Then draw the shape on the canvas:
 While you draw, the cursor is a cross, the outline is blue for \ui{+ Add} and red for \ui{Cut},
 and the button you started from is highlighted. A shape is applied as soon as it is complete.
 Each pick from the menu draws one shape; pick again for the next one. If you pick the wrong
-shape, pick the right one; it replaces the first. To abandon a shape you have started, press
-\kbd{Esc} before it is complete. Shapes that reach beyond the image are cut at its border.
+shape, pick the right one; it replaces the first. To abandon a shape, press \kbd{Esc} before it
+is complete, whether you have started drawing it or only picked it from the menu. Shapes that reach beyond the image are cut at its border.
 
 \begin{notebox}
 The toolbar has no brush and no undo. Before a change you may want to take back, click
@@ -79,30 +80,26 @@ The toolbar has no brush and no undo. Before a change you may want to take back,
     than mid-grey (127 on a scale of 0 to 255), so masks stored as 0 and 255 and masks stored as
     0 and 1 both work. A colour file is read as its luminance. A mask of another size than the
     images is resized to the image size (nearest neighbour). If the file cannot be read, the
-    mask stays as it was.
-    % CHECK: no message is shown for an unreadable file (app.py _on_roi_import swallows IOError); confirm this is intended
+    mask stays as it was, and the log says \emph{``Could not read the mask file''} with the file
+    name and the reason.
   \item[Batch Import]
     Assigns mask files to many frames at once (Section~\ref{sec:roi-batch}).
   \item[Save]
     Writes the mask of the frame shown to a PNG file, white (255) inside and black (0) outside.
-    The dialog proposes \file{roi\_mask.png} in the image folder. \ui{Import}, \ui{Batch Import}
+    The dialog proposes a name made of the image folder and the frame number, next to the image
+    folder rather than inside it: for frame~1 of the folder \file{specimen}, the file
+    \file{specimen\_roi\_frame1.png} beside \file{specimen}. A mask saved among the images would be
+    loaded as an image the next time you open the folder. \ui{Import}, \ui{Batch Import}
     and \file{raftcorr run --roi} (Section~\ref{sec:cli}) read this format.
   \item[Invert]
-    Swaps inside and outside of the mask of the frame shown. On frame~1 without a mask it
+    Swaps inside and outside of the mask of the frame shown, whether you drew it or it came from
+    \ui{Import}, \ui{Batch Import}, the image list or a project file. On frame~1 without a mask it
     selects the whole image. On a later frame without a mask of its own, while frame~1 has one,
     nothing changes, and the log explains that the region of frame~1 is used there.
   \item[Clear]
     Removes the mask of the frame shown. The masks of the other frames stay; to clear several
     frames at once, select them in the image list and right-click (Section~\ref{sec:images}).
 \end{description}
-
-\begin{warnbox}
-\ui{Invert} and \ui{Save} work on the mask that is open for editing. When a mask came from
-\ui{Batch Import}, from an import in the image list or from a project file, first click the
-\ui{Edit} button of that frame in the image list; otherwise \ui{Invert} can give the frame the
-whole image as its mask, and \ui{Save} can report an empty mask.
-% CHECK: app.py _on_roi_invert / _on_roi_save use the ROI controller buffer without reloading it for the current frame (reproduced offscreen: Invert after a context-menu import gave the whole image); remove this box once fixed
-\end{warnbox}
 
 \subsection{Editing mode}
 \label{sec:roi-editing}
@@ -204,16 +201,17 @@ frame.
 \begin{description}[leftmargin=1.2cm,style=nextline]
   \item[Mask Folder]
     \ui{Browse...} chooses the folder of the mask files. Its image files (PNG, BMP, TIFF, JPEG,
-    JPEG~2000 and WebP) appear under \ui{Available Masks}. A mask whose size differs from the
+    JPEG~2000 and WebP) appear under \ui{Available Masks}, in natural order (\file{mask2.png}
+    before \file{mask10.png}). A mask whose size differs from the
     images is greyed out and cannot be assigned; its tooltip gives both sizes, and a line above
     the lists counts these masks. Unlike \ui{Import}, the dialog does not resize masks.
   \item[Auto-Match by Name]
-    Reads the last number in each mask file name as a frame index counted from 0. The mask
-    \file{mask\_0000.png} goes to frame~1, \file{mask\_0001.png} to frame~2.
+    Gives each image the mask whose file name ends in the same number: \file{mask6.png} goes to
+    \file{image6.tif}, whatever frame that image is. If several images end in that number, each
+    of them gets the mask. Only when the image names carry no number is the last number of the
+    mask name read as the frame position counted from 0: \file{mask0.png} goes to frame~1.
   \item[Assign Sequential]
-    Gives the masks, in the order of the list, to frames 1, 2, 3, \ldots{} (the tooltip counts
-    the first frame as frame~0). The list is in plain alphabetical order, so \file{mask10.png}
-    comes before \file{mask2.png}.
+    Gives the masks, in the order of the list, to frames 1, 2, 3, and so on.
   \item[Assign Selected ->]
     Pairs the masks selected on the left with the frames selected in the middle: one mask with
     one frame, one mask with many frames, or as many masks as frames in the order of selection.
@@ -233,8 +231,10 @@ replaces the masks of those frames; the log lists every frame that received one.
 changes nothing.
 
 \begin{warnbox}
-\ui{Auto-Match by Name} counts frames from 0, as data files do. If your masks are numbered like
-images that start at 1 (\file{img1.png} with \file{mask1.png}), every mask lands one frame
-late. Use \ui{Assign Sequential} with zero-padded names, or \ui{Assign Selected ->}, and check
-the \ui{Mask} column before you click \ui{OK}.
+When the image names carry no number, \ui{Auto-Match by Name} counts frames from 0, as data
+files do, and masks numbered from 1 land one frame late. Use \ui{Assign Sequential} or
+\ui{Assign Selected ->} instead, and check the \ui{Mask} column before you click \ui{OK}.
 \end{warnbox}
+
+A mask with no white pixel, assigned to frame~1, leaves frame~1 without a region of interest:
+the run then does not start (Section~\ref{sec:running}).

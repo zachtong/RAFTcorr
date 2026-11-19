@@ -20,7 +20,7 @@ from raftcorr.callbacks import StopRequested
 from raftcorr.i18n import tr_args
 from raftcorr.models.zoo import ModelUnavailableError
 from raftcorr.gui.app_state import AppState, RunState
-from raftcorr.gui.controllers.pipeline_messages import PipelineMessages
+from raftcorr.gui.controllers.pipeline_messages import PipelineMessages, memory_advice
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class PipelineWorker(QThread):
             series = Pipeline(self._cfg, cb, loaded).run(self._seq, self._roi, frame_masks=self._masks,
                                                          storage_dir=self._storage)
         except StopRequested:
-            self.log.emit(QCoreApplication.translate("PipelineController", "Stopped."), "warning")
+            self.log.emit(QCoreApplication.translate("PipelineController", "Stopped."), "warn")
             self.finished_result.emit(None)
             return
         except ModelUnavailableError as exc:      # the Models window offers a download or an import
@@ -88,9 +88,9 @@ class PipelineWorker(QThread):
         except Exception as exc:  # report, never crash the GUI thread
             self.log.emit(traceback.format_exc(), "error")
             text = str(exc).strip() or type(exc).__name__
-            if "out of memory" in text.lower():
-                text = QCoreApplication.translate("PipelineController", "The GPU ran out of memory. Close other GPU programs, choose a model with a "
-                           "larger s, or lower the memory fraction (Advanced).") + "\n\n" + text
+            advice = memory_advice(exc)
+            if advice is not None:
+                text = advice + "\n\n" + text
             self.fatal_error.emit(QCoreApplication.translate("PipelineController", "Analysis failed"), text)
             self.finished_result.emit(None)
             return
@@ -161,6 +161,12 @@ class PipelineController:
             return
         if state.roi_mask is None:
             self._fatal(m.cannot_start_title(), m.no_roi())
+            return
+        if not state.roi_mask.any():   # Batch Import can store an all-black mask
+            self._fatal(m.cannot_start_title(), m.empty_roi())
+            return
+        if state.tracking_mode == "incremental" and state.inc_ref_mode == "custom" and state.inc_custom_refs_error:
+            self._fatal(m.cannot_start_title(), state.inc_custom_refs_error)   # never the older frames
             return
         try:
             cfg = state.run_config()
@@ -262,7 +268,7 @@ class PipelineController:
                 self._report_tracking_quality(result)
             else:
                 if result is not None:
-                    state.log_message.emit(QCoreApplication.translate("PipelineController", "No frame was computed; the previous results are kept."), "warning")
+                    state.log_message.emit(QCoreApplication.translate("PipelineController", "No frame was computed; the previous results are kept."), "warn")
                 state.set_run_state(RunState.DONE if state.results is not None else RunState.IDLE)
         except Exception as e:
             tb = traceback.format_exc()

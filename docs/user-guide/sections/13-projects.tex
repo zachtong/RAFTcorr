@@ -27,9 +27,10 @@ displacement, the residual and the strain, so the project reopens ready to view,
 export. \ui{No} writes a small file with the settings only, for sharing or as a template; after
 opening it you run the analysis again. \ui{Cancel} saves nothing.
 
-Saving and opening run behind a progress dialog. \ui{Cancel} in that dialog stops a save. A save
-is written to a temporary file first, so a cancelled or failed save leaves an existing project as
-it was. After a save or an open, the title bar shows the name of the project file.
+Saving and opening run behind a progress dialog. \ui{Cancel} in that dialog stops a save or an
+open. A save is written to a temporary file first, so a cancelled or failed save leaves an
+existing project as it was. An open reads the stored results frame by frame, the bar follows the
+frames read, and a cancelled open leaves the current session as it was. After a save or an open, the title bar shows the name of the project file.
 
 \subsection{What a project holds}
 

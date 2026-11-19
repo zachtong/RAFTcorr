@@ -71,16 +71,17 @@ reference frame changes:
     separated by commas (for example \file{5, 10, 20}); the setting applies when you press
     \kbd{Enter} or leave the field. Frame~1 is always the first reference frame, and each frame
     is compared with the last reference frame before it. Use it when the motion is uneven: put
-    the reference frames closer together where the specimen moves fast. A list that is not made
-    of whole numbers from 1 on is refused with a warning in the log, and the previous list stays.
+    the reference frames closer together where the specimen moves fast. The last frame cannot be
+    a reference frame, because no frame follows it, so with $n$ images the numbers must lie
+    between 1 and $n-1$. A list that breaks this rule, or that is not made of whole numbers, is
+    refused: the field gets a red border, its tooltip and a warning in the log say what is wrong,
+    for example \emph{``Invalid reference frames 44: use frames 1 to 43, separated by commas (the
+    last frame cannot be a reference).''}. While the field holds refused text, \ui{Run DIC
+    Analysis} does not start: a \ui{Cannot start analysis} dialog repeats the reason. Reference
+    frames
+    that the loaded images cannot use, because a project or an earlier folder had more images,
+    are dropped, and the log names them.
 \end{description}
-
-\begin{warnbox}
-The last frame cannot be a reference frame, because no frame follows it. If the
-\ui{Reference Frames} list holds the number of the last frame, or a larger one, the hint of the
-region of interest shows frame~1 as the only reference frame, and the run stops with an error.
-Keep every number below the number of the last frame.
-\end{warnbox}
 
 \subsubsection*{How the steps are composed}
 
@@ -131,7 +132,8 @@ largest displacement from frame~1; in incremental tracking it is the largest ste
 and its reference frame.
 
 Hovering over an entry shows its description and reach, and \ui{Weights not installed.} when the
-model file was missing when RAFTcorr started. A model is downloaded the first time a run or a survey
+model file is not on the computer; the list checks this each time it opens, so a model you have
+just downloaded or imported shows as installed. A model is downloaded the first time a run or a survey
 uses it; \menu{Help}{Models…} shows which models are installed and imports model files on a
 computer without an internet connection (Section~\ref{sec:installing-models}).
 
@@ -145,11 +147,17 @@ least two images and does not start while a run is going. It works in these step
   \item It loads RAFTcorr-s8, the model with the largest reach (downloading it on first use),
         with the current \ui{Device} and \ui{Iterations} (Section~\ref{sec:parameters}). A
         progress dialog, \ui{Measuring the motion with RAFTcorr-s8}, has a \ui{Cancel} button.
-  \item It compares up to three frames with frame~1: the frame a quarter of the way through
-        the sequence, the middle frame and the last frame (for 44 images, frames 11, 22 and 44).
+  \item It compares up to three pairs of frames, chosen by the tracking mode. In
+        \ui{Accumulative} tracking these are frame~1 against the frame a quarter of the way
+        through the sequence, the middle frame and the last frame (for 44 images, frames 11, 22
+        and 44). In \ui{Incremental} tracking it takes the reference frames the run would use and,
+        for each, the frame farthest from it that is compared with it, where the step is
+        largest; of these pairs it surveys the last, the middle one and the one a quarter of the
+        way through. The progress dialog names each pair, for example \ui{Survey: frame 44 against
+        frame 43}.
   \item Over the region of interest of frame~1 (the whole image if none is drawn yet), it takes
         the 99th percentile of the displacement magnitude $\sqrt{u^2 + v^2}$ of each sampled
-        frame. The 99th percentile ignores the largest 1\,\% of the values, so a few stray points
+        pair. The 99th percentile ignores the largest 1\,\% of the values, so a few stray points
         do not decide the choice. The largest of the three values is the measured displacement
         $d$.
   \item It selects the finest model whose reach is at least $1.3\,d$: RAFTcorr-s1 for $d$ up to
@@ -161,9 +169,17 @@ and in a card under the button (the parts in angle brackets are the measured val
 \begin{lstlisting}
 Suggested: RAFTcorr-<s>. Largest displacement of the region of interest about <d> px (99th percentile over frames <a, b, c>); RAFTcorr-<s> reaches <R> px.
 \end{lstlisting}
+In incremental tracking the message lists the surveyed pairs, each as reference frame
+$\rightarrow$ frame:
+\begin{lstlisting}[literate={→}{{$\rightarrow$}}1]
+Suggested: RAFTcorr-<s>. Largest displacement of the region of interest between a frame and its reference frame about <d> px (99th percentile over the pairs reference → frame <r1 → k1, r2 → k2, r3 → k3>); RAFTcorr-<s> reaches <R> px.
+\end{lstlisting}
 When $1.3\,d$ exceeds even the reach of RAFTcorr-s8 (above about 197~px), the suggestion is still
-RAFTcorr-s8, and the message adds \ui{This exceeds even the reach of RAFTcorr-s8: use incremental
-tracking.} The card stays until you open other images, and a project file keeps it.
+RAFTcorr-s8, and the message adds a sentence that starts with \ui{This exceeds even the reach of
+RAFTcorr-s8:} and says what to change: \ui{use incremental tracking.} in accumulative tracking,
+\ui{update the reference frame more often.} with \ui{Every N Frames} or \ui{Custom Frames}, and
+\ui{the motion between consecutive frames is too large to track.} with \ui{Every Frame}. The card
+stays until you open other images, and a project file keeps it.
 
 \begin{tipbox}
 Draw the region of interest before you click \ui{Suggest a Model}. The survey then measures the
@@ -171,10 +187,10 @@ motion of the specimen, not of the background around it.
 \end{tipbox}
 
 \begin{notebox}
-The survey always compares with frame~1, whatever the tracking mode, and it looks at three frames
-only. With incremental tracking each pair spans a shorter step, so a finer model than the
-suggestion may reach it; choose it by hand. If the motion peaks between the sampled frames and
-comes back, the survey does not see the peak.
+The survey looks at three pairs only. If the motion peaks between the sampled frames and comes
+back, or one step of an incremental run is much longer than the surveyed ones, the survey does
+not see it. Choose the tracking mode before you click \ui{Suggest a Model}: a suggestion made
+for accumulative tracking does not fit an incremental run, and the other way round.
 \end{notebox}
 
 \subsection{Which combination to choose}

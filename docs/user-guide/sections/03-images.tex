@@ -67,9 +67,10 @@ exposure constant over the sequence.
 \subsection{Image size}
 
 All images of a sequence must have the size of the reference image. If one does not, RAFTcorr
-shows the \ui{Cannot open the images} dialog, which names up to five of the images that
-differ, and loads nothing. The message counts the reference image as ``frame~0'', the index it
-has in data files.
+shows the \ui{Cannot open the images} dialog and loads nothing. The message names the reference
+image with its size and up to five of the images that differ, each with its frame number and its
+size, for example \emph{``every frame must have the size of frame 1, a1.png (80 x 64 px);
+different: frame 2, a2.png (82 x 64 px)''}.
 
 The models also need a minimum image size: each side must be at least $16\,s$~px, which is
 16, 32, 64 and 128~px for RAFTcorr-s1, -s2, -s4 and -s8. A smaller image stops the run with an
@@ -84,9 +85,12 @@ alphabetical order, which puts \file{img10.png} before \file{img2.png}. For name
 zero-padded numbers (\file{img\_0002.png}, \file{img\_0010.png}) both orders are the same.
 
 \begin{warnbox}
-Changing \ui{Natural Sort} reloads the images in the new order and, like opening a folder,
-starts a new session: the regions of interest, the results and the probes are discarded. Set the
-order before you draw a region of interest.
+When changing \ui{Natural Sort} puts the images in a different order, RAFTcorr reloads them and,
+like opening a folder, starts a new session: the regions of interest, the results and the probes
+are discarded. If there is anything to lose (regions of interest, results, probes, load data or
+a running analysis), it asks first with \ui{Change the image order?}; \ui{No} keeps everything
+and sets the checkbox back. When the order stays the same, as with zero-padded names, the
+checkbox changes nothing else. Set the order before you draw a region of interest.
 \end{warnbox}
 
 \subsection{The image list}
@@ -124,9 +128,9 @@ Right-clicking the selected rows opens a menu:
 \begin{description}[leftmargin=1.2cm,style=nextline]
   \item[Import Region of Interest for $n$ frame(s)] Opens a file dialog. Choose exactly as many
     mask files as rows are selected; with any other number nothing is imported and the log says
-    that the counts must match. The rows receive the files in the order the dialog returns them.
-    % CHECK: the pairing follows QFileDialog.getOpenFileNames order, which may differ from the order of selection; confirm on Windows and macOS
-    Check the \ui{Region} buttons afterwards, or use \ui{Batch Import}, which shows every
+    that the counts must match. The selected frames, from the first to the last, receive the
+    files in the natural order of their names (\file{mask2.png} before \file{mask10.png}),
+    whatever order you clicked them in. Check the \ui{Region} buttons afterwards, or use \ui{Batch Import}, which shows every
     pairing before it applies them (Section~\ref{sec:roi}).
   \item[Clear Region of Interest] Removes the masks of the selected frames. The entry tells how
     many of them have one.

@@ -52,7 +52,8 @@ Downloads are on \href{https://github.com/zachtong/RAFTcorr/releases/latest}{the
   \item \textbf{Windows 10/11}: \file{RAFTcorr-Windows-Setup.exe}, no administrator rights. It needs
         the internet once: it installs the PyTorch build that matches the NVIDIA driver (CUDA 12.8,
         12.6, 11.8, or CPU), RAFTcorr and the models. SmartScreen asks once: \ui{More info}
-        $\to$ \ui{Run anyway}. An interrupted setup: \ui{Repair RAFTcorr} in the Start menu.
+        $\to$ \ui{Run anyway}. An interrupted setup or a new NVIDIA driver: \ui{Repair RAFTcorr} in
+        the Start menu.
   \item \textbf{macOS 14+, Apple silicon}: open \file{RAFTcorr-macOS.dmg}, drag RAFTcorr to
         Applications. First launch: \emph{System Settings} $\to$ \emph{Privacy \& Security} $\to$
         \emph{Open Anyway}. PyTorch runs on the CPU.
@@ -94,13 +95,15 @@ Frames are numbered from 1 on screen and from 0 in exported data.
         \ui{Custom Frames}. Use it when the motion from frame 1 exceeds even s8's reach.
   \item \ui{Model}: s1 to s8 (above).
   \item \ui{Suggest a Model}: measures the motion inside the region of interest with s8 on a few
-        frames and selects the finest model that reaches it; the log says why.
+        of the pairs the tracking mode compares and selects the finest model that reaches it; the
+        log says why.
 \end{itemize}
 
 \section{Region of interest}
 \ui{+ Add} and \ui{Cut} open the shapes: \ui{Polygon}, \ui{Rectangle}, \ui{Circle},
-\ui{Circle (3-point)}. Drag on the canvas (polygon: click the corners, double-click to close;
-3-point circle: click three points on the edge). \ui{Import} reads a mask image (bright =
+\ui{Circle (3-point)}. Drag on the canvas (polygon: click the corners, double-click or
+\texttt{Enter} to close; 3-point circle: click three points on the edge); \texttt{Esc} cancels
+the shape. \ui{Import} reads a mask image (bright =
 inside); \ui{Batch Import} assigns masks to many frames; \ui{Save}, \ui{Invert}, \ui{Clear}. Only
 frame 1 needs a region; incremental tracking carries it to the reference frames. A mask on a
 later frame cuts out what it leaves out there (a crack, a hole) and is the region of interest
@@ -131,7 +134,7 @@ Correlation & Automatic; on demand or stored volume, identical results. \\
 model download. Large regions are split into tiles that fit the GPU; after an out-of-memory error
 RAFTcorr retries with smaller tiles. \ui{Cancel} stops the run and keeps the frames already
 computed. If the residual jumps (motion beyond the model's reach), RAFTcorr warns: try a larger
-\emph{s} or incremental tracking. When the run ends, the strain window opens.
+\emph{s} or incremental tracking. When a run ends with computed frames, the strain window opens.
 
 \section{View the displacement}
 \ui{FIELD}: \ui{Disp U} (+ right), \ui{Disp V} (+ down), \ui{Magnitude}, \ui{Residual} (grey-level
@@ -142,7 +145,7 @@ a length unit and seconds; data files stay in pixels. Play the sequence with the
 under the canvas.
 
 \section{Strain window}
-It opens when a run ends (later: \ui{Open Strain Window}). Set the \ui{STRAIN PARAMETERS}, then
+It opens when a run ends with computed frames (later: \ui{Open Strain Window}). Set the \ui{STRAIN PARAMETERS}, then
 click \ui{Compute Strain}.
 \begin{itemize}
   \item \ui{Method}: \ui{Plane fitting} (default) or \ui{Quadratic fitting} over a virtual strain

@@ -33,7 +33,7 @@ from .._version import __version__
 from ..callbacks import check_stop, coerce
 from ..viz.fields import ALL_FIELDS, FieldProvider, Units
 from ..viz.render import ColorRange
-from .figures import FrameStyle, _crop_box, color_range, compose, figure_rgba, render_figure
+from .figures import FrameStyle, _crop_box, color_range, colorbar_label, compose, figure_rgba, render_figure
 from .params import run_parameters
 from .scientific import PhysicalUnits, atomic_output
 
@@ -151,7 +151,7 @@ def export_html_report(
             pictures = []
             for k in samples[key]:
                 check_stop(cb)
-                pictures.append(_picture(provider, images, k, style, units, rng, spec))
+                pictures.append(_picture(provider, images, k, style, units, rng))
                 step(f"report: picture of {key}")
             sections.append("<div class='field-row'>" + "".join(pictures) + "</div>")
     page = (
@@ -250,8 +250,7 @@ def _thumbnail_style(style: FrameStyle | None, key: str, images: Any) -> FrameSt
     return replace(base, field=key, background=background, dpi=_THUMB_DPI, title=True, hidden_background=hidden)
 
 
-def _picture(provider: FieldProvider, images: Any, k: int, style: FrameStyle, units: Units, rng: ColorRange,
-             spec: Any) -> str:
+def _picture(provider: FieldProvider, images: Any, k: int, style: FrameStyle, units: Units, rng: ColorRange) -> str:
     from PIL import Image
 
     rgba = compose(provider, images, k, style, units, rng)
@@ -262,7 +261,7 @@ def _picture(provider: FieldProvider, images: Any, k: int, style: FrameStyle, un
     if max(h, w) > _THUMB_MAX_SIDE:
         stride = int(math.ceil(max(h, w) / _THUMB_MAX_SIDE))
         rgba = rgba[::stride, ::stride]
-    label = f"{style.field} ({units.unit(spec)})"
+    label = colorbar_label(style.field, units)
     fig = render_figure(rgba, style, rng, label, f"Frame {k + 1}")
     buf = io.BytesIO()
     Image.fromarray(figure_rgba(fig)[..., :3]).save(buf, format="PNG")

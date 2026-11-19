@@ -6,6 +6,11 @@ from PySide6.QtWidgets import QTextEdit
 from raftcorr.gui.theme import COLORS
 from raftcorr.gui.theme_manager import connect_theme, themed
 
+#: Other spellings of a level, mapped to the one the colours are keyed by. The GUI writes "warn";
+#: the engine's callbacks (raftcorr.callbacks.LEVELS), forwarded to the LOG as they are, write
+#: "warning".
+_LEVEL_ALIASES = {"warning": "warn"}
+
 
 class ConsoleLog(QTextEdit):
     """Read-only log viewer with colored, timestamped messages."""
@@ -32,7 +37,7 @@ class ConsoleLog(QTextEdit):
             "warn": COLORS.WARNING,
             "error": COLORS.DANGER,
             "success": COLORS.SUCCESS,
-        }.get(level, COLORS.TEXT_SECONDARY)
+        }.get(_LEVEL_ALIASES.get(level, level), COLORS.TEXT_SECONDARY)
         # The line is HTML, where a newline is just a space: keep a
         # multi-line message (the tracking advice) on its own lines.
         text = message.replace("\n", "<br>")

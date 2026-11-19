@@ -190,7 +190,37 @@ class AdvancedPanel(_WheelGuard):
         self._mem.valueChanged.connect(lambda v: state.set_param("memory_fraction", float(v)))
         self._blend.valueChanged.connect(lambda v: state.set_param("blend_px", int(v)))
         self._corr.currentIndexChanged.connect(lambda _i: state.set_param("corr_mode", self._corr.currentData()))
+        state.params_changed.connect(self._sync)
         self._guard(self._margin, self._mem, self._blend, self._corr)
+
+    def _sync(self) -> None:
+        """Follow changes made elsewhere (project loading), without writing them back.
+
+        A widget is set only when it differs from the state, as in :meth:`ParamPanel._sync`: each
+        keystroke in a spin box sets the parameter and comes back here through ``params_changed``,
+        and setting the box being typed in again would reformat its text under the cursor.
+        """
+        state = AppState.instance()
+        auto = state.margin_px is None
+        widgets = (self._margin_auto, self._margin, self._mem, self._blend, self._corr)
+        for w in widgets:
+            w.blockSignals(True)
+        try:
+            if self._margin_auto.isChecked() != auto:
+                self._margin_auto.setChecked(auto)
+            if not auto and self._margin.value() != state.margin_px:   # automatic: keep the last number
+                self._margin.setValue(state.margin_px)
+            self._margin.setEnabled(not auto)
+            if abs(self._mem.value() - state.memory_fraction) > 1e-9:
+                self._mem.setValue(state.memory_fraction)
+            if self._blend.value() != state.blend_px:
+                self._blend.setValue(state.blend_px)
+            idx = self._corr.findData(state.corr_mode)
+            if idx >= 0 and idx != self._corr.currentIndex():
+                self._corr.setCurrentIndex(idx)
+        finally:
+            for w in widgets:
+                w.blockSignals(False)
 
     def _margin_changed(self, *_a) -> None:
         auto = self._margin_auto.isChecked()

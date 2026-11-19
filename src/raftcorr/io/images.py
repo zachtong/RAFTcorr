@@ -183,16 +183,17 @@ class ImageSequence:
     def _check_sizes(self) -> None:
         """Refuse a sequence whose frames differ in size (read from the headers, fast)."""
         bad = []
-        for p in self.files[1:]:
+        for k, p in enumerate(self.files[1:], start=2):  # frame numbers count from 1, as on screen
             try:
-                if image_size(p) != self.shape:
-                    bad.append(p.name)
+                h, w = image_size(p)
+                if (h, w) != self.shape:
+                    bad.append(f"frame {k}, {p.name} ({w} x {h} px)")
             except Exception as exc:  # unreadable header
-                bad.append(f"{p.name} ({exc})")
+                bad.append(f"frame {k}, {p.name} ({exc})")
         if bad:
             more = f" and {len(bad) - 5} more" if len(bad) > 5 else ""
-            raise ValueError(f"every frame must have the size of frame 0 ({self.shape[1]} x {self.shape[0]} px); "
-                             f"different: {', '.join(bad[:5])}{more}")
+            raise ValueError(f"every frame must have the size of frame 1, {self.files[0].name} "
+                             f"({self.shape[1]} x {self.shape[0]} px); different: {'; '.join(bad[:5])}{more}")
 
     @classmethod
     def from_folder(cls, folder: str | Path, natural: bool = True, cache_size: int = 8) -> "ImageSequence":
@@ -230,7 +231,8 @@ class ImageSequence:
                 return hit
         img = read_grey(self.files[i], self.scale)
         if img.shape != self.shape:
-            raise ValueError(f"{self.files[i].name}: size {img.shape} differs from frame 0 {self.shape}")
+            raise ValueError(f"frame {i + 1}, {self.files[i].name}: {img.shape[1]} x {img.shape[0]} px differs "
+                             f"from frame 1, {self.files[0].name} ({self.shape[1]} x {self.shape[0]} px)")
         with self._lock:
             self._put(i, img)
         return img

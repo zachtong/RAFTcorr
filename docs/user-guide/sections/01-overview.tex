@@ -3,7 +3,7 @@
 
 RAFTcorr measures full-field displacement and strain from a sequence of images of a deforming
 specimen. The first image of the sequence is the reference image. Every other image is compared
-with it, or with a later reference frame, by a learned correlation model: a neural network trained
+with it, or with a reference frame earlier in the sequence, by a learned correlation model: a neural network trained
 on speckle images whose displacement is known exactly. The model returns one displacement vector
 for every pixel of the region of interest, so there is no subset size and no mesh to choose.
 Strain follows from the displacement with a virtual strain gauge, in the strain window.
@@ -113,7 +113,7 @@ The five regions of Figure~\ref{fig:main-window}:
     \ui{FIELD} chooses what is drawn (\ui{Disp U}, \ui{Disp V}, \ui{Magnitude}, \ui{Residual}) and
     where (\ui{Show on}); \ui{VISUALIZATION} holds the colormap, the colour range and the opacity;
     \ui{PHYSICAL UNITS} converts pixels and frames to lengths and seconds; \ui{LOG} lists every
-    message of the session with its time, errors in red. See Section~\ref{sec:results}.
+    message of the session with its time, warnings in yellow and errors in red. See Section~\ref{sec:results}.
 \end{description}
 
 The menu bar has three menus: \ui{File} (images, projects, export), \ui{Settings} (theme and
@@ -140,8 +140,9 @@ Python.
     navigator and the log call the reference image frame~1. File names written by
     the export dialog count the same way (\file{frame\_0001} is the reference image). Inside the
     arrays of the exported data files, and in Python, index $k$ is image $k$ counted from 0, so
-    frame~$n$ on the screen is index $n-1$. The command line uses both: its progress lines count
-    from 1, its frame options and its \file{suggest} report from 0 (Section~\ref{sec:cli}).
+    frame~$n$ on the screen is index $n-1$. The command line uses both: its progress lines, its
+    messages and its \file{suggest} report count from 1, its frame option \file{-{}-keys} from 0
+    (Section~\ref{sec:cli}).
   \item \textbf{Shear strain} $\varepsilon_{xy}$ is the tensor component, half the engineering
     shear strain $\gamma_{xy}$ (Section~\ref{sec:strain}).
   \item \textbf{Grey levels.} RAFTcorr compares grey levels from 0 to 255. Colour images are
@@ -166,11 +167,14 @@ your user account, so no administrator rights are needed.
     \file{HKEY\_CURRENT\_USER\textbackslash Software\textbackslash RAFTcorr} on Windows, a property
     list in \file{\textasciitilde/Library/Preferences} on macOS.
   \item[Log file]
-    The macOS application writes \file{RAFTcorr.log} in the folder
-    \file{\textasciitilde/Library/Application Support/}\allowbreak\file{RAFTcorr/logs}. On Windows
-    and with pip
-    there is no log file: the messages are in the \ui{LOG} panel, and in the terminal when you
-    start RAFTcorr from one (Section~\ref{sec:troubleshooting}).
+    \file{RAFTcorr.log}, however RAFTcorr was installed, in this folder:\newline
+    Windows: \file{\%LOCALAPPDATA\%\textbackslash RAFTcorr\textbackslash logs}\newline
+    macOS: \file{\textasciitilde/Library/Application Support/RAFTcorr/logs}\newline
+    Linux: \file{\$XDG\_DATA\_HOME/RAFTcorr/logs}, by default
+    \file{\textasciitilde/.local/share/RAFTcorr/logs}\newline
+    At 2\,MB the
+    file is renamed and a new one started; the three most recent older files are kept
+    (Section~\ref{sec:troubleshooting}).
   \item[Windows installation]
     \file{\%LOCALAPPDATA\%\textbackslash Programs\textbackslash RAFTcorr} by default, with the
     private Python and \file{install.log}, the log of the setup (Section~\ref{sec:installing}).

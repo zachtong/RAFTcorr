@@ -20,8 +20,9 @@ from typing import Any, Sequence
 import numpy as np
 
 from ..callbacks import Callbacks, check_stop, coerce
+from ..post.strain import COMPONENT_LABELS
 from ..viz.colormaps import discrete_lut, lut
-from ..viz.fields import ALL_FIELDS, FieldProvider, Units
+from ..viz.fields import ALL_FIELDS, FieldProvider, Units, fill_untracked
 from ..viz.render import ColorRange, auto_range, colorize, composite, grey_rgba
 from .figure_layout import (
     COLORBAR_POSITIONS,
@@ -39,9 +40,19 @@ from .figure_layout import (
 
 __all__ = [
     "ALPHA_FORMATS", "ANIMATION_FORMATS", "COLORBAR_POSITIONS", "FONT_FAMILIES", "HIDDEN_BACKGROUNDS",
-    "IMAGE_FORMATS", "ColorbarStyle", "FrameStyle", "color_range", "compose", "export_animation",
-    "export_frames", "figure_rgba", "render_figure", "style_for_format",
+    "DISPLAY_NAMES", "IMAGE_FORMATS", "ColorbarStyle", "FrameStyle", "colorbar_label", "color_range", "compose",
+    "export_animation", "export_frames", "figure_rgba", "render_figure", "style_for_format",
 ]
+
+#: The name of each field on a colour bar: the name the windows show (U, V, Magnitude, and the strain
+#: symbols of :data:`raftcorr.post.strain.COMPONENT_LABELS`), in English (the export has no Qt to
+#: translate the words). The keys are :data:`raftcorr.viz.fields.ALL_FIELDS` keys.
+DISPLAY_NAMES: dict[str, str] = {
+    "u": "U", "v": "V", "magnitude": "Magnitude",
+    "vel_u": "U velocity", "vel_v": "V velocity", "speed": "Velocity",
+    "residual": "Residual",
+    **COMPONENT_LABELS,
+}
 
 IMAGE_FORMATS = (".png", ".tif", ".tiff", ".pdf", ".svg", ".jpg")
 ANIMATION_FORMATS = (".gif", ".mp4")
@@ -96,6 +107,11 @@ def style_for_format(style: FrameStyle, ext: str) -> FrameStyle:
     return style
 
 
+def colorbar_label(field: str, units: Units) -> str:
+    """Colour-bar label of ``field``: its display name and unit, e.g. ``"U (px)"``, ``"εxx (-)"``."""
+    return f"{DISPLAY_NAMES.get(field, field)} ({units.unit(ALL_FIELDS[field])})"
+
+
 # -- composing a frame --------------------------------------------------------------------------
 
 
@@ -105,23 +121,6 @@ def _blank(h: int, w: int, color: str) -> np.ndarray:
     if color != "transparent":
         out[..., :3] = 255 if color == "white" else 0
         out[..., 3] = 255
-    return out
-
-
-def _fill_untracked(values: np.ndarray, inside: np.ndarray) -> np.ndarray:
-    """Nearest valid value for NaN points inside ``inside`` ('Hide untracked regions' off).
-
-    The rule of the main window and the strain window (their ``_fill_untracked``).
-    """
-    from scipy import ndimage
-
-    finite = np.isfinite(values)
-    bad = inside & ~finite
-    if not bad.any() or not finite.any():
-        return values
-    _, (ii, jj) = ndimage.distance_transform_edt(~finite, return_indices=True)
-    out = values.copy()
-    out[bad] = values[ii[bad], jj[bad]]
     return out
 
 
@@ -151,7 +150,8 @@ def _reference_values(provider: FieldProvider, style: FrameStyle, frame: int) ->
     if not style.hide_untracked:
         inside = mask[:: pl.step, :: pl.step] if pl.step > 1 else mask
         if inside.shape == vals.shape:
-            vals = _fill_untracked(np.asarray(vals, dtype=np.float32), inside)
+            vals = fill_untracked(np.asarray(vals, dtype=np.float32), inside,
+                                  provider.trimmed_band(style.field, frame))
     return vals, pl
 
 
@@ -305,7 +305,7 @@ def export_frames(folder: str | Path, provider: FieldProvider, images: Any, fram
     out.mkdir(parents=True, exist_ok=True)
     spec = ALL_FIELDS[style.field]
     rng_all = color_range(provider, style, units, frames) if style.range_mode == "sequence" else None
-    label = f"{style.field} ({units.unit(spec)})"
+    label = colorbar_label(style.field, units)
     options = _save_options(fmt, jpeg_quality)
     written = []
     for i, k in enumerate(frames):
@@ -345,7 +345,7 @@ def export_animation(path: str | Path, provider: FieldProvider, images: Any, fra
     gif = p.suffix.lower() == ".gif"
     spec = ALL_FIELDS[style.field]
     rng = color_range(provider, style, units, frames)
-    label = f"{style.field} ({units.unit(spec)})"
+    label = colorbar_label(style.field, units)
     pictures = []
     for i, k in enumerate(frames):
         check_stop(cb)

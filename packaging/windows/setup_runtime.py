@@ -83,6 +83,30 @@ def torch_build(force_cpu: bool = False) -> tuple[str, str]:
     return parse_smi(out)
 
 
+def torch_action(installed: str | None, build: str) -> str:
+    """What to do with PyTorch: ``"keep"``, ``"install"`` or ``"replace"``.
+
+    *installed* is the installed ``torch.__version__`` (None when there is none), *build* the
+    wanted one (``cu128`` ... ``cpu``). A version tagged ``+<build>`` is kept, so a re-run
+    downloads nothing. Any other build, e.g. the CPU build after a driver update made CUDA
+    usable, must be uninstalled first: ``pip install --upgrade`` would keep it as "already
+    satisfied" whenever its version is the same or newer.
+    """
+    if installed is None:
+        return "install"
+    return "keep" if installed.endswith("+" + build) else "replace"
+
+
+def installed_torch(py: str) -> str | None:
+    """``torch.__version__`` of the Python *py*, or None when PyTorch is not installed there."""
+    try:
+        out = subprocess.run([py, "-c", "import torch; print(torch.__version__)"], capture_output=True,
+                             text=True, timeout=300)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return (out.stdout.strip() or None) if out.returncode == 0 else None
+
+
 def _run(say: _Tee, args: list[str]) -> int:
     say("$ " + " ".join(args))
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -100,7 +124,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-models", action="store_true", help="do not download the model files")
     ap.add_argument("--detect", action="store_true",
                     help="print '<build>|<reason>' (cu128, cu126, cu118 or cpu) and exit; used by install.bat")
+    ap.add_argument("--torch-action", metavar="BUILD",
+                    help="print keep, install or replace for PyTorch build BUILD in this Python and exit; "
+                         "used by install.bat")
     args = ap.parse_args(argv)
+    if args.torch_action:
+        print(torch_action(installed_torch(sys.executable), args.torch_action))
+        return 0
     if args.detect:
         build, reason = torch_build(args.cpu)
         print(f"{build}|{reason}")
@@ -125,9 +155,15 @@ def main(argv: list[str] | None = None) -> int:
         say(f"[1/3] PyTorch: {reason}")
         pip = [py, "-m", "pip", "install", "--upgrade", "--no-cache-dir", "--no-warn-script-location",
                "--disable-pip-version-check"]
-        if _run(say, pip + ["torch", "--index-url", TORCH_INDEX[build]]) != 0:
-            say("ERROR: PyTorch could not be installed (check the internet connection)")
-            return 4
+        action = torch_action(installed_torch(py), build)
+        if action == "keep":
+            say(f"  PyTorch {build} build already installed, keeping it")
+        else:
+            if action == "replace":
+                _run(say, [py, "-m", "pip", "uninstall", "-y", "torch"])
+            if _run(say, pip + ["torch", "--index-url", TORCH_INDEX[build]]) != 0:
+                say("ERROR: PyTorch could not be installed (check the internet connection)")
+                return 4
         say(f"[2/3] RAFTcorr {wheels[-1].name} and its dependencies")
         if _run(say, pip + [str(wheels[-1])]) != 0:
             say("ERROR: RAFTcorr could not be installed (check the internet connection)")

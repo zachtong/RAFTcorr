@@ -50,6 +50,8 @@ LABEL_FFT = ("InitGuessWidget", "FFT (cross-correlation)")
 LABEL_SUBSET_SIZE = ("ParamPanel", "Subset Size")
 LABEL_SUBSET_STEP = ("ParamPanel", "Subset Step")
 LABEL_BATCH_IMPORT = ("ROIToolbar", "Batch Import")
+LABEL_ADVANCED = ("LeftSidebar", "ADVANCED")
+LABEL_GPU_MEMORY = ("AdvancedPanel", "GPU Memory")
 
 
 def gui_label(label: tuple[str, str]) -> str:
@@ -201,6 +203,21 @@ class PipelineMessages(QObject):
         return tr_args(self.tr(
             "%1\n\nSee the console log for the full traceback."), detail)
 
+    def out_of_memory(self) -> str:
+        """Advice above the text of a GPU out-of-memory error: smaller windows fit."""
+        return tr_args(self.tr(
+            "The GPU ran out of memory. Close other GPU programs, choose a model with a "
+            "larger s, or lower %1 in %2."),
+            gui_label(LABEL_GPU_MEMORY), gui_label(LABEL_ADVANCED))
+
+    def memory_budget_too_small(self) -> str:
+        """Advice above the engine's "the memory budget allows windows of about N x N px"
+        error: the budget is below the model's smallest window, so lowering it cannot help."""
+        return tr_args(self.tr(
+            "There is not enough free GPU memory for the smallest window this model accepts. "
+            "Close other GPU programs, or raise %1 in %2 if it is set low."),
+            gui_label(LABEL_GPU_MEMORY), gui_label(LABEL_ADVANCED))
+
     # -- Run-time confirmation: reference frames without their own region --
 
     def missing_roi_title(self) -> str:
@@ -239,6 +256,21 @@ class PipelineMessages(QObject):
 
     def missing_roi_question(self) -> str:
         return self.tr("Continue with frame 1's region?")
+
+
+def memory_advice(exc: BaseException) -> str | None:
+    """Translated advice for a run that failed for lack of GPU memory, or None for other errors.
+
+    The engine's ``MemoryError`` from tiling (``raftcorr.engine.tiling.plan_tiles``) says "the
+    memory budget allows windows of about N x N px"; a CUDA out-of-memory error says "out of
+    memory". Both are matched on the engine's English text, which is never translated.
+    """
+    text = str(exc).lower()
+    if isinstance(exc, MemoryError) and "memory budget" in text:
+        return PipelineMessages().memory_budget_too_small()
+    if "out of memory" in text:
+        return PipelineMessages().out_of_memory()
+    return None
 
 
 def missing_roi_dialog(missing: Iterable[int]) -> tuple[str, str]:

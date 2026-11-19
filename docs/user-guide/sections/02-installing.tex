@@ -79,10 +79,11 @@ driver for the GPU)''}: update the driver, then run \ui{Repair RAFTcorr}.
 \begin{itemize}
   \item \ui{RAFTcorr} in the Start menu, and on the desktop if you asked for it.
   \item \ui{Repair RAFTcorr} in the Start menu. It runs the second half of the setup again:
-    detects the driver, installs PyTorch, RAFTcorr and the model files. Use it when the setup
-    was interrupted (no connection, console window closed) or after you installed or updated an
-    NVIDIA driver.
-    % CHECK: does Repair replace an already installed CPU build of PyTorch with a CUDA build? setup_runtime.py runs "pip install --upgrade torch --index-url <cuda index>"; pip should prefer the +cuXXX local version, not verified on a real machine.
+    detects the driver, installs PyTorch, RAFTcorr and the model files. A PyTorch of the build
+    that fits the driver is kept, so nothing is downloaded for it again; a PyTorch of another
+    build is uninstalled first and the right one installed, for example the CUDA build in place
+    of the CPU build after a driver update. Use it when the setup was interrupted (no connection,
+    console window closed) or after you installed or updated an NVIDIA driver.
   \item The \file{raftcorr} command in every new terminal, when the PATH task was ticked. Only the
     folder \file{bin} of the installation goes on the PATH; the private Python and its
     \file{pip} stay off it.
@@ -193,7 +194,9 @@ Clone the repository, \url{https://github.com/zachtong/RAFTcorr}. On Windows wit
 Miniconda, run \file{install.bat} in its folder. It creates the conda environment
 \file{raftcorr-app} (Python 3.11), detects the GPU as the Setup program does, installs the
 matching PyTorch build (a download of about 2.5\,GB), RAFTcorr in editable mode and the model
-files, and writes \file{install.log} in the same folder. Start the application with
+files, and writes \file{install.log} in the same folder. Like Repair, it keeps a PyTorch of the
+matching build, so running it again downloads no PyTorch, and uninstalls a PyTorch of another
+build before it installs the matching one. Start the application with
 \file{run.bat}.
 
 On any platform:

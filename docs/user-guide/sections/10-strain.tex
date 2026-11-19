@@ -3,7 +3,8 @@
 
 Strain is computed from the displacement results in a window of its own, \ui{Strain
 Post-Processing}, called the strain window in this guide (Figure~\ref{fig:strain-window}). It
-opens by itself when a run finishes; \ui{Open Strain Window} in the right sidebar opens it at
+opens by itself when a run finishes with at least one computed frame, and when you open a project
+with results; \ui{Open Strain Window} in the right sidebar opens it at
 any time once there are displacement results (without them, the \ui{LOG} says \emph{Run DIC
 first -{}- no displacement results to post-process.}). The window has two tabs: \ui{Strain
 Field}, described here, and \ui{Analysis}, which places probes, gauges and areas on the results
@@ -167,7 +168,8 @@ calculation, \ui{Eulerian} to compare with a measure in the deformed configurati
   \item[Output spacing]
     Keep the strain every $n$ pixels in $x$ and $y$, from 1 to 64\,px; default 1\,px (every
     pixel). Each kept point is still fitted over its whole gauge. A larger spacing gives a
-    smaller strain result: less memory and smaller exported files for long sequences.
+    smaller strain result: less memory and smaller exported files for long sequences. The fit
+    still runs at every pixel, so a larger spacing does not shorten the computation.
   \item[Pre-fit smoothing]
     Gaussian smoothing of the displacement, with $\sigma$ in pixels up to 50\,px, before the
     strain fit; \ui{Off} (0, the default) differentiates the measured displacement as it is.
@@ -290,9 +292,10 @@ differs.
     off when the edge itself matters.
   \item[Hide untracked regions]
     As in the main window; the window starts from the main window's choice when it is first
-    opened, then keeps its own. On the \ui{Reference frame} view, unticking it fills every empty
-    point inside the region of interest with the nearest value, the trimmed band included,
-    whatever the \ui{Edges} option says. % CHECK: the untracked fill also fills the trimmed band (not region by region); intended? see report.
+    opened, then keeps its own. On the \ui{Reference frame} view, unticking it fills every
+    untracked point with the nearest value of its own connected part of the region of interest,
+    as in the main window. The trimmed band is not part of this fill: it stays empty unless
+    \ui{Fill trimmed edges (display only)} is on, and then it is filled as that option fills it.
 \end{description}
 
 \ui{PHYSICAL UNITS} is the same group as in the main window and shares its setting. The window's

@@ -302,6 +302,9 @@ def main() -> None:
     ap.add_argument("--lang", choices=sorted(SCRIPTS), default="en")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
+    # The progress lines quote the application's own text (Chinese in the zh_CN video), which a
+    # Windows console code page cannot encode.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Tutorial(SCRIPTS[a.lang], a.images, a.out).render()
 

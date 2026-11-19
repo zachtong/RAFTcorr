@@ -95,7 +95,8 @@ Figure~\ref{fig:displacement}, in grey levels.}{fig:residual}
     of interest of a later frame excludes (a crack, a hole), or that fell outside the area
     measured from a reference frame in incremental tracking. With the option on, such points are left
     transparent. With it off, the \ui{Reference frame} view fills them with the value of the
-    nearest tracked point inside the region of interest. On the \ui{Deformed frame} view an
+    nearest tracked point of the same connected part of the region of interest, so a value never
+    comes from across a gap or a hole cut out of the region. On the \ui{Deformed frame} view an
     untracked point has no position to be drawn at, so it stays empty either way.
     The choice is also used for exported images and animations; exported data files always
     keep NaN at untracked points.
@@ -184,9 +185,11 @@ Section~\ref{sec:canvas}.
 \subsection{LOG}
 
 The \ui{LOG} at the bottom of the right sidebar lists the messages of the application, each with
-the time (hours, minutes and seconds). It scrolls to the newest line by itself. Errors are red
-and completed steps green. % CHECK: warnings sent with level "warning" (engine, Stopped., OOM retry) show in the info colour, only level "warn" is amber; see report.
-A run writes its start, the model, the tiling, the frames with a low coverage, the
+the time (hours, minutes and seconds). It scrolls to the newest line by itself. Errors are red,
+warnings yellow (amber in the light theme) and completed steps green. Every warning has that
+colour, whether it comes from the application or from a run: a retry after the GPU ran out of
+memory, a frame with a low coverage, the tracking-quality note, \emph{Stopped.} and \emph{No
+frame was computed; the previous results are kept.} A run writes its start, the model, the tiling, the frames with a low coverage, the
 tracking-quality note and its end there (Section~\ref{sec:running}); an error writes its full
 traceback there. \ui{Clear} empties the \ui{LOG}; it changes nothing else. The strain window has
 a \ui{LOG} of its own.

@@ -66,12 +66,26 @@ class ImageController:
         return self._natural_sort
 
     def set_natural_sort(self, enabled: bool) -> None:
-        """Change sort mode and re-sort the current file list."""
+        """Change sort mode and re-sort the current file list.
+
+        Re-sorting publishes a new set of images, which drops the ROIs, results and probes;
+        when the order does not change (zero-padded names) only the mode is recorded.
+        """
         if enabled == self._natural_sort:
             return
+        reorders = self.reorders(enabled)
         self._natural_sort = enabled
-        if self._raw_files:
+        if reorders:
             self._sort_and_update()
+
+    def reorders(self, enabled: bool) -> bool:
+        """Whether sorting with natural order ``enabled`` would change the current frame order."""
+        return bool(self._raw_files) and self._sorted(enabled) != list(self._state.image_files)
+
+    def _sorted(self, natural: bool) -> list[str]:
+        if natural:
+            return sorted(self._raw_files, key=lambda p: _natural_sort_key(Path(p).name))
+        return sorted(self._raw_files, key=lambda p: _lexicographic_sort_key(Path(p).name))
 
     def load_folder(self, folder: str) -> None:
         """Scan a folder for images, sort them and publish them in the state."""
@@ -120,12 +134,7 @@ class ImageController:
         state.set_remaining_frames(files, seq, rois)
 
     def _sort_and_update(self, folder: Path | None = None) -> None:
-        files = list(self._raw_files)
-        if self._natural_sort:
-            files.sort(key=lambda p: _natural_sort_key(Path(p).name))
-        else:
-            files.sort(key=lambda p: _lexicographic_sort_key(Path(p).name))
-        self._publish(files, folder or self._state.image_folder)
+        self._publish(self._sorted(self._natural_sort), folder or self._state.image_folder)
 
     def _publish(self, files: list[str], folder: Path | None) -> None:
         self._cache_rgb.clear()

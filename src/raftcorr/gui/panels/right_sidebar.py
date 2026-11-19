@@ -214,8 +214,10 @@ class RightSidebar(QWidget):
         self._hide_untracked_cb.setToolTip(self.tr(
             "Leave points without a result transparent, for example "
             "material that left the field of view, instead of filling them "
-            "with the nearest value inside the region of interest. Also used "
-            "for exported images and animations; data files always keep NaN there."
+            "with the nearest value inside the region of interest. Applies to "
+            "the Reference frame view only: the Deformed frame view always "
+            "leaves them empty. Also used for exported images and animations; "
+            "data files always keep NaN there."
         ))
         self._hide_untracked_cb.stateChanged.connect(
             self._on_hide_untracked_toggled)
@@ -307,6 +309,8 @@ class RightSidebar(QWidget):
         # Track last known frame string to avoid flickering
         self._last_frame_str: str = ""
         self._status_text: str = ""     # a model download, shown instead of the frame
+        # RUNNING follows PAUSED on resume too; only a RUNNING from elsewhere is a new run.
+        self._run_state: RunState = self._state.run_state
 
     @property
     def console(self) -> ConsoleLog:
@@ -345,6 +349,8 @@ class RightSidebar(QWidget):
 
     def _on_export(self) -> None:
         if self._state.results is None:
+            # File > Export Results… (Ctrl+E) reaches here even while the button is disabled.
+            self._state.log_message.emit(self.tr("Run DIC first -- no displacement results to export."), "warn")
             return
 
         from raftcorr.gui.dialogs.export_dialog import ExportDialog, VizExportHint
@@ -416,6 +422,8 @@ class RightSidebar(QWidget):
         paused = new_state == RunState.PAUSED
         done = new_state == RunState.DONE
         idle = new_state == RunState.IDLE
+        new_run = running and self._run_state != RunState.PAUSED
+        self._run_state = new_state
 
         # Cancel is available while the pipeline is actively doing work
         # (RUNNING or the legacy PAUSED state). Run is available when
@@ -441,6 +449,12 @@ class RightSidebar(QWidget):
                 tr_args(self.tr("REMAINING  %1"), "--:--"))
             self._last_frame_str = ""
             self._status_text = ""
+        elif new_run:
+            # The previous run's "Frame N/N" (or a download line it left) would stay up until
+            # this run's first frame reports; the controller has already sent its 0 %.
+            self._last_frame_str = ""
+            self._status_text = ""
+            self._on_progress(self._state.progress, "")
 
     def _on_geometry_changed(self, index: int) -> None:
         """Plot the field on deformed or reference node positions."""

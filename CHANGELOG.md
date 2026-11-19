@@ -18,6 +18,70 @@
 - Charts in Chinese, Japanese and Korean (Analysis tab) showed boxes instead of the axis labels on
   Windows: matplotlib now gets the installed fonts as a fallback list.
 
+Found while writing the User Guide:
+
+**Region of interest, canvas, images**
+- Invert and Save used the mask last opened for editing. After Batch Import, an import in the image list or
+  Open Project, Invert could give a frame the whole image and Save could write another frame's mask. Both
+  now work on the current frame's own mask.
+- Batch Import lists the masks in natural order (mask2 before mask10). Auto-Match by Name pairs a mask with
+  the image whose file name ends in the same number (mask6 with image6) instead of reading the number as a
+  frame index counted from 0.
+- The image list's mask import pairs the selected frames with the files in the natural order of their
+  names, not in the file dialog's order.
+- An empty region of interest on frame 1, e.g. an all-black mask from Batch Import, is refused before the
+  run starts. It used to fail inside the run.
+- Esc cancels a shape picked in the Add / Cut menu even before drawing starts, and Enter closes a polygon.
+- Changing Natural Sort asks first when it would reorder the frames and discard regions of interest,
+  results or probes. It used to discard them silently.
+- Save proposes a file next to the image folder rather than inside it, so the next load does not take the
+  mask for an image.
+- An unreadable mask file is reported in the LOG instead of being ignored.
+- The tooltips of Clear and of Batch Import's Assign Sequential were corrected.
+
+**Workflow, projects, menus**
+- After Open Project, the ADVANCED controls and the Interval box show the project's values. They kept
+  their previous values, although the run used the project's.
+- Custom reference frames are checked against frames 1 to N-1. Invalid input is marked and explained in
+  the LOG, and a run is refused while the field holds it; invalid frames never reach the run.- Suggest a Model follows the tracking mode: in incremental tracking it measures the steps between each
+  frame and its reference, not the motion from frame 1. Its progress counts frames from 1.
+- The model list's tooltips are refreshed after a download, without a restart.
+- The Language menu checks exactly one language.
+- Export Results (Ctrl+E) without results says so in the LOG.
+- Cancel while a project opens stops loading.
+- The Tracking Mode tooltip said incremental tracking uses a later reference frame. It uses an earlier one.
+
+**Run, LOG, strain window**
+- Every warning is amber in the LOG. Warnings from the engine used to show in the plain colour.
+- The out-of-memory message names the GPU Memory control in ADVANCED. A memory budget too small for the
+  model's smallest window gets its own advice.
+- A new run no longer shows the previous run's "Frame N/N".
+- The strain window opens only after a run that produced results. It also opened after a failed run.
+- With "Hide untracked regions" off, the main window, the strain window and exported pictures fill each
+  part of the region of interest from itself, never across a crack, and leave the edge-trimmed band empty
+  unless "Fill trimmed edges" is on.
+- The frame-rate list under the canvas shows "2 fps" in full.
+- Tooltips corrected: Hide untracked regions applies to the Reference frame view only; Output spacing does
+  not make strain faster; the strain window's Export Results lists every format.
+
+**Command line, library, export, installation**
+- `raftcorr run --strain --project` stores the strain settings that were used (`--gauge`, `--measure`,
+  `--edge-trim`) instead of the defaults.
+- Frame numbers printed by the command line count from 1, as in the application: the `suggest` report and
+  the strain progress. `--keys` stays 0-based and its help says so.
+- Bad input on the command line prints one line on stderr and exits with code 2 instead of a Python
+  traceback. Internal errors keep their traceback.
+- Colour bars of exported pictures and report thumbnails use the names shown on screen (U, εxx, max shear)
+  instead of internal names (`u`, `exx`, `max_shear`), and so does the export preview.
+- The image-size error counts frames from 1 and names the files.
+- A rotating log file is written for every installation, not only the frozen build:
+  `RAFTcorr.log` in the `logs` folder of the user data folder.
+- `install.bat` and Repair of the Windows installation replace an installed PyTorch of the wrong build,
+  e.g. the CPU build after a driver update, and keep the right one without downloading it again.
+- The `callbacks` docstring now describes stopping correctly: `Pipeline.run` returns the frames computed so
+  far, and the other operations raise `StopRequested`.
+- Removed an unused velocity-settings widget.
+
 ## 2.0.1 (2026-11-18)
 
 ### Models for a new user

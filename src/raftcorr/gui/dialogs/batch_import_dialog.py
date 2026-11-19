@@ -61,6 +61,7 @@ from raftcorr.gui.theme import COLORS
 from raftcorr.gui.theme_manager import themed
 from raftcorr.gui.window_geometry import fit_dialog_to_screen
 from raftcorr.i18n import tr_args
+from raftcorr.io.images import natural_key
 
 # Image file extensions accepted as mask files
 _MASK_EXTENSIONS = {".png", ".bmp", ".tif", ".tiff", ".jpg", ".jpeg", ".jp2", ".webp"}
@@ -454,13 +455,17 @@ class BatchImportDialog(QDialog):
 
         auto_btn = QPushButton(self.tr("Auto-Match by Name"))
         auto_btn.setToolTip(self.tr(
-            "Match mask files to frames by number in filename"))
+            "Give each image the mask whose file name ends in the same "
+            "number: mask6.png goes to image6.tif.\n"
+            "If the image names carry no number, the mask's number is "
+            "read as the frame position counted from 0: mask0 goes to "
+            "frame 1."))
         auto_btn.clicked.connect(self._auto_match)
         left.addWidget(auto_btn)
 
         seq_btn = QPushButton(self.tr("Assign Sequential"))
         seq_btn.setToolTip(self.tr(
-            "Assign masks to frames in order starting from frame 0"))
+            "Assign masks to frames in order, starting from frame 1"))
         seq_btn.clicked.connect(self._assign_sequential)
         left.addWidget(seq_btn)
 
@@ -544,10 +549,14 @@ class BatchImportDialog(QDialog):
     def _load_mask_files(self, folder: str) -> None:
         """Scan *folder* for image files, pre-check sizes, populate list."""
         p = Path(folder)
+        # Natural order, as in the image list: mask2 before mask10.
         self._mask_files = sorted(
-            str(f)
-            for f in p.iterdir()
-            if f.is_file() and f.suffix.lower() in _MASK_EXTENSIONS
+            (
+                str(f)
+                for f in p.iterdir()
+                if f.is_file() and f.suffix.lower() in _MASK_EXTENSIONS
+            ),
+            key=lambda f: natural_key(Path(f).name),
         )
 
         # Pre-scan: read each mask's actual on-disk shape so we can
@@ -670,18 +679,35 @@ class BatchImportDialog(QDialog):
     # Assignment strategies
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _last_number(path: str) -> int | None:
+        """The last number in a file name (without extension), or None."""
+        numbers = re.findall(r"\d+", Path(path).stem)
+        return int(numbers[-1]) if numbers else None
+
     def _auto_match(self) -> None:
-        """Match masks to frames by extracting the last number in filename."""
+        """Pair each mask with the image whose file name ends in the same number.
+
+        image1, image6, image11 take mask1, mask6, mask11: the number names a
+        file, not a frame position.  Only when no image name carries a number
+        is the mask's number read as the 0-based frame index.
+        """
         self._assignments.clear()
+        frames_by_number: dict[int, list[int]] = {}
+        for idx, img in enumerate(self._image_files):
+            n = self._last_number(img)
+            if n is not None:
+                frames_by_number.setdefault(n, []).append(idx)
         for mf in self._mask_files:
             if mf in self._mismatched:
                 continue
-            numbers = re.findall(r"\d+", Path(mf).stem)
-            if not numbers:
+            n = self._last_number(mf)
+            if n is None:
                 continue
-            idx = int(numbers[-1])
-            if idx in self._required_frames:
-                self._assignments[idx] = mf
+            frames = frames_by_number.get(n, []) if frames_by_number else [n]
+            for idx in frames:
+                if idx in self._required_frames:
+                    self._assignments[idx] = mf
         self._refresh_display()
 
     def _assign_sequential(self) -> None:

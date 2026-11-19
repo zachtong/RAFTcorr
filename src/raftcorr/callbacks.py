@@ -3,8 +3,12 @@
 The library never prints. It reports through a :class:`Callbacks` object:
 
 * ``progress(fraction, message)``: fraction in ``[0, 1]``;
-* ``should_stop()``: polled between units of work; returning True makes the pipeline raise
-  :class:`StopRequested`;
+* ``should_stop()``: polled between units of work. Returning True ends the work early, in one
+  of two ways. :meth:`~raftcorr.engine.pipeline.Pipeline.run` stops tracking and returns the
+  frames computed so far (``DisplacementSeries.done`` says which; ``info.notes`` records the
+  stop); it does not raise. Everything else raises :class:`StopRequested`: a single pair
+  (``Pipeline.solve_pair``), :func:`~raftcorr.post.strain.compute_strain`, the exporters,
+  saving a project and downloading model weights;
 * ``log(message, level)``: level is one of :data:`LEVELS`.
 
 :func:`coerce` turns ``None``, a plain callable or a Callbacks into a Callbacks.
@@ -20,7 +24,7 @@ LEVELS: tuple[str, ...] = ("debug", "info", "warning", "error")
 
 
 class StopRequested(RuntimeError):
-    """Raised inside the pipeline when ``should_stop()`` returns True."""
+    """Raised by :func:`check_stop` when ``should_stop()`` returns True (``Pipeline.run`` catches it)."""
 
 
 @runtime_checkable

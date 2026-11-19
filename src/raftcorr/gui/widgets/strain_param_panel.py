@@ -175,8 +175,10 @@ class StrainParamPanel(QWidget):
         self._step_spin.setRange(1, _STEP_MAX)
         self._step_spin.setSuffix(" px")
         self._step_spin.setToolTip(self.tr(
-            "Spacing of the strain points: 1 computes strain at every pixel; "
-            "larger values are faster and lighter for long sequences."
+            "Spacing of the strain points: 1 keeps strain at every pixel; "
+            "larger values keep every n-th point, so the results take less "
+            "memory and smaller files for long sequences. The gauge fit still "
+            "runs at every pixel, so the computation takes about as long."
         ))
         adv.addRow(self.tr("Output spacing"), self._step_spin)
 

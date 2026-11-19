@@ -19,12 +19,13 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
-from raftcorr.gui.app_state import AppState
+from raftcorr.gui.app_state import AppState, RunState
 from raftcorr.gui.controllers.image_controller import ImageController
 from raftcorr.gui.theme_manager import themed
 from raftcorr.gui.widgets.collapsible_section import CollapsibleSection
@@ -190,7 +191,7 @@ class LeftSidebar(QWidget):
             "QCheckBox {{ color: {TEXT_SECONDARY}; font-size: 11px; "
             "margin: 2px 12px; }}"
         )
-        self._natural_sort_cb.toggled.connect(self._image_ctrl.set_natural_sort)
+        self._natural_sort_cb.toggled.connect(self._on_natural_sort_toggled)
         layout.addWidget(self._natural_sort_cb)
 
         # Image list: fixed height range — internal QTreeWidget handles its own
@@ -343,6 +344,47 @@ class LeftSidebar(QWidget):
         # Clamp so we don't scroll past the bottom of the content.
         target_y = max(scroll_bar.minimum(), min(scroll_bar.maximum(), target_y))
         scroll_bar.setValue(target_y)
+
+    def _on_natural_sort_toggled(self, enabled: bool) -> None:
+        """Re-sort the images, asking first when that would discard the user's work.
+
+        A new order renumbers the frames, so the image controller publishes a new set of
+        images and the ROIs, results and probes of the old numbering go.  On No the check
+        box goes back, without a reload.
+        """
+        ctrl = self._image_ctrl
+        if ctrl.reorders(enabled) and self._has_work_to_lose() and not self._confirm_resort():
+            cb = self._natural_sort_cb
+            was_blocked = cb.blockSignals(True)
+            cb.setChecked(not enabled)
+            cb.blockSignals(was_blocked)
+            return
+        ctrl.set_natural_sort(enabled)
+
+    def _has_work_to_lose(self) -> bool:
+        """Whether a new set of images would discard anything the user made."""
+        st = self._state
+        return bool(
+            st.per_frame_rois
+            or st.results is not None
+            or (st.probes is not None and len(st.probes) > 0)
+            or st.load_data is not None
+            or st.run_state != RunState.IDLE
+        )
+
+    def _confirm_resort(self) -> bool:
+        answer = QMessageBox.question(
+            self,
+            self.tr("Change the image order?"),
+            self.tr(
+                "Sorting the images differently renumbers the frames. The "
+                "Regions of Interest, results and probes of the current "
+                "frames will be discarded.\n\nSort the images again?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        return answer == QMessageBox.StandardButton.Yes
 
     def _update_badge(self) -> None:
         """Update the IMAGES section badge with current count."""

@@ -22,6 +22,40 @@ from ..post.strain import fill_trimmed as fill_trimmed_band
 from ..results import DisplacementSeries, StrainSeries
 
 
+def fill_untracked(values: np.ndarray, inside: np.ndarray, keep_empty: np.ndarray | None = None) -> np.ndarray:
+    """NaN points of ``inside`` filled from the nearest valid value ("Hide untracked regions" off).
+
+    The one rule of the main window, the strain window and exported pictures. Region by region,
+    as :func:`raftcorr.post.strain.fill_trimmed` fills the trimmed band: each point takes the value
+    of the nearest finite point of its own connected part of ``inside``, so the fill never takes
+    values from across a crack or a hole cut out of the region of interest. Points of
+    ``keep_empty`` (the edge-trimmed strain band) stay as they are: only "Fill trimmed edges"
+    fills them. Returns ``values`` itself when there is nothing to fill, else a new array.
+    """
+    from scipy import ndimage
+
+    finite = np.isfinite(values)
+    bad = inside & ~finite
+    if keep_empty is not None and keep_empty.shape == bad.shape:
+        bad &= ~keep_empty
+    if not bad.any() or not finite.any():
+        return values
+    out = values.copy()
+    labels, _n = ndimage.label(inside)
+    for lab, sl in enumerate(ndimage.find_objects(labels), start=1):
+        if sl is None:
+            continue
+        region = labels[sl] == lab
+        need = bad[sl] & region
+        src = finite[sl] & region
+        if not need.any() or not src.any():
+            continue
+        _d, (iy, ix) = ndimage.distance_transform_edt(~src, return_indices=True)
+        block = out[sl]                                     # a view: writes go to ``out``
+        block[need] = block[iy[need], ix[need]]
+    return out
+
+
 @dataclass(frozen=True)
 class FieldSpec:
     key: str
@@ -155,6 +189,16 @@ class FieldProvider:
         if trimmed is not None:
             vals = fill_trimmed_band(vals, trimmed)
         return vals, Placement(g.x0, g.y0, self.strain.step)
+
+    def trimmed_band(self, key: str, frame: int) -> np.ndarray | None:
+        """Edge-trimmed points of strain field *key* on *frame*, on the field's own grid.
+
+        None for a displacement field or when nothing is trimmed; :func:`fill_untracked` leaves
+        these points to "Fill trimmed edges".
+        """
+        if not ALL_FIELDS[key].is_strain or self.strain is None:
+            return None
+        return self.strain.trimmed_in(frame)
 
     def _velocity(self, frame: int) -> tuple[np.ndarray, np.ndarray]:
         s = self.series

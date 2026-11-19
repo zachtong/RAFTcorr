@@ -39,6 +39,19 @@ from raftcorr.gui.theme_manager import set_icon, themed
 from raftcorr.gui.widgets.roi_hint import HINT_STYLE
 from raftcorr.i18n import tr_args
 
+#: Border of a field whose text was refused (the run keeps the last valid value).
+_INVALID_STYLE = "QLineEdit {{ border: 1px solid {DANGER}; }}"
+
+
+class _ModelCombo(QComboBox):
+    """A combo box that says when its list is about to open (to refresh the item tooltips)."""
+
+    popup_about_to_show = Signal()
+
+    def showPopup(self) -> None:  # noqa: N802 - Qt override
+        self.popup_about_to_show.emit()
+        super().showPopup()
+
 
 class WorkflowTypePanel(QWidget):
     """Panel for high-level workflow parameters (tracking, model, refs)."""
@@ -64,7 +77,7 @@ class WorkflowTypePanel(QWidget):
             "Accumulative: every frame is compared directly with frame 1.\n"
             "Preferred whenever the motion stays within the model's reach:\n"
             "no error accumulates from frame to frame.\n\n"
-            "Incremental: each frame is compared with a later reference frame\n"
+            "Incremental: each frame is compared with an earlier reference frame\n"
             "and the steps are composed. Needed when the motion from frame 1\n"
             "exceeds the model's reach (large stretch or rotation); every step\n"
             "adds its error."
@@ -77,23 +90,15 @@ class WorkflowTypePanel(QWidget):
         layout.addLayout(row)
 
         # --- Model: the four RAFTcorr networks differ only in the encoder downsampling s ---
-        from raftcorr.models.zoo import MODELS, available_models
+        from raftcorr.models.zoo import MODELS
 
-        self._model = QComboBox()
-        avail = available_models()
-        summaries = {  # raftcorr.models.zoo summaries, translatable
-            "s1": self.tr("finest spatial resolution; small displacements"),
-            "s2": self.tr("fine resolution, several times faster than s1; small to moderate displacements"),
-            "s4": self.tr("balanced resolution and capture range"),
-            "s8": self.tr("largest capture range, coarsest resolution; large motion and rotation"),
-        }
+        self._model = _ModelCombo()
         for key, spec in MODELS.items():
             self._model.addItem(f"RAFTcorr-{key} ({spec.lookup_radius_px} px)", key)
-            tip = tr_args(self.tr("%1: %2.\nReach (nominal lookup radius 32 s): %3 px."),
-                          spec.name, summaries.get(key, spec.summary), spec.lookup_radius_px)
-            if avail.get(key) is None:
-                tip += "\n" + self.tr("Weights not installed.")
-            self._model.setItemData(self._model.count() - 1, tip, Qt.ItemDataRole.ToolTipRole)
+        self._refresh_model_tooltips()
+        # Weights arrive while the application runs (Models window, first-use download, import):
+        # whether they are installed is checked again each time the list opens.
+        self._model.popup_about_to_show.connect(self._refresh_model_tooltips)
         _midx = self._model.findData(state.model)
         self._model.setCurrentIndex(_midx if _midx >= 0 else 2)
         self._model.setToolTip(self.tr(
@@ -171,10 +176,11 @@ class WorkflowTypePanel(QWidget):
 
         self._custom_edit = QLineEdit()
         self._custom_edit.setPlaceholderText(self.tr("e.g. 5, 10, 20"))
-        self._custom_edit.setToolTip(self.tr(
+        self._custom_tip = self.tr(
             "Frame numbers (as in the image list) to use as reference frames, separated by "
             "commas. Frame 1 is always the first reference."
-        ))
+        )
+        self._custom_edit.setToolTip(self._custom_tip)
         self._custom_row = QHBoxLayout()
         self._custom_lbl = QLabel(self.tr("Reference Frames"))
         self._custom_lbl.setFixedWidth(108)
@@ -190,6 +196,7 @@ class WorkflowTypePanel(QWidget):
         )
         self._model.currentIndexChanged.connect(self._on_model_changed)
         state.params_changed.connect(self._sync_from_state)
+        state.images_changed.connect(self._sync_from_state)     # the valid reference frames change
         self._ref_mode.currentIndexChanged.connect(self._on_ref_mode_changed)
         self._interval_spin.valueChanged.connect(
             lambda v: state.set_param("inc_ref_interval", v)
@@ -216,9 +223,30 @@ class WorkflowTypePanel(QWidget):
         if key and key != state.model:
             state.set_param("model", key)
 
+    def _refresh_model_tooltips(self) -> None:
+        """Item tooltips: what each model is for, and whether its weights are installed."""
+        from raftcorr.models import zoo
+
+        avail = zoo.available_models()
+        summaries = {  # raftcorr.models.zoo summaries, translatable
+            "s1": self.tr("finest spatial resolution; small displacements"),
+            "s2": self.tr("fine resolution, several times faster than s1; small to moderate displacements"),
+            "s4": self.tr("balanced resolution and capture range"),
+            "s8": self.tr("largest capture range, coarsest resolution; large motion and rotation"),
+        }
+        for i in range(self._model.count()):
+            key = self._model.itemData(i)
+            spec = zoo.MODELS[key]
+            tip = tr_args(self.tr("%1: %2.\nReach (nominal lookup radius 32 s): %3 px."),
+                          spec.name, summaries.get(key, spec.summary), spec.lookup_radius_px)
+            if avail.get(key) is None:
+                tip += "\n" + self.tr("Weights not installed.")
+            self._model.setItemData(i, tip, Qt.ItemDataRole.ToolTipRole)
+
     def _sync_from_state(self) -> None:
-        """Follow changes made elsewhere (model suggestion, project loading)."""
+        """Follow changes made elsewhere (model suggestion, project loading, new images)."""
         state = AppState.instance()
+        self._drop_out_of_range_refs()
         for combo, value in ((self._model, state.model), (self._tracking_mode, state.tracking_mode),
                              (self._ref_mode, state.inc_ref_mode)):
             idx = combo.findData(value)
@@ -232,9 +260,14 @@ class WorkflowTypePanel(QWidget):
         self._interval_lbl.setVisible(mode == "every_n")
         self._custom_edit.setVisible(mode == "custom")
         self._custom_lbl.setVisible(mode == "custom")
+        if self._interval_spin.value() != state.inc_ref_interval:
+            self._interval_spin.blockSignals(True)
+            self._interval_spin.setValue(state.inc_ref_interval)
+            self._interval_spin.blockSignals(False)
         shown = ", ".join(str(k + 1) for k in state.inc_custom_refs)   # 1-based, as on screen
         if not self._custom_edit.hasFocus() and self._custom_edit.text() != shown:
             self._custom_edit.setText(shown)
+            self._mark_custom_refs("")                 # the field shows what the run uses again
         self._advice.setText(state.model_advice)
         self._advice.setVisible(bool(state.model_advice))
 
@@ -255,11 +288,46 @@ class WorkflowTypePanel(QWidget):
         self._custom_edit.setVisible(mode == "custom")
         self._custom_lbl.setVisible(mode == "custom")
 
+    def custom_refs_invalid(self) -> bool:
+        """True while the Reference Frames field holds text that was refused."""
+        return bool(AppState.instance().inc_custom_refs_error)
+
+    def _mark_custom_refs(self, problem: str) -> None:
+        """Mark the Reference Frames field as refused (``problem`` says why) or as valid ("")."""
+        AppState.instance().inc_custom_refs_error = problem
+        themed(self._custom_edit, _INVALID_STYLE if problem else "")
+        self._custom_edit.setToolTip(problem or self._custom_tip)
+
+    @staticmethod
+    def _last_valid_ref() -> int | None:
+        """The last frame (1-based) that can be a reference, N - 1; None before images are loaded."""
+        n = len(AppState.instance().image_files)
+        return n - 1 if n >= 2 else None
+
+    def _drop_out_of_range_refs(self) -> None:
+        """Keep reference frames the run cannot use (fewer images, an older project) out of it."""
+        state = AppState.instance()
+        last = self._last_valid_ref()
+        if last is None:
+            return
+        dropped = [k for k in state.inc_custom_refs if k + 1 > last]
+        if not dropped:
+            return
+        state.inc_custom_refs = [k for k in state.inc_custom_refs if k + 1 <= last]
+        state.log_message.emit(tr_args(self.tr(
+            "Reference frames %1 dropped: a reference must be one of the frames 1 to %2 (the last frame "
+            "cannot be a reference)."), ", ".join(str(k + 1) for k in dropped), last), "warn")
+        state.params_changed.emit()
+
     def _on_custom_refs_changed(self) -> None:
-        """Parse the frame numbers (1-based, as on screen) into 0-based reference indices."""
+        """Parse the frame numbers (1-based, as on screen) into 0-based reference indices.
+
+        Refused text is marked and explained in the log; the run keeps the last valid frames.
+        """
         state = AppState.instance()
         text = self._custom_edit.text().strip()
         if not text:
+            self._mark_custom_refs("")
             state.inc_custom_refs = []
             state.params_changed.emit()
             return
@@ -267,9 +335,19 @@ class WorkflowTypePanel(QWidget):
             numbers = [int(x.strip()) for x in text.split(",") if x.strip()]
         except ValueError:
             numbers = []
+        last = self._last_valid_ref()
         if not numbers or min(numbers) < 1:
-            state.log_message.emit(self.tr(
-                "Invalid reference frames: use frame numbers from 1 on, separated by commas."), "warn")
+            problem = self.tr("Invalid reference frames: use frame numbers from 1 on, separated by commas.")
+        elif last is not None and max(numbers) > last:
+            beyond = ", ".join(str(n) for n in sorted(set(numbers)) if n > last)
+            problem = tr_args(self.tr(
+                "Invalid reference frames %1: use frames 1 to %2, separated by commas (the last frame "
+                "cannot be a reference)."), beyond, last)
+        else:
+            problem = ""
+        self._mark_custom_refs(problem)
+        if problem:
+            state.log_message.emit(problem, "warn")
             return
         state.inc_custom_refs = sorted({n - 1 for n in numbers if n > 1})
         state.params_changed.emit()

@@ -127,20 +127,6 @@ def percentile_range(values: NDArray, colormap: str = "turbo") -> tuple[float, f
     return rng.vmin, rng.vmax
 
 
-def _fill_untracked(values: NDArray, inside: NDArray) -> NDArray:
-    """Nearest valid value for NaN points inside ``inside`` ('Hide untracked regions' off)."""
-    from scipy import ndimage
-
-    finite = np.isfinite(values)
-    bad = inside & ~finite
-    if not bad.any() or not finite.any():
-        return values
-    _, (ii, jj) = ndimage.distance_transform_edt(~finite, return_indices=True)
-    out = values.copy()
-    out[bad] = values[ii[bad], jj[bad]]
-    return out
-
-
 def _safe_colormap(name: str) -> str:
     """*name* when matplotlib knows it, else jet (pyALDIC's silent fallback)."""
     from raftcorr.viz.colormaps import lut
@@ -208,7 +194,9 @@ class FieldRenderer:
             inside = series.mask[::step, ::step] if step > 1 else series.mask
             vals = np.where(inside, np.asarray(vals, dtype=np.float32), np.float32(np.nan))
             if not hide_untracked:
-                vals = _fill_untracked(vals, inside)
+                from raftcorr.viz.fields import fill_untracked
+
+                vals = fill_untracked(vals, inside, provider.trimmed_band(key, frame))
         if vals.size == 0 or not np.isfinite(vals).any():
             return None  # nothing to draw: a 0..1 colorbar would mislead
         shown_vals = vals * np.float32(factor) if factor != 1.0 else vals

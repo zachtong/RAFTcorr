@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QSlider,
     QWidget,
 )
@@ -105,7 +106,10 @@ class StrainNavigator(QWidget):
         for label, _ms in _SPEED_PRESETS:
             self._speed_combo.addItem(label)
         self._speed_combo.setCurrentIndex(1)   # default 2 fps
-        self._speed_combo.setFixedWidth(68)
+        # As wide as its longest item in the current font and style (padding, drop-down
+        # arrow): a fixed width clipped "2 fps" to "2 fp:" under the application style.
+        self._speed_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self._speed_combo.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._speed_combo.setToolTip(self.tr("Playback speed"))
         self._speed_combo.currentIndexChanged.connect(self._on_speed_changed)
         layout.addWidget(self._speed_combo)

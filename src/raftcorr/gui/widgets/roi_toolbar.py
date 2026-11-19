@@ -151,7 +151,7 @@ class ROIToolbar(QWidget):
 
         self._btn_clear = QPushButton(self.tr("Clear"))
         self._btn_clear.setToolTip(self.tr(
-            "Clear all Region of Interest masks"))
+            "Clear the Region of Interest of the current frame"))
         self._btn_clear.setFixedHeight(26)
         self._btn_clear.clicked.connect(lambda: self.clear_requested.emit())
         action_row.addWidget(self._btn_clear)

@@ -21,8 +21,12 @@ the inputs; a missing input opens a \ui{Cannot start analysis} dialog that says 
   \item fewer than 2 images: \emph{Need at least 2 images. Load an image folder in the IMAGES
         section before running DIC.}
   \item no region of interest on frame~1: \emph{Define a Region of Interest first: draw or
-        import one for frame 1 in the REGION OF INTEREST section.} A region with no pixel
-        selected counts as no region.
+        import one for frame 1 in the REGION OF INTEREST section.}
+  \item a region of interest on frame~1 with no pixel selected, such as an all-black mask from
+        \ui{Batch Import}: \emph{The Region of Interest of frame 1 is empty (no pixels selected).
+        Draw it again in the REGION OF INTEREST section.}
+  \item refused text in the \ui{Reference Frames} field, with \ui{Custom Frames}: the dialog
+        repeats the reason the field gives (Section~\ref{sec:workflow});
   \item a setting the run cannot use: the same dialog names it.
 \end{itemize}
 
@@ -62,7 +66,8 @@ strain window shows \emph{Frame $k$ was not computed.}, and exported data files 
 (with a \file{Done} array that marks the computed frames, Section~\ref{sec:export}).
 
 If you cancel before the first frame is finished, nothing replaces the previous results
-(\emph{No frame was computed; the previous results are kept.}). Cancelling during the model
+(\emph{No frame was computed; the previous results are kept.}), and the strain window does not
+open. Cancelling during the model
 download stops the download; the \ui{LOG} says \emph{Stopped.}
 
 \begin{warnbox}
@@ -72,8 +77,8 @@ cancel if you still need the previous results.
 \end{warnbox}
 
 A run that stops on an error is different: it returns no frames at all. An \ui{Analysis failed}
-dialog shows the cause, the \ui{LOG} holds the full traceback, and the previous results, if any,
-stay.
+dialog shows the cause, the \ui{LOG} holds the full traceback, the previous results, if any,
+stay, and the strain window does not open.
 
 \subsection{The PROGRESS area}
 
@@ -147,9 +152,10 @@ cache, makes the windows smaller (at most 55\,\% of the area of the largest wind
 solves the pair again; the \ui{LOG} shows \emph{out of device memory; retrying with windows of at
 most \ldots{} px}. After three such retries the run stops with an \ui{Analysis failed} dialog
 that begins with \emph{The GPU ran out of memory. Close other GPU programs, choose a model with a
-larger s, or lower the memory fraction (Advanced).} The memory fraction is the \ui{GPU Memory}
-setting under \ui{ADVANCED}. A budget so small that a window would fall below the smallest size
-the model accepts also stops the run, with a message that gives both sizes.
+larger s, or lower GPU Memory in ADVANCED.} A budget so small that a window would fall below the
+smallest size the model accepts also stops the run, with a message that gives both sizes and
+begins with \emph{There is not enough free GPU memory for the smallest window this model accepts.
+Close other GPU programs, or raise GPU Memory in ADVANCED if it is set low.}
 
 \subsection{Tracking quality warning}
 \label{sec:tracking-quality}

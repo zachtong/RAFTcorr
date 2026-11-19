@@ -104,6 +104,9 @@ class AppState(QObject):
         self.inc_ref_mode: str = "every_frame"
         self.inc_ref_interval: int = 5
         self.inc_custom_refs: list[int] = []
+        # Why the Reference Frames text was refused ("" = it shows what the run uses); a run with
+        # custom reference frames is refused while it is set, instead of using older frames.
+        self.inc_custom_refs_error: str = ""
         # RAFTcorr analysis parameters (paper defaults)
         self.model: str = "s4"
         self.device: str = "auto"

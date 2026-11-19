@@ -15,11 +15,10 @@ import numpy as np
 from numpy.typing import NDArray
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QImage, QPixmap
-from scipy import ndimage
 
 from raftcorr.engine.mapping import sample_bilinear
 from raftcorr.gui.app_state import DISPLAY_FIELDS
-from raftcorr.viz.fields import ALL_FIELDS
+from raftcorr.viz.fields import ALL_FIELDS, fill_untracked
 from raftcorr.viz.render import ColorRange, colorize
 
 _PIXMAP_CACHE = 48
@@ -65,17 +64,6 @@ def resolve_range(state, values: NDArray) -> tuple[float, float]:
     return rng.vmin, rng.vmax
 
 
-def _fill_untracked(values: NDArray, inside: NDArray) -> NDArray:
-    """Nearest valid value for NaN points inside ``inside`` ('Hide untracked regions' off)."""
-    bad = inside & ~np.isfinite(values)
-    if not bad.any() or not np.isfinite(values).any():
-        return values
-    _, (ii, jj) = ndimage.distance_transform_edt(~np.isfinite(values), return_indices=True)
-    out = values.copy()
-    out[bad] = values[ii[bad], jj[bad]]
-    return out
-
-
 class VizController:
     """Cached rendering of the main window's field."""
 
@@ -116,7 +104,7 @@ class VizController:
             vals, pl = prov.values(key, frame)
             vals = np.where(prov.series.mask, vals, np.nan)
             if not state.hide_untracked:
-                vals = _fill_untracked(np.asarray(vals, dtype=np.float32), prov.series.mask)
+                vals = fill_untracked(np.asarray(vals, dtype=np.float32), prov.series.mask)
         vals = np.asarray(vals, dtype=np.float32)
         if not np.isfinite(vals).any():  # nothing tracked on this frame: draw nothing
             self.shown = None

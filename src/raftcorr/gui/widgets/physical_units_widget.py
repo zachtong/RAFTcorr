@@ -4,7 +4,7 @@ Shared between the main window and the strain post-processing window via
 :class:`AppState` signals.  A change in either window is automatically
 reflected in the other through the ``physical_units_changed`` signal.
 
-Layout mirrors the VelocitySettingsWidget style:
+Layout:
 
     [checkbox] Use physical units
     Pixel size  [spinbox] [unit▼ (nm / µm / mm / cm / m / inch)] / px

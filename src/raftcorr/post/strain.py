@@ -307,7 +307,8 @@ def compute_strain(series: DisplacementSeries, cfg: StrainConfig | None = None, 
         if trimmed is not None:
             trimmed[k] = cut
         done[k] = True
-        cb.progress((i + 1) / max(1, len(todo)), f"strain: frame {k} ({i + 1}/{len(todo)})")
+        # Frame numbers a person reads count from 1, as in the application
+        cb.progress((i + 1) / max(1, len(todo)), f"strain: frame {k + 1} ({i + 1}/{len(todo)})")
     settings = StrainSettings(
         measure=cfg.measure, gauge_px=cfg.gauge_px, weighting=cfg.weighting, poly_order=cfg.poly_order,
         step=cfg.step, gaussian_sigma=cfg.gaussian_sigma, smoothing_sigma=cfg.smoothing_sigma,

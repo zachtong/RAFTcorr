@@ -16,7 +16,8 @@ the settings of your user account (Section~\ref{sec:overview-files}).
     its lines.
   \item[\menu{Settings}{Language}]
     The language of the interface: English, Simplified Chinese, Traditional Chinese, Japanese,
-    Korean, German, French or Spanish, each listed under its own name. RAFTcorr saves your choice
+    Korean, German, French or Spanish, each listed under its own name. The language in use is the
+    one entry with a check mark. RAFTcorr saves your choice
     and shows \ui{Language changed}, which asks you to restart: the windows already open keep
     their labels until then. The first time RAFTcorr starts, it takes the language of the
     operating system when it has a translation for it (Portuguese falls back to Spanish), and
@@ -56,8 +57,9 @@ line.
     Projects, \file{.raftcorr} files that hold the images, the regions of interest, the settings
     and optionally the results (Section~\ref{sec:projects}).
   \item[\menu{File}{Export Results…}]
-    The export dialog, as the \ui{Export Results} button opens it (Section~\ref{sec:export}). It
-    does nothing while there are no results.
+    The export dialog, as the \ui{Export Results} button opens it (Section~\ref{sec:export}).
+    While there are no results, it opens nothing and writes \emph{Run DIC first -{}- no
+    displacement results to export.} in the \ui{LOG}.
   \item[\menu{File}{Associate .raftcorr files with RAFTcorr…}]
     Windows only: makes a double-click on a project file open this copy of RAFTcorr
     (Section~\ref{sec:projects-doubleclick}).
@@ -96,7 +98,9 @@ answers to. On macOS, press \kbd{Cmd} where the table says \kbd{Ctrl}.
   \midrule
   \kbd{Up}, \kbd{Down}, \kbd{Page Up}, \kbd{Page Down}, \kbd{Home}, \kbd{End}
     & In the image list: move to another frame & \ref{sec:images} \\
-  \kbd{Esc} & On the canvas: cancel the shape being drawn & \ref{sec:roi} \\
+  \kbd{Esc} & On the canvas: cancel the shape being drawn, or picked in the \ui{+ Add} or
+    \ui{Cut} menu and not yet started & \ref{sec:roi} \\
+  \kbd{Enter} & On the canvas: close the polygon being drawn & \ref{sec:roi} \\
   \kbd{Esc} & In the \ui{Analysis} tab: cancel the placement of a probe, or deselect & \ref{sec:analysis} \\
   \kbd{Delete} & In the \ui{Analysis} tab: delete the selected probe & \ref{sec:analysis} \\
   \kbd{F2} & In the \ui{Analysis} tab: rename the selected probe & \ref{sec:analysis} \\

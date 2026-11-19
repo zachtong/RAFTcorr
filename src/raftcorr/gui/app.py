@@ -191,11 +191,14 @@ class MainWindow(QMainWindow):
 
         language_menu = settings_menu.addMenu(self.tr("Language"))
         current = LanguageManager.saved_preference()
+        language_group = QActionGroup(self)      # one language checked; clicking it keeps it checked
+        language_group.setExclusive(True)
         for code, display_name in SUPPORTED_LANGUAGES.items():
             act = QAction(display_name, self)
             act.setCheckable(True)
             act.setChecked(code == current)
             act.triggered.connect(lambda _checked=False, c=code: self._on_language_selected(c))
+            language_group.addAction(act)
             language_menu.addAction(act)
 
         help_menu = menu_bar.addMenu(self.tr("&Help"))
@@ -299,7 +302,8 @@ class MainWindow(QMainWindow):
     def open_project_path(self, path: str) -> None:
         from raftcorr.io.project import load_project
 
-        self._run_task(self.tr("Opening the project"), lambda cb: load_project(path),
+        # The dialog's callbacks: its bar follows the frames read, and Cancel stops between frames.
+        self._run_task(self.tr("Opening the project"), lambda cb: load_project(path, cb),
                        lambda prj: self._apply_project(prj, Path(path)))
 
     def _apply_project(self, prj, path: Path) -> None:
@@ -346,11 +350,22 @@ class MainWindow(QMainWindow):
             state.log_message.emit(self.tr("Wait for the running task to finish."), "warn")
             return
         from raftcorr.config import RunConfig
-        from raftcorr.models.advisor import sample_frames, survey
+        from raftcorr.models.advisor import survey, survey_pairs
+        from raftcorr.schedule import FrameSchedule
 
         seq = state.sequence
         roi = state.roi_mask if state.roi_mask is not None else np.ones(seq.shape, bool)
-        pairs = [(0, k) for k in sample_frames(len(seq))]
+        # The pairs the run would compare: in incremental tracking only a frame's step from its
+        # reference matters, not its displacement from frame 1.
+        tracking = state.tracking_config()
+        try:
+            schedule = FrameSchedule.from_mode(tracking.mode, len(seq), tracking.every_n, tracking.key_frames)
+        except ValueError as exc:
+            state.log_message.emit(str(exc), "warn")
+            return
+        pairs = survey_pairs(schedule)
+        incremental = not schedule.is_accumulative
+        pair_text = self.tr("Survey: frame %1 against frame %2")      # read in the survey's thread
         cfg = RunConfig(model="s8", device=state.device, iters=state.iters)
         cache = self._pipeline_ctrl._loaded_cache
 
@@ -366,18 +381,33 @@ class MainWindow(QMainWindow):
                 cache.clear()
                 loaded = load_model(p, cfg.device)
                 cache[key] = loaded
-            return survey(Pipeline(cfg, cb, loaded), seq, roi, pairs, cb)
+            return survey(Pipeline(cfg, cb, loaded), seq, roi, pairs, cb,
+                          label=lambda r, k: tr_args(pair_text, k + 1, r + 1))   # 1-based, as on screen
 
         def done(advice) -> None:
             from raftcorr.models.zoo import MODELS
 
-            frames = ", ".join(str(k + 1) for k, _ in advice.per_frame)   # 1-based, as on screen
-            text = tr_args(self.tr(
-                "Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile "
-                "over frames %3); RAFTcorr-%1 reaches %4 px."),
-                advice.key, f"{advice.max_displacement_px:.1f}", frames, MODELS[advice.key].lookup_radius_px)
-            if advice.beyond_reach:
+            reach = MODELS[advice.key].lookup_radius_px
+            dmax = f"{advice.max_displacement_px:.1f}"
+            if incremental:
+                steps = ", ".join(f"{r + 1} → {k + 1}" for r, k in pairs)   # 1-based, as on screen
+                text = tr_args(self.tr(
+                    "Suggested: RAFTcorr-%1. Largest displacement of the region of interest between a frame and "
+                    "its reference frame about %2 px (99th percentile over the pairs reference → frame %3); "
+                    "RAFTcorr-%1 reaches %4 px."), advice.key, dmax, steps, reach)
+            else:
+                frames = ", ".join(str(k + 1) for k, _ in advice.per_frame)   # 1-based, as on screen
+                text = tr_args(self.tr(
+                    "Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th "
+                    "percentile over frames %3); RAFTcorr-%1 reaches %4 px."), advice.key, dmax, frames, reach)
+            if advice.beyond_reach and not incremental:
                 text += " " + self.tr("This exceeds even the reach of RAFTcorr-s8: use incremental tracking.")
+            elif advice.beyond_reach and tracking.mode == "incremental":
+                text += " " + self.tr("This exceeds even the reach of RAFTcorr-s8: the motion between "
+                                      "consecutive frames is too large to track.")
+            elif advice.beyond_reach:
+                text += " " + self.tr("This exceeds even the reach of RAFTcorr-s8: update the reference "
+                                      "frame more often.")
             state.model_advice = text
             state.log_message.emit(state.model_advice, "info")
             state.set_param("model", advice.key)
@@ -573,8 +603,17 @@ class MainWindow(QMainWindow):
             state.set_frame_roi(
                 state.current_frame, self._roi_ctrl.mask.copy()
             )
-        except IOError:
-            pass
+        except (OSError, ValueError) as exc:   # missing, not an image, or undecodable
+            self._log_mask_read_failure(path, exc)
+
+    def _log_mask_read_failure(self, path: str, exc: Exception) -> None:
+        """Tell the user which mask file could not be read, and why."""
+        from raftcorr.i18n import tr_args
+        self._state.log_message.emit(
+            tr_args(self.tr("Could not read the mask file %1: %2"),
+                    Path(path).name, str(exc)),
+            "warn",
+        )
 
     def _no_own_roi_hint(self) -> str | None:
         """Explain an empty ROI buffer when the frame itself is the reason.
@@ -605,14 +644,34 @@ class MainWindow(QMainWindow):
             state.current_frame + 1,
         )
 
+    def _roi_save_suggestion(self) -> str:
+        """Default path offered by Save: next to the image folder, never inside it.
+
+        Loading a folder takes every image in it, so a mask saved among the
+        frames would come back as a frame -- and as the reference if it sorts
+        first.  An anchored path, not a bare name: a relative path is resolved
+        against the working directory, which for a frozen app launched from a
+        shortcut or a file association is not the user's project folder.
+        """
+        state = self._state
+        name = f"roi_frame{state.current_frame + 1}.png"   # 1-based, as on screen
+        folder = state.image_folder
+        if not folder:
+            return name
+        folder = Path(folder)
+        return str(folder.parent / f"{folder.name}_{name}")
+
     def _on_roi_save(self) -> None:
-        """Save the current ROI mask to a PNG file."""
+        """Save the current frame's ROI mask to a PNG file."""
         if self._roi_ctrl is None:
             self._state.log_message.emit(
                 self.tr("No Region of Interest to save — load images first."),
                 "warn",
             )
             return
+        # Save what the current frame owns, not whatever the buffer was last
+        # loaded with (see _on_roi_invert).
+        self._load_roi_buffer_for_current_frame()
         if not self._roi_ctrl.mask.any():
             self._state.log_message.emit(
                 self._no_own_roi_hint()
@@ -621,15 +680,10 @@ class MainWindow(QMainWindow):
             )
             return
         self._enter_roi_editing()
-        # An anchored suggestion, not a bare name: a relative path is resolved
-        # against the working directory, which for a frozen app launched from a
-        # shortcut or a file association is not the user's project folder.
-        folder = self._state.image_folder
-        suggested = str(Path(folder) / "roi_mask.png") if folder else "roi_mask.png"
         path, _ = QFileDialog.getSaveFileName(
             self,
             self.tr("Save Region of Interest Mask"),
-            suggested,
+            self._roi_save_suggestion(),
             self.tr("PNG Images") + " (*.png);;"
             + self.tr("All Files") + " (*)",
         )
@@ -660,6 +714,10 @@ class MainWindow(QMainWindow):
             self._state.log_message.emit(hint, "warn")
             return
         self._enter_roi_editing()
+        # The buffer only mirrors the frame while editing: a mask that arrived
+        # by the image list, Batch Import or a project left it holding another
+        # frame's mask.  per_frame_rois is the truth; start from it.
+        self._load_roi_buffer_for_current_frame()
         self._roi_ctrl.invert()
         self._canvas_area.canvas.update_roi_overlay()
         state = self._state
@@ -735,8 +793,8 @@ class MainWindow(QMainWindow):
                 mask = read_mask_as_bool(path, target_shape=img_shape)
                 state.per_frame_rois[frame_idx] = mask
                 count += 1
-            except (FileNotFoundError, IOError) as e:
-                state.log_message.emit(f"Failed to read: {e}", "warn")
+            except (OSError, ValueError) as exc:
+                self._log_mask_read_failure(path, exc)
 
         if count:
             state.log_message.emit(
@@ -771,13 +829,24 @@ class MainWindow(QMainWindow):
         an extra click for an almost-always-yes answer. The strain window is
         non-modal and the user can close it immediately if they only need
         displacement, so auto-opening is strictly less friction.
+
+        Only results this run produced open it: a run that fails, or that is
+        stopped before its first frame, also ends in DONE when older results
+        are kept (PipelineController._on_finished), and must not open it. The
+        controller sets new results before DONE, so the results are compared
+        with those held when the run started.
         """
         from raftcorr.gui.app_state import RunState
         if new_state == RunState.RUNNING:
             # A new run makes the last run's tracking warning stale.
             self._close_run_warning()
+            self._results_before_run = self._state.results
             return
-        if new_state != RunState.DONE or self._state.results is None:
+        results = self._state.results
+        if new_state != RunState.DONE or results is None:
+            return
+        # Set on RUNNING; a project opened before any run has none to compare with.
+        if results is getattr(self, "_results_before_run", None):
             return
         self._on_open_strain_window()
 
@@ -828,12 +897,13 @@ def _warning_parent(
 def user_data_dir() -> Path:
     """Per-user writable directory for logs and other app-owned state.
 
-    Deliberately not next to the executable: a onedir bundle is routinely
-    unzipped into Program Files, onto a network share, or anywhere else the
-    user has no write permission -- and a macOS app bundle must not change
-    once signed. Each platform's own place, never a bare folder in the home
-    directory: %LOCALAPPDATA% on Windows, Application Support on macOS,
-    $XDG_DATA_HOME on Linux. packaging/rthook_pyaldic.py mirrors this.
+    Deliberately not next to the executable or the package: a bundle or a
+    Setup installation routinely sits in Program Files, on a network share,
+    or anywhere else the user has no write permission -- and a macOS app
+    bundle must not change once signed. Each platform's own place, never a
+    bare folder in the home directory: %LOCALAPPDATA% on Windows,
+    Application Support on macOS, $XDG_DATA_HOME on Linux. The log file is
+    ``logs/RAFTcorr.log`` here (:func:`_configure_logging`).
     """
     home = Path(os.path.expanduser("~"))
     if sys.platform == "win32":
@@ -846,32 +916,52 @@ def user_data_dir() -> Path:
 
 
 
-# Path of the log file, once one has been opened. None when not frozen.
+# Path of the log file, once one has been opened. None until then, or when
+# the user data folder is not writable.
 _LOG_FILE: Path | None = None
+# The log rotates at this size, keeping this many older files beside it.
+_LOG_MAX_BYTES = 2 * 1024 * 1024
+_LOG_BACKUPS = 3
 
 
 def _configure_logging() -> None:
-    """Send the logging stream to a file when there is no console.
+    """Write the logging stream to ``user_data_dir()/logs/RAFTcorr.log``.
 
-    A windowed PyInstaller build has ``sys.stdout is None``, which makes every
-    ``print`` a silent no-op and leaves ``logging``'s last-resort handler with
-    nowhere to write. Without a file the application has no way at all to
-    report a startup failure -- which is precisely when it fails.
+    Always, however the application was started: a windowed build and the
+    Setup installation (``pythonw -m raftcorr``) have no console at all
+    (``sys.stdout is None``, every ``print`` a silent no-op), and a pip
+    installation started from a shortcut has none either. Without a file
+    the application has no way to report a startup failure -- which is
+    precisely when it fails -- and messages such as "see the application
+    log" would point to nothing. The file rotates (``_LOG_MAX_BYTES``,
+    ``_LOG_BACKUPS`` older files). When a console exists, warnings and
+    errors also go to it, as Python's last-resort handler did before.
+    Calling it again does nothing.
     """
     global _LOG_FILE
-    if not getattr(sys, "frozen", False):
+    if _LOG_FILE is not None:
         return
+    from logging.handlers import RotatingFileHandler
+
     try:
         log_dir = user_data_dir() / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / "RAFTcorr.log"
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-            handlers=[logging.FileHandler(log_file, encoding="utf-8")],
-        )
+        handler = RotatingFileHandler(log_file, maxBytes=_LOG_MAX_BYTES, backupCount=_LOG_BACKUPS,
+                                      encoding="utf-8")
     except OSError:
         return  # a read-only profile is not a reason to refuse to start
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    handler.setFormatter(formatter)
+    root = logging.getLogger()
+    root.addHandler(handler)
+    if sys.stderr is not None:  # a handler on the root logger silences the last-resort one
+        console = logging.StreamHandler()
+        console.setLevel(logging.WARNING)
+        console.setFormatter(formatter)
+        root.addHandler(console)
+    if root.getEffectiveLevel() > logging.INFO:
+        root.setLevel(logging.INFO)
     _LOG_FILE = log_file
 
 

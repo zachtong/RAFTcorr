@@ -396,8 +396,9 @@ class ExportDialog(QDialog):
         chk.setToolTip(self.tr(
             "Leave points without a result transparent in the pictures, for "
             "example material that left the field of view, instead of filling "
-            "them with the nearest value inside the region of interest. Data "
-            "files always keep NaN there."))
+            "them with the nearest value inside the region of interest. Applies "
+            "to the Reference frame view only: the Deformed frame view always "
+            "leaves them empty. Data files always keep NaN there."))
         return chk
 
     def _build_images_tab(self) -> QWidget:

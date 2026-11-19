@@ -30,13 +30,21 @@ from PySide6.QtWidgets import (
 )
 
 from raftcorr.export.figure_layout import FONT_FAMILIES, ColorbarStyle
-from raftcorr.export.figures import FrameStyle, _crop_box, color_range, compose, figure_rgba, render_figure
+from raftcorr.export.figures import (
+    FrameStyle,
+    _crop_box,
+    color_range,
+    colorbar_label,
+    compose,
+    figure_rgba,
+    render_figure,
+)
 from raftcorr.gui.dialogs.export_widgets import FieldImageConfig, FieldRow, field_label
 from raftcorr.gui.support.colormaps import COLORMAP_NAMES
 from raftcorr.gui.theme_manager import themed
 from raftcorr.gui.widgets.double_spin import LocaleSafeDoubleSpinBox
 from raftcorr.gui.widgets.range_mode import AutoFixedSelector
-from raftcorr.viz.fields import ALL_FIELDS, FieldProvider, Units
+from raftcorr.viz.fields import FieldProvider, Units
 
 _PREVIEW_DPI = 80
 
@@ -307,7 +315,7 @@ class ExportPreview(QWidget):
         if style.crop_to_roi:   # the crop export_frames applies
             x0, y0, x1, y1 = _crop_box(self._provider)
             rgba = rgba[y0:y1, x0:x1]
-        label = f"{style.field} ({units.unit(ALL_FIELDS[style.field])})"   # the label export_frames writes
+        label = colorbar_label(style.field, units)   # the label export_frames writes
         fig = render_figure(rgba, replace(style, dpi=_PREVIEW_DPI), rng, label, "")
         return figure_rgba(fig)
 

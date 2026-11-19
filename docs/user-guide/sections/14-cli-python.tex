@@ -65,7 +65,8 @@ sorted in natural order with the first one as the reference image, and writes th
   \file{-{}-edge-trim A} & 0.7 & leave strain empty within $A \times (\text{gauge} - 1)/2$\,px of an
     edge, 0 to 1; 0 keeps every point \\
   \file{-{}-out FILE}    & none & data file: \file{.h5}, \file{.hdf5}, \file{.mat} or \file{.npz} \\
-  \file{-{}-project FILE}& none & also save a \file{.raftcorr} project with the results \\
+  \file{-{}-project FILE}& none & also save a \file{.raftcorr} project with the results and, with
+    \file{-{}-strain}, the strain settings used \\
   \file{-{}-overwrite}   & off & replace existing output files \\
   \file{-{}-quiet}       & off & hide the information lines; progress, warnings and errors remain \\
   \bottomrule
@@ -78,11 +79,16 @@ The data file holds every variable of Table~\ref{tab:export-variables}, with the
 spacing 1\,px, no pre-fit smoothing, never across cracks or holes. Regions of interest of later
 frames are not available here; use the application or \file{frame\_masks} in Python.
 
-Before tracking, \file{run} checks what would fail at the end: an existing output file without
+Before tracking, \file{run} checks its input and what would fail at the end: the folder and its
+images (at least two, all of one size), the \file{-{}-roi} mask (readable, not empty), the
+\file{-{}-config} file, the \file{-{}-keys} indices, the device, the model (it is loaded, and
+downloaded if needed, before the first frame), an existing output file without
 \file{-{}-overwrite}, a wrong \file{-{}-out} extension, an even gauge, or a trim that would empty the
-whole region of interest. Without \file{-{}-out} and \file{-{}-project} it tracks, warns and writes
-nothing. Its progress lines, such as \file{[ 25.0\%] Frame 2/5 (reference 1): …}, count frames from
-1 like the application.
+whole region of interest. A problem stops it at once with one line on the error output and exit
+code 2 (Section~\ref{sec:cli-exit}). Without \file{-{}-out} and \file{-{}-project} it tracks, warns
+and writes nothing. Its progress lines, such as \file{[ 25.0\%] Frame 2/5 (reference 1): …}, and
+its messages count frames from 1 like the application; only the option \file{-{}-keys} takes
+0-based indices.
 
 \begin{lstlisting}
 raftcorr run images/ --roi roi.png --model s4 --strain --out results.h5 --project specimen.raftcorr
@@ -110,7 +116,8 @@ so you can copy the settings of an earlier run from it.
     up to three later images (a quarter of the way, half way, the last), and prints the finest
     model whose reach is at least 1.3 times the largest displacement (its 99th percentile),
     assuming accumulative tracking. When even s8 falls short, it says to use incremental tracking.
-    The frames named in its output are 0-based indices.
+    The frames named in its output count from 1, as in the application, for example \file{(99th
+    percentile over frames 2, 3)}.
   \item[\file{raftcorr models [-{}-download [KEY …]] [-{}-import FILE …]}]
     Lists the four models: name, $s$, reach, the path of the installed file or
     \file{NOT INSTALLED}, a summary, and the folders searched. \file{-{}-download} fetches
@@ -129,6 +136,11 @@ so you can copy the settings of an earlier run from it.
 \end{description}
 
 \subsubsection{Exit codes}
+\label{sec:cli-exit}
+
+A mistake in the command line or in the files it names ends the command with one line on the
+error output (stderr), \file{raftcorr <command>: error: <message>}, and exit code 2. Other errors
+print a Python traceback.
 
 \begin{center}
 \small
@@ -138,10 +150,14 @@ so you can copy the settings of an earlier run from it.
   \midrule
   0 & success \\
   1 & \file{selftest}: a model failed, none is installed, or the GUI check failed. Any command: an
-      unexpected error, printed as a Python traceback (a folder without images, a reference frame
-      out of range, an unknown model key) \\
-  2 & a wrong option or value; \file{run}: an output file exists without \file{-{}-overwrite}, a
-      wrong \file{-{}-out} extension, or invalid strain settings \\
+      unexpected error, printed as a Python traceback \\
+  2 & a wrong option or value, or a problem with the input: a missing folder, a folder without
+      images, with a single image or with images of different sizes, an unreadable or empty
+      \file{-{}-roi} mask, a bad \file{-{}-config} file, \file{-{}-keys} that are not numbers or out
+      of range, a bad \file{-{}-every}, \file{-{}-iters} or \file{-{}-smooth}, an unknown
+      \file{-{}-device} or CUDA that is not available, an unknown or missing model,
+      \file{models -{}-download} with an unknown key; \file{run}: an output file exists without
+      \file{-{}-overwrite}, a wrong \file{-{}-out} extension, or invalid strain settings \\
   3 & \file{models}: a download or an import failed \\
   \bottomrule
 \end{tabularx}
@@ -224,7 +240,8 @@ The settings are frozen dataclasses with the defaults of the application:
   \multicolumn{2}{@{}l}{\textbf{DisplacementSeries}} \\
   \file{u}, \file{v}  & $(T, h, w)$ float32, px; NaN outside the region of interest, at untracked
     points and in frames not computed; read-only \\
-  \file{mask}, \file{done} & $(h, w)$ region of interest of frame 0; $(T)$ computed frames \\
+  \file{mask}, \file{done} & $(h, w)$ region of interest of the reference image (index 0); $(T)$
+    computed frames \\
   \file{grid}         & \file{x0}, \file{y0}, \file{width}, \file{height} and the image size;
     \file{grid.coords()} gives the image coordinates \file{X}, \file{Y} \\
   \file{residual}     & $(T, h, w)$ residual in grey levels, or \file{None} \\
@@ -251,8 +268,10 @@ polled between frames, and \file{log(message, level)} with the levels \file{debu
 \file{warning} and \file{error}. \file{ConsoleCallbacks} prints like the command line;
 \file{FunctionCallbacks} wraps your own functions; the default is silent. When
 \file{should\_stop()} returns \file{True}, \file{track} stops after the current frame and returns
-what it computed: check \file{series.done}; \file{series.info.notes} records the stop.
-\file{compute\_strain} and the exporters raise \file{raftcorr.StopRequested} instead.
+what it computed, without an exception: check \file{series.done}; \file{series.info.notes}
+records the stop. \file{compute\_strain}, a single pair (\file{Pipeline.solve\_pair}), the
+exporters, saving a project and downloading model files raise \file{raftcorr.StopRequested}
+instead.
 
 \begin{lstlisting}[language=Python,showstringspaces=false]
 import raftcorr

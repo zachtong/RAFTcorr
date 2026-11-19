@@ -57,12 +57,27 @@ for /f "tokens=1,* delims=|" %%A in ('python packaging\windows\setup_runtime.py 
 )
 set TORCH_INDEX=https://download.pytorch.org/whl/!TORCH_BUILD!
 
-echo [3/5] Installing PyTorch (this downloads about 2.5 GB)...
-pip install torch --index-url !TORCH_INDEX! >> "%LOGFILE%" 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] PyTorch installation failed, see install.log
-    pause
-    exit /b 1
+echo [3/5] Installing PyTorch...
+:: The rule of the Windows installer (setup_runtime.py torch_action): a PyTorch of the build chosen
+:: above (the "+cu128" or "+cpu" of its version) is kept, so re-running downloads nothing. Any
+:: other build, e.g. the CPU build after a driver update made CUDA usable, is uninstalled first:
+:: "pip install --upgrade" would keep it as "already satisfied".
+set TORCH_ACTION=install
+for /f %%A in ('python packaging\windows\setup_runtime.py --torch-action !TORCH_BUILD!') do set TORCH_ACTION=%%A
+if "!TORCH_ACTION!"=="keep" (
+    echo   PyTorch !TORCH_BUILD! build already installed, keeping it
+) else (
+    if "!TORCH_ACTION!"=="replace" (
+        echo   replacing the installed PyTorch with the !TORCH_BUILD! build
+        pip uninstall -y torch >> "%LOGFILE%" 2>&1
+    )
+    echo   downloading PyTorch !TORCH_BUILD! ^(about 2.5 GB^)
+    pip install torch --index-url !TORCH_INDEX! >> "%LOGFILE%" 2>&1
+    if !errorlevel! neq 0 (
+        echo [ERROR] PyTorch installation failed, see install.log
+        pause
+        exit /b 1
+    )
 )
 
 echo [4/5] Installing RAFTcorr...

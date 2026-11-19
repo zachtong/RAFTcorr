@@ -146,6 +146,8 @@ if TYPE_CHECKING:
 _ZOOM_FACTOR = 1.15
 _ZOOM_MIN = 0.10
 _ZOOM_MAX = 20.0
+# Tools that stamp one Region of Interest shape, then return to select.
+_SHAPE_TOOLS = ("rect", "polygon", "circle", "circle3")
 
 def _centered_arange(lo: int, hi: int, step: int) -> NDArray[np.float64]:
     """Generate evenly-spaced grid points centered within [lo, hi]."""
@@ -299,8 +301,11 @@ class ImageCanvas(QGraphicsView):
             self.setCursor(Qt.CursorShape.OpenHandCursor)
         elif tool == "brush":
             self._update_brush_cursor()
-        elif tool in ("rect", "polygon", "circle", "circle3"):
+        elif tool in _SHAPE_TOOLS:
             self.setCursor(Qt.CursorShape.CrossCursor)
+            # The shape is picked in a menu, which leaves the focus on the
+            # toolbar: take it so Escape and Enter reach the canvas.
+            self.setFocus(Qt.FocusReason.OtherFocusReason)
         elif tool == "seed":
             self.setCursor(Qt.CursorShape.CrossCursor)
             # Grab keyboard focus so Escape can exit the mode
@@ -717,7 +722,7 @@ class ImageCanvas(QGraphicsView):
         # Shape drawing tools
         if (
             event.button() == Qt.MouseButton.LeftButton
-            and self._current_tool in ("rect", "polygon", "circle", "circle3")
+            and self._current_tool in _SHAPE_TOOLS
         ):
             scene_pos = self.mapToScene(event.position().toPoint())
             self._handle_draw_press(scene_pos)
@@ -829,17 +834,6 @@ class ImageCanvas(QGraphicsView):
 
         super().mouseMoveEvent(event)
 
-    def keyPressEvent(self, event) -> None:  # noqa: N802
-        # Escape exits the seed-placement tool, returning to pan.
-        if (
-            self._current_tool == "seed"
-            and event.key() == Qt.Key.Key_Escape
-        ):
-            self.set_tool("pan")
-            event.accept()
-            return
-        super().keyPressEvent(event)
-
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if self._panning and event.button() in (
             Qt.MouseButton.MiddleButton,
@@ -900,9 +894,26 @@ class ImageCanvas(QGraphicsView):
         super().leaveEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
-        # Escape cancels in-progress drawing
-        if event.key() == Qt.Key.Key_Escape and self._draw_state is not None:
-            self._cancel_drawing()
+        key = event.key()
+        if key == Qt.Key.Key_Escape:
+            # Escape exits the seed-placement tool, returning to pan.
+            if self._current_tool == "seed":
+                self.set_tool("pan")
+                event.accept()
+                return
+            # Escape cancels a shape, whether drawing began or the shape
+            # was only picked in the Add / Cut menu.
+            if self._draw_state is not None or self._current_tool in _SHAPE_TOOLS:
+                self._cancel_drawing(force=True)
+                event.accept()
+                return
+        # Enter / Return closes a polygon, as a double-click does.
+        if (
+            key in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+            and self._current_tool == "polygon"
+            and self._draw_state is not None
+        ):
+            self._finalize_polygon()
             event.accept()
             return
         super().keyPressEvent(event)
@@ -1116,9 +1127,14 @@ class ImageCanvas(QGraphicsView):
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.drawing_finished.emit()
 
-    def _cancel_drawing(self) -> None:
-        """Cancel in-progress drawing, remove preview items, and reset to select."""
-        was_drawing = self._draw_state is not None
+    def _cancel_drawing(self, force: bool = False) -> None:
+        """Cancel in-progress drawing, remove preview items, and reset to select.
+
+        ``force`` also leaves a shape tool that has not started drawing yet
+        (Escape after picking a shape); ``set_tool`` must not, since it calls
+        this on the way *into* a shape tool.
+        """
+        was_drawing = self._draw_state is not None or force
         self._remove_preview_items()
         self._draw_state = None
         if was_drawing:

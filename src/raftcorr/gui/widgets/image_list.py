@@ -455,6 +455,11 @@ class ImageList(QWidget):
                 "warn",
             )
             return
+        # The dialog's order is not guaranteed (selection order on some platforms): pair the
+        # frames with the files in the natural order of their names, as the image list sorts.
+        from raftcorr.io.images import natural_key
+
+        paths = sorted(paths, key=lambda p: natural_key(Path(p).name))
         self.roi_import_for_frames.emit(dict(zip(frames, paths)))
 
     def _clear_roi_selected(self) -> None:

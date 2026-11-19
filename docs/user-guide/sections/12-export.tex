@@ -4,7 +4,9 @@
 One dialog writes everything RAFTcorr exports: data files, per-frame tables, pictures, animations
 and an HTML report. Open it with \ui{Export Results} in the main window, with
 \menu{File}{Export Results…} (\kbd{Ctrl+E}), or with \ui{Export Results} in the strain window, once
-a run has results. Displacement can be exported before any strain is computed.
+a run has results; before that, \menu{File}{Export Results…} only writes \emph{Run DIC first -{}- no
+displacement results to export.} in the \ui{LOG}. Displacement can be exported before any strain
+is computed.
 
 The window you open the dialog from sets the starting values of the picture settings:
 \ui{Deformed frame} or \ui{Reference frame}, \ui{Show background image}, the hidden-background
@@ -190,8 +192,10 @@ transparent to 1 opaque). Fields without data are greyed out. \ui{IMAGE SETTINGS
     the windows do; \ui{Whole sequence} takes one range from all exported frames, so a colour means
     the same value in every image. Use it, or a \ui{Fixed} range, for pictures shown side by side.
   \item[Include colorbar]
-    On by default; styled on the \ui{Preview \& Colorbar} tab. It is labelled with the variable name
-    of the data files and the unit, for example \file{u (mm)} or \file{exx (-)}.
+    On by default; styled on the \ui{Preview \& Colorbar} tab. It is labelled with the name the
+    windows show and the unit, for example \file{U (mm)}, \file{Magnitude (px)}, \file{εxx (-)},
+    \file{max shear (-)} or \file{Residual (grey levels)}, in English whatever the language of the
+    interface. The preview, the animations and the pictures of the report carry the same label.
   \item[Render as]
     \ui{Deformed frame} draws the field where each point is in that frame, over that frame's image;
     \ui{Reference frame} draws it at the positions in frame~1, over frame~1. Untick
@@ -199,8 +203,9 @@ transparent to 1 opaque). Fields without data are greyed out. \ui{IMAGE SETTINGS
     ROI} cuts the picture to the region of interest plus 20 image pixels.
   \item[Hide untracked regions]
     On: points without a result stay transparent. Off: in \ui{Reference frame} pictures they take
-    the nearest value inside the region of interest, as on the canvas. Data files keep NaN either
-    way.
+    the nearest value of their own connected part of the region of interest, as on the canvas;
+    the trimmed band of a strain field follows \ui{Fill trimmed edges (display only)} instead.
+    \ui{Deformed frame} pictures always leave them empty. Data files keep NaN either way.
 \end{description}
 
 \ui{FRAME RANGE} exports \ui{All frames}, or \ui{From} \ldots\ \ui{to}, numbered like the slider.

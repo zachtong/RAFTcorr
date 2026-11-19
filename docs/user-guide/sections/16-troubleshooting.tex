@@ -40,8 +40,8 @@ lines that come from the tracking engine itself.
     the device, for example \emph{``loaded RAFTcorr-s4 (\ldots, cpu)''}, and
     \file{raftcorr info} prints \file{CUDA available: False}. The cause is a CPU build of PyTorch,
     or a driver too old for the CUDA build that is installed. With the Windows Setup program,
-    update the NVIDIA driver and run \ui{Repair RAFTcorr}; \file{install.log} says which build it
-    chose and why. With pip or a source installation, run \file{pip uninstall torch} and install
+    update the NVIDIA driver and run \ui{Repair RAFTcorr}, which replaces a CPU build with the
+    CUDA build the driver supports; \file{install.log} says which build it chose and why. With pip or a source installation, run \file{pip uninstall torch} and install
     the CUDA build from the PyTorch index (Section~\ref{sec:installing-pip}). A Mac always runs on
     the CPU.
   \item[``Analysis failed'': ``device 'cuda' was requested but CUDA is not available; use 'cpu'\,'']
@@ -52,9 +52,13 @@ lines that come from the tracking engine itself.
     The GPU runs out of memory even after RAFTcorr has cut the region into tiles and retried three
     times with smaller windows (Section~\ref{sec:tiling}). Close other GPU programs, a second
     RAFTcorr included; choose a model with a larger $s$, which needs less memory per pixel; or
-    lower \ui{GPU Memory} in \ui{ADVANCED} for smaller windows. If the message is instead
-    \emph{``the memory budget allows windows of about N x N px, below the model's M px minimum''}, too little
-    memory is free for even one window: free memory, raise \ui{GPU Memory}, or run on the CPU.
+    lower \ui{GPU Memory} in \ui{ADVANCED} for smaller windows.
+  \item[``Analysis failed'': ``There is not enough free GPU memory for the smallest window this
+    model accepts. \ldots'']
+    The message goes on with \emph{``the memory budget allows windows of about N x N px, below the
+    model's M px minimum''}: too little memory is free for even one window, so lowering
+    \ui{GPU Memory} cannot help. Free memory (close other GPU programs), raise \ui{GPU Memory} if
+    it is set low, or run on the CPU.
   \item[The tiling line ends with ``(margin reduced to fit memory)'']
     The windows that fit the memory are too small to keep the full margin, so a large
     displacement may be missed (Section~\ref{sec:tiling}). Free GPU memory or raise
@@ -97,8 +101,9 @@ lines that come from the tracking engine itself.
 
 \begin{description}[leftmargin=0.6cm,style=nextline]
   \item[``Cannot start analysis'']
-    Fewer than two images are loaded, or frame~1 has no region of interest; the dialog says which
-    (Section~\ref{sec:running}). Load the images or define the region of interest of frame~1
+    Fewer than two images are loaded, or frame~1 has no region of interest, or its region of
+    interest holds no pixel (an all-black mask, for example), or the \ui{Reference Frames} field
+    holds refused text; the dialog says which (Section~\ref{sec:running}). Load the images or define the region of interest of frame~1
     (Sections~\ref{sec:images} and~\ref{sec:roi}).
   \item[``Tracking Quality Warning'': the motion is beyond the reach of the model]
     The residual jumps from one frame on, typically because the displacement from the reference
@@ -121,7 +126,8 @@ lines that come from the tracking engine itself.
         \emph{``Frame N: only P\% of the region of interest could be tracked''} when less than
         90\,\% of the region is left. With \ui{Hide untracked regions} ticked these points are
         transparent; unticked, the \ui{Reference frame} view and pictures fill them from the
-        nearest value, while data files keep them empty.
+        nearest value of the same connected part of the region of interest, while data files
+        keep them empty.
       \item A point that moves further than the margin falls outside its window and cannot be
         matched (Section~\ref{sec:tiling}): keep \ui{Use the Model Reach}, or set a \ui{Margin}
         larger than the largest displacement, and watch for \emph{``margin reduced to fit
@@ -135,10 +141,11 @@ lines that come from the tracking engine itself.
   \item[Frames are in the wrong order, or an extra frame appears]
     \ui{Natural Sort (1, 2, …, 10)}, on by default, puts \file{img2} before \file{img10}; untick it
     for names whose plain alphabetical order is the right one. Check the order in the image list
-    before you draw the region of interest, since changing the sort starts a new session
-    (Section~\ref{sec:images}). Every image file directly inside the folder becomes a frame, a mask
-    image included. \ui{Save} in \ui{REGION OF INTEREST} proposes the image folder: save masks
-    elsewhere, or the next time you load the folder the mask becomes a frame, possibly the
+    before you draw the region of interest, since a change of the sort that reorders the frames
+    starts a new session, after asking you (Section~\ref{sec:images}). Every image file directly
+    inside the folder becomes a frame, a mask image included. \ui{Save} in \ui{REGION OF
+    INTEREST} proposes a file next to the image folder, not inside it; keep masks out of the
+    image folder, or the next time you load the folder the mask becomes a frame, possibly the
     reference image.
 \end{description}
 
@@ -164,9 +171,9 @@ lines that come from the tracking engine itself.
     RAFTcorr loads the files directly inside the folder with the extensions \file{.png},
     \file{.jpg}, \file{.jpeg}, \file{.tif}, \file{.tiff} and \file{.bmp}; it does not look into
     subfolders. Open the folder that holds the images themselves.
-  \item[``Cannot open the images'': ``every frame must have the size of frame 0 (\ldots)'']
-    All images of a sequence must have the size of the first one; the message lists the files that
-    differ (here, ``frame~0'' is the first image, frame~1 everywhere else in the application).
+  \item[``Cannot open the images'': ``every frame must have the size of frame 1, \ldots'']
+    All images of a sequence must have the size of the first one; the message names the first
+    image with its size and lists the files that differ, each with its frame number and size.
     Move those files out of the folder.
   \item[Images of different bit depths, or a dark reference image]
     RAFTcorr converts every frame with one intensity scale, taken from the reference image
@@ -184,18 +191,18 @@ lines that come from the tracking engine itself.
     An unexpected error. The dialog says \emph{``An unexpected error occurred. The application may
     not behave correctly from here on, so saving your project and restarting is recommended.''}
     Save the project, if you can, and restart RAFTcorr. \ui{Show Details} holds the traceback,
-    and the log shows it after a line starting with \file{CRASH:}. The macOS application also
-    writes it to \file{RAFTcorr.log} in
-    \file{\textasciitilde/Library/Application Support/RAFTcorr/logs}, and the dialog then says
-    \emph{``Details were written to \ldots''}.
+    and the log shows it after a line starting with \file{CRASH:}. RAFTcorr also writes it to
+    \file{RAFTcorr.log} in its log folder (Section~\ref{sec:overview-files}), and the dialog
+    then says \emph{``Details were written to \ldots''} with the path of the file.
   \item[``Analysis failed'' with another message]
     The run stopped on an error. Unlike \ui{Cancel}, an error discards the frames of this run;
     the results of an earlier run stay. The dialog gives the message, and the log holds the full
     traceback.
   \item[RAFTcorr does not start, or closes at once]
-    The Windows and pip installations write no log file, so start RAFTcorr from a terminal to see
-    the error: \file{raftcorr} (with the Windows Setup program, when the PATH task was ticked), or
-    \file{/Applications/RAFTcorr.app/Contents/MacOS/RAFTcorr} on a Mac. The command
+    Look at the end of \file{RAFTcorr.log} in the log folder (Section~\ref{sec:overview-files}).
+    If it says nothing about the failure, start RAFTcorr from a terminal to see the error:
+    \file{raftcorr} (with the Windows Setup program, when the PATH task was ticked), or
+    \file{/Applications/RAFTcorr.app/}\allowbreak\file{Contents/MacOS/RAFTcorr} on a Mac. The command
     \file{raftcorr~selftest~-{}-gui} checks that the interface libraries, icons and translations
     load. After an interrupted Windows setup, run \ui{Repair RAFTcorr}.
 \end{description}
@@ -211,7 +218,7 @@ Report problems at \url{https://github.com/zachtong/RAFTcorr/issues}. Include:
   \item the output of \file{raftcorr info} and, for a model problem, of \menu{Help}{Self-test};
   \item the text of the \ui{LOG} (right-click it, \ui{Select All}, then \ui{Copy}) and the
     \ui{Show Details} text of the error dialog;
-  \item \file{install.log} for a problem with the Windows setup, and \file{RAFTcorr.log} on a Mac;
+  \item \file{install.log} for a problem with the Windows setup, and \file{RAFTcorr.log};
   \item the steps that lead to the problem, and the settings, best as a project saved without
     results.
 \end{itemize}

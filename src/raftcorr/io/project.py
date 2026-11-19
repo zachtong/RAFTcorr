@@ -249,10 +249,15 @@ def _write_strain(zf: zipfile.ZipFile, strain: StrainSeries, cb: Callbacks, offs
 # -- load ---------------------------------------------------------------------------------------
 
 
-def load_project(path: str | Path) -> Project:
+def load_project(path: str | Path, callbacks: object = None) -> Project:
     """Read a project file. Raises FileNotFoundError, or ValueError for a file that is not a
-    project, is damaged, or was written by a newer RAFTcorr (newer ``schema_version``)."""
+    project, is damaged, or was written by a newer RAFTcorr (newer ``schema_version``).
+
+    Progress is reported per frame of every stored series array, and a stop request of
+    ``callbacks`` is honoured between frames (:class:`~raftcorr.callbacks.StopRequested`).
+    """
     path = Path(path)
+    cb = coerce(callbacks)
     if not path.is_file():
         raise FileNotFoundError(f"no such project file: {path}")
     try:
@@ -262,11 +267,57 @@ def load_project(path: str | Path) -> Project:
     with archive as zf:
         doc = _read_document(zf, path)
         try:
-            parts = _read_parts(zf, doc)
+            parts = _read_parts(zf, doc, cb)
         except _CORRUPT as exc:
             raise ValueError(f"{path}: damaged or incomplete project file ({type(exc).__name__}: {exc})") from exc
     folder, warnings = _resolve_image_folder(doc, path)
+    cb.progress(1.0, "project loaded")
     return Project(image_folder=folder, warnings=warnings, **parts)
+
+
+def _npy_header(fp: Any) -> tuple[tuple[int, ...], bool, np.dtype]:
+    """``(shape, fortran_order, dtype)`` of the ``.npy`` stream ``fp``, left at the data."""
+    version = np.lib.format.read_magic(fp)
+    if version == (1, 0):
+        return np.lib.format.read_array_header_1_0(fp)
+    if version == (2, 0):
+        return np.lib.format.read_array_header_2_0(fp)
+    raise ValueError(f"unsupported .npy format version {version}")
+
+
+class _FrameReader:
+    """Reads the per-frame arrays of a project (``entries``) frame by frame, so that a large
+    series reports its progress and can be stopped while it loads."""
+
+    def __init__(self, zf: zipfile.ZipFile, entries: list[str], cb: Callbacks) -> None:
+        self._zf, self._cb = zf, cb
+        self._done = 0
+        self._total = max(1, sum(self._n_frames(e) for e in entries))
+
+    def _n_frames(self, entry: str) -> int:
+        with self._zf.open(entry) as fp:
+            shape, _fortran, _dtype = _npy_header(fp)
+        return int(shape[0]) if shape else 1
+
+    def read(self, entry: str, label: str) -> np.ndarray:
+        with self._zf.open(entry) as fp:
+            shape, fortran, dtype = _npy_header(fp)
+            if dtype.hasobject:
+                raise ValueError(f"{entry}: object arrays are not allowed")
+            if fortran or not shape:          # never written by save_project: read it whole
+                self._done += int(shape[0]) if shape else 1
+                return read_npy_entry(self._zf, entry)
+            arr = np.empty(shape, dtype)
+            frame_bytes = arr[0].nbytes if shape[0] else 0
+            for k in range(shape[0]):
+                check_stop(self._cb)
+                data = fp.read(frame_bytes)
+                if len(data) != frame_bytes:
+                    raise EOFError(f"{entry}: data ends in frame {k + 1} of {shape[0]}")
+                arr[k] = np.frombuffer(data, dtype).reshape(shape[1:])
+                self._done += 1
+                self._cb.progress(self._done / self._total, f"loading {label}: frame {k + 1}/{shape[0]}")
+        return arr
 
 
 def _read_document(zf: zipfile.ZipFile, path: Path) -> dict[str, Any]:
@@ -289,8 +340,9 @@ def _read_document(zf: zipfile.ZipFile, path: Path) -> dict[str, Any]:
     return doc
 
 
-def _read_parts(zf: zipfile.ZipFile, doc: dict[str, Any]) -> dict[str, Any]:
+def _read_parts(zf: zipfile.ZipFile, doc: dict[str, Any], cb: Callbacks) -> dict[str, Any]:
     """Every Project field stored in the file except the (resolved) image folder."""
+    reader = _FrameReader(zf, _frame_entries(doc), cb)
     return {
         "image_files": tuple(str(f) for f in doc.get("image_files", ())),
         "natural_sort": bool(doc.get("natural_sort", True)),
@@ -300,12 +352,24 @@ def _read_parts(zf: zipfile.ZipFile, doc: dict[str, Any]) -> dict[str, Any]:
         "view": dict(doc.get("view") or {}),
         "probes": list(doc.get("probes") or []),
         "units": PhysicalUnits.from_dict(doc.get("units")),
-        "series": _read_series(zf, doc.get("series")),
-        "strain": _read_strain(zf, doc.get("strain")),
+        "series": _read_series(zf, doc.get("series"), reader),
+        "strain": _read_strain(zf, doc.get("strain"), reader),
         "created": str(doc.get("created", "")),
         "modified": str(doc.get("modified", "")),
         "schema_version": int(doc["schema_version"]),
     }
+
+
+def _frame_entries(doc: dict[str, Any]) -> list[str]:
+    """The per-frame arrays of a project document: displacement, residual, strain components."""
+    out: list[str] = []
+    series = doc.get("series")
+    if series is not None:
+        out += [series["entries"][k] for k in ("u", "v", "residual") if k in series["entries"]]
+    strain = doc.get("strain")
+    if strain is not None:
+        out += [c["entry"] for c in strain["components"]]
+    return out
 
 
 def _read_masks(zf: zipfile.ZipFile, entries: list[dict[str, Any]]) -> dict[int, np.ndarray]:
@@ -319,27 +383,28 @@ def _read_masks(zf: zipfile.ZipFile, entries: list[dict[str, Any]]) -> dict[int,
     return out
 
 
-def _read_series(zf: zipfile.ZipFile, d: dict[str, Any] | None) -> DisplacementSeries | None:
+def _read_series(zf: zipfile.ZipFile, d: dict[str, Any] | None, reader: _FrameReader) -> DisplacementSeries | None:
     if d is None:
         return None
     entries = d["entries"]
     return DisplacementSeries(
         grid=Grid.from_dict(d["grid"]),
         mask=read_npy_entry(zf, entries["mask"]),
-        u=read_npy_entry(zf, entries["u"]),
-        v=read_npy_entry(zf, entries["v"]),
+        u=reader.read(entries["u"], "u"),
+        v=reader.read(entries["v"], "v"),
         done=read_npy_entry(zf, entries["done"]),
         frame_names=tuple(str(n) for n in d["frame_names"]),
         schedule=FrameSchedule.from_dict(d["schedule"]),
         info=RunInfo.from_dict(d["info"]),
-        residual=(read_npy_entry(zf, entries["residual"]).astype(np.float32) if "residual" in entries else None),
+        residual=(reader.read(entries["residual"], "residual").astype(np.float32) if "residual" in entries
+                  else None),
     )
 
 
-def _read_strain(zf: zipfile.ZipFile, d: dict[str, Any] | None) -> StrainSeries | None:
+def _read_strain(zf: zipfile.ZipFile, d: dict[str, Any] | None, reader: _FrameReader) -> StrainSeries | None:
     if d is None:
         return None
-    components = {str(c["name"]): read_npy_entry(zf, c["entry"]) for c in d["components"]}
+    components = {str(c["name"]): reader.read(c["entry"], str(c["name"])) for c in d["components"]}
     return StrainSeries(
         grid=Grid.from_dict(d["grid"]),
         step=int(d["step"]),

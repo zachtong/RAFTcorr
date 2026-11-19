@@ -65,7 +65,9 @@ class FrameSchedule:
         _check_n(n_frames)
         for r in key_frames:
             if r < 0 or r > n_frames - 2:
-                raise ValueError(f"key frame {r} out of range [0, {n_frames - 2}] (the last frame cannot be a reference)")
+                # The engine counts from 0 (the CLI's --keys too); the GUI checks its 1-based field first.
+                raise ValueError(f"key frame {r} (0-based) out of range [0, {n_frames - 2}] "
+                                 f"(the last frame, {n_frames - 1}, cannot be a reference)")
         keys = sorted(set(key_frames) | {0})
         refs = []
         for k in range(1, n_frames):

@@ -2636,6 +2636,207 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr":    "Non importé : %1. Seuls les fichiers de modèle de la publication peuvent être importés.",
         "es":    "No importado: %1. Solo se pueden importar los archivos de modelo de la publicación.",
     },
+
+    # --- Bug fixes found while writing the user guide (2026-11-19) ---
+    # BatchImportDialog: tooltips of "Auto-Match by Name" and "Assign Sequential".
+    "Give each image the mask whose file name ends in the same number: mask6.png goes to image6.tif.\nIf the image names carry no number, the mask's number is read as the frame position counted from 0: mask0 goes to frame 1.": {
+        "zh_CN": "为每张图像分配文件名末尾数字相同的掩模：mask6.png 对应 image6.tif。\n如果图像文件名中没有数字，则把掩模的数字视为从 0 开始计数的帧位置：mask0 对应第 1 帧。",
+        "zh_TW": "為每張影像分配檔名結尾數字相同的遮罩：mask6.png 對應 image6.tif。\n如果影像檔名中沒有數字，則把遮罩的數字視為從 0 開始計數的影格位置：mask0 對應第 1 影格。",
+        "ja":    "各画像に、ファイル名の末尾が同じ番号のマスクを割り当てます：mask6.png は image6.tif に対応します。\n画像名に番号がない場合、マスクの番号は 0 から数えたフレーム位置として読み取ります：mask0 はフレーム 1 に対応します。",
+        "ko":    "각 이미지에 파일 이름 끝의 숫자가 같은 마스크를 할당합니다: mask6.png는 image6.tif에 할당됩니다.\n이미지 이름에 숫자가 없으면 마스크의 숫자를 0부터 센 프레임 위치로 읽습니다: mask0은 프레임 1에 할당됩니다.",
+        "de":    "Jedem Bild die Maske zuweisen, deren Dateiname auf dieselbe Zahl endet: mask6.png gehört zu image6.tif.\nTragen die Bildnamen keine Zahl, wird die Zahl der Maske als ab 0 gezählte Bildposition gelesen: mask0 gehört zu Bild 1.",
+        "fr":    "Attribuer à chaque image le masque dont le nom de fichier se termine par le même numéro : mask6.png va à image6.tif.\nSi les noms des images ne portent aucun numéro, le numéro du masque est lu comme la position de l'image comptée à partir de 0 : mask0 va à l'image 1.",
+        "es":    "Asignar a cada imagen la máscara cuyo nombre de archivo termina en el mismo número: mask6.png va a image6.tif.\nSi los nombres de las imágenes no llevan número, el número de la máscara se lee como la posición del fotograma contada desde 0: mask0 va al fotograma 1.",
+    },
+    "Assign masks to frames in order, starting from frame 1": {
+        "zh_CN": "从第 1 帧起按顺序把掩模分配给各帧",
+        "zh_TW": "從第 1 影格起按順序把遮罩分配給各影格",
+        "ja":    "フレーム 1 から順番にマスクを割り当てます",
+        "ko":    "프레임 1부터 순서대로 마스크를 프레임에 할당합니다",
+        "de":    "Masken den Bildern der Reihe nach ab Bild 1 zuweisen",
+        "fr":    "Attribuer les masques aux images dans l'ordre, à partir de l'image 1",
+        "es":    "Asignar máscaras a los fotogramas en orden, desde el fotograma 1",
+    },
+    # "Hide untracked regions" tooltips; the view names are the "Show on"
+    # combo items "Reference frame" / "Deformed frame".
+    "Leave points without a result transparent in the pictures, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest. Applies to the Reference frame view only: the Deformed frame view always leaves them empty. Data files always keep NaN there.": {
+        "zh_CN": "在图片中让没有结果的点保持透明（例如移出视野的材料），而不是用感兴趣区域内最近的值填充。仅适用于“参考帧”视图：“变形帧”视图中这些点始终留空。数据文件中这些点始终为 NaN。",
+        "zh_TW": "在圖片中讓沒有結果的點保持透明（例如移出視野的材料），而不是以感興趣區域內最近的值填充。僅適用於「參考影格」檢視：「變形影格」檢視中這些點始終留空。資料檔案中這些點始終為 NaN。",
+        "ja":    "結果のない点（視野の外に出た材料など）を、画像では関心領域内で最も近い値で埋めずに透明のままにします。「参照フレーム」表示にのみ適用されます。「変形フレーム」表示では常に空白のままです。データファイルではこれらの点は常に NaN です。",
+        "ko":    "결과가 없는 점(시야 밖으로 나간 재료 등)을 그림에서 관심 영역 안의 가장 가까운 값으로 채우지 않고 투명하게 둡니다. '참조 프레임' 보기에만 적용되며, '변형된 프레임' 보기에서는 항상 비워 둡니다. 데이터 파일에서는 항상 NaN입니다.",
+        "de":    "Punkte ohne Ergebnis (etwa Material, das das Sichtfeld verlassen hat) in den Bildern transparent lassen, statt sie mit dem nächstgelegenen Wert innerhalb der Region of Interest zu füllen. Gilt nur für die Ansicht „Referenzbild“: Die Ansicht „Verformtes Bild“ lässt sie immer leer. Datendateien behalten dort immer NaN.",
+        "fr":    "Laisser transparents dans les images les points sans résultat (par exemple la matière sortie du champ de vision) au lieu de les remplir avec la valeur la plus proche dans la région d'intérêt. S'applique uniquement à la vue « Image de référence » : la vue « Image déformée » les laisse toujours vides. Les fichiers de données y gardent toujours NaN.",
+        "es":    "Dejar transparentes en las imágenes los puntos sin resultado (por ejemplo, el material que salió del campo de visión) en lugar de rellenarlos con el valor más cercano dentro de la región de interés. Solo se aplica a la vista «Fotograma de referencia»: la vista «Fotograma deformado» siempre los deja vacíos. Los archivos de datos siempre conservan NaN en ellos.",
+    },
+    "Leave points without a result transparent, for example material that left the field of view, instead of filling them with the nearest value inside the region of interest. Applies to the Reference frame view only: the Deformed frame view always leaves them empty. Also used for exported images and animations; data files always keep NaN there.": {
+        "zh_CN": "让没有结果的点保持透明（例如移出视野的材料），而不是用感兴趣区域内最近的值填充。仅适用于“参考帧”视图：“变形帧”视图中这些点始终留空。导出的图像和动画同样遵守此设置；数据文件中这些点始终为 NaN。",
+        "zh_TW": "讓沒有結果的點保持透明（例如移出視野的材料），而不是以感興趣區域內最近的值填充。僅適用於「參考影格」檢視：「變形影格」檢視中這些點始終留空。匯出的影像與動畫同樣遵守此設定；資料檔案中這些點始終為 NaN。",
+        "ja":    "結果のない点（視野の外に出た材料など）を、関心領域内で最も近い値で埋めずに透明のままにします。「参照フレーム」表示にのみ適用されます。「変形フレーム」表示では常に空白のままです。エクスポートした画像・アニメーションにも適用されます。データファイルではこれらの点は常に NaN です。",
+        "ko":    "결과가 없는 점(시야 밖으로 나간 재료 등)을 관심 영역 안의 가장 가까운 값으로 채우지 않고 투명하게 둡니다. '참조 프레임' 보기에만 적용되며, '변형된 프레임' 보기에서는 항상 비워 둡니다. 내보낸 이미지와 애니메이션에도 적용되며, 데이터 파일에서는 항상 NaN입니다.",
+        "de":    "Punkte ohne Ergebnis (etwa Material, das das Sichtfeld verlassen hat) transparent lassen, statt sie mit dem nächstgelegenen Wert innerhalb der Region of Interest zu füllen. Gilt nur für die Ansicht „Referenzbild“: Die Ansicht „Verformtes Bild“ lässt sie immer leer. Gilt auch für exportierte Bilder und Animationen; Datendateien behalten dort immer NaN.",
+        "fr":    "Laisser transparents les points sans résultat (par exemple la matière sortie du champ de vision) au lieu de les remplir avec la valeur la plus proche dans la région d'intérêt. S'applique uniquement à la vue « Image de référence » : la vue « Image déformée » les laisse toujours vides. Vaut aussi pour les images et animations exportées ; les fichiers de données y gardent toujours NaN.",
+        "es":    "Dejar transparentes los puntos sin resultado (por ejemplo, el material que salió del campo de visión) en lugar de rellenarlos con el valor más cercano dentro de la región de interés. Solo se aplica a la vista «Fotograma de referencia»: la vista «Fotograma deformado» siempre los deja vacíos. También se aplica a las imágenes y animaciones exportadas; los archivos de datos siempre conservan NaN en ellos.",
+    },
+    # LeftSidebar: confirmation before re-sorting loaded images discards work.
+    "Change the image order?": {
+        "zh_CN": "更改图像顺序？",
+        "zh_TW": "變更影像順序？",
+        "ja":    "画像の順序を変更しますか？",
+        "ko":    "이미지 순서를 바꾸시겠습니까?",
+        "de":    "Bildreihenfolge ändern?",
+        "fr":    "Modifier l'ordre des images ?",
+        "es":    "¿Cambiar el orden de las imágenes?",
+    },
+    "Sorting the images differently renumbers the frames. The Regions of Interest, results and probes of the current frames will be discarded.\n\nSort the images again?": {
+        "zh_CN": "以不同方式排序图像会重新编号各帧。当前各帧的感兴趣区域、结果和探针将被丢弃。\n\n要重新排序图像吗？",
+        "zh_TW": "以不同方式排序影像會重新編號各影格。目前各影格的感興趣區域、結果與探針將被捨棄。\n\n要重新排序影像嗎？",
+        "ja":    "画像の並べ方を変えるとフレーム番号が振り直されます。現在のフレームの関心領域、結果、プローブは破棄されます。\n\n画像を並べ替えますか？",
+        "ko":    "이미지를 다르게 정렬하면 프레임 번호가 다시 매겨집니다. 현재 프레임의 관심 영역, 결과, 프로브는 폐기됩니다.\n\n이미지를 다시 정렬하시겠습니까?",
+        "de":    "Eine andere Sortierung der Bilder nummeriert sie neu. Die Regions of Interest, Ergebnisse und Sonden der aktuellen Bilder werden verworfen.\n\nBilder neu sortieren?",
+        "fr":    "Trier les images autrement renumérote les images. Les régions d'intérêt, résultats et sondes des images actuelles seront supprimés.\n\nTrier à nouveau les images ?",
+        "es":    "Ordenar las imágenes de otra manera renumera los fotogramas. Se descartarán las regiones de interés, los resultados y las sondas de los fotogramas actuales.\n\n¿Ordenar las imágenes de nuevo?",
+    },
+    # MainWindow model survey ("Suggest a model"): progress label, %1 the
+    # frame, %2 its reference frame (1-based).
+    "Survey: frame %1 against frame %2": {
+        "zh_CN": "运动测量：第 %1 帧与第 %2 帧比较",
+        "zh_TW": "運動測量：第 %1 影格與第 %2 影格比較",
+        "ja":    "動きの計測：フレーム %1 とフレーム %2 を比較",
+        "ko":    "움직임 측정: 프레임 %1 대 프레임 %2",
+        "de":    "Bewegungsmessung: Bild %1 gegen Bild %2",
+        "fr":    "Mesure du mouvement : image %1 par rapport à l'image %2",
+        "es":    "Medición del movimiento: fotograma %1 frente al fotograma %2",
+    },
+    # Incremental survey result; %3 lists the pairs as "1 → 5, 5 → 9".
+    "Suggested: RAFTcorr-%1. Largest displacement of the region of interest between a frame and its reference frame about %2 px (99th percentile over the pairs reference → frame %3); RAFTcorr-%1 reaches %4 px.": {
+        "zh_CN": "推荐：RAFTcorr-%1。感兴趣区域内各帧相对其参考帧的最大位移约 %2 px（在“参考帧 → 帧”帧对 %3 上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。",
+        "zh_TW": "建議：RAFTcorr-%1。感興趣區域內各影格相對其參考影格的最大位移約 %2 px（在「參考影格 → 影格」配對 %3 上取第 99 百分位數）；RAFTcorr-%1 的量程為 %4 px。",
+        "ja":    "推奨：RAFTcorr-%1。各フレームとその参照フレームとの間の関心領域の最大変位は約 %2 px（「参照 → フレーム」のペア %3 での 99 パーセンタイル）、RAFTcorr-%1 の到達範囲は %4 px です。",
+        "ko":    "추천: RAFTcorr-%1. 각 프레임과 그 참조 프레임 사이의 관심 영역 최대 변위는 약 %2 px(참조 → 프레임 쌍 %3에서의 99번째 백분위수)이며, RAFTcorr-%1의 도달 범위는 %4 px입니다.",
+        "de":    "Vorschlag: RAFTcorr-%1. Größte Verschiebung der Region of Interest zwischen einem Bild und seinem Referenzbild etwa %2 px (99. Perzentil über die Paare Referenz → Bild %3); RAFTcorr-%1 reicht %4 px weit.",
+        "fr":    "Suggestion : RAFTcorr-%1. Plus grand déplacement de la région d'intérêt entre une image et son image de référence d'environ %2 px (99e centile sur les paires référence → image %3) ; la portée de RAFTcorr-%1 est de %4 px.",
+        "es":    "Sugerencia: RAFTcorr-%1. Mayor desplazamiento de la región de interés entre un fotograma y su fotograma de referencia de unos %2 px (percentil 99 sobre los pares referencia → fotograma %3); RAFTcorr-%1 alcanza %4 px.",
+    },
+    "This exceeds even the reach of RAFTcorr-s8: the motion between consecutive frames is too large to track.": {
+        "zh_CN": "这甚至超出了 RAFTcorr-s8 的量程：相邻帧之间的运动过大，无法追踪。",
+        "zh_TW": "這甚至超出了 RAFTcorr-s8 的量程：相鄰影格之間的運動過大，無法追蹤。",
+        "ja":    "これは RAFTcorr-s8 の到達範囲さえ超えています。連続するフレーム間の動きが大きすぎて追跡できません。",
+        "ko":    "이는 RAFTcorr-s8의 도달 범위조차 넘습니다: 연속한 프레임 사이의 움직임이 너무 커서 추적할 수 없습니다.",
+        "de":    "Das übersteigt sogar die Reichweite von RAFTcorr-s8: Die Bewegung zwischen aufeinanderfolgenden Bildern ist zu groß, um sie zu verfolgen.",
+        "fr":    "Cela dépasse même la portée de RAFTcorr-s8 : le mouvement entre images consécutives est trop grand pour être suivi.",
+        "es":    "Esto supera incluso el alcance de RAFTcorr-s8: el movimiento entre fotogramas consecutivos es demasiado grande para seguirlo.",
+    },
+    "This exceeds even the reach of RAFTcorr-s8: update the reference frame more often.": {
+        "zh_CN": "这甚至超出了 RAFTcorr-s8 的量程：请更频繁地更新参考帧。",
+        "zh_TW": "這甚至超出了 RAFTcorr-s8 的量程：請更頻繁地更新參考影格。",
+        "ja":    "これは RAFTcorr-s8 の到達範囲さえ超えています。参照フレームをより頻繁に更新してください。",
+        "ko":    "이는 RAFTcorr-s8의 도달 범위조차 넘습니다: 참조 프레임을 더 자주 갱신하세요.",
+        "de":    "Das übersteigt sogar die Reichweite von RAFTcorr-s8: Aktualisieren Sie das Referenzbild häufiger.",
+        "fr":    "Cela dépasse même la portée de RAFTcorr-s8 : mettez à jour l'image de référence plus souvent.",
+        "es":    "Esto supera incluso el alcance de RAFTcorr-s8: actualice el fotograma de referencia con más frecuencia.",
+    },
+    # MainWindow log line: %1 the mask file name, %2 the error text.
+    "Could not read the mask file %1: %2": {
+        "zh_CN": "无法读取掩模文件 %1：%2",
+        "zh_TW": "無法讀取遮罩檔案 %1：%2",
+        "ja":    "マスクファイル %1 を読み込めませんでした：%2",
+        "ko":    "마스크 파일 %1을(를) 읽을 수 없습니다: %2",
+        "de":    "Die Maskendatei %1 konnte nicht gelesen werden: %2",
+        "fr":    "Impossible de lire le fichier de masque %1 : %2",
+        "es":    "No se pudo leer el archivo de máscara %1: %2",
+    },
+    # PipelineMessages: %1 the "GPU Memory" label, %2 the "ADVANCED" section,
+    # both inserted already translated; quoted like other literal UI names.
+    "The GPU ran out of memory. Close other GPU programs, choose a model with a larger s, or lower %1 in %2.": {
+        "zh_CN": "GPU 显存不足。请关闭其他占用 GPU 的程序，选择 s 更大的模型，或调低“%2”中的“%1”。",
+        "zh_TW": "GPU 記憶體不足。請關閉其他使用 GPU 的程式，選擇 s 較大的模型，或調低「%2」中的「%1」。",
+        "ja":    "GPU のメモリが不足しました。GPU を使う他のプログラムを閉じるか、s の大きいモデルを選ぶか、「%2」の「%1」を下げてください。",
+        "ko":    "GPU 메모리가 부족합니다. GPU를 사용하는 다른 프로그램을 닫거나, s가 더 큰 모델을 선택하거나, '%2'에서 '%1'을(를) 낮추세요.",
+        "de":    "Der GPU-Speicher reicht nicht aus. Schließen Sie andere GPU-Programme, wählen Sie ein Modell mit größerem s oder verringern Sie „%1“ unter „%2“.",
+        "fr":    "La mémoire du GPU est épuisée. Fermez les autres programmes qui utilisent le GPU, choisissez un modèle avec un s plus grand, ou réduisez « %1 » dans « %2 ».",
+        "es":    "La GPU se quedó sin memoria. Cierre otros programas que usen la GPU, elija un modelo con un s mayor o reduzca «%1» en «%2».",
+    },
+    "There is not enough free GPU memory for the smallest window this model accepts. Close other GPU programs, or raise %1 in %2 if it is set low.": {
+        "zh_CN": "空闲 GPU 显存不足以容纳该模型可接受的最小窗口。请关闭其他占用 GPU 的程序；如果“%2”中的“%1”设得较低，请调高它。",
+        "zh_TW": "閒置 GPU 記憶體不足以容納此模型可接受的最小視窗。請關閉其他使用 GPU 的程式；若「%2」中的「%1」設得較低，請調高它。",
+        "ja":    "このモデルが受け付ける最小のウィンドウに対して、空き GPU メモリが足りません。GPU を使う他のプログラムを閉じるか、「%2」の「%1」が低く設定されている場合は上げてください。",
+        "ko":    "이 모델이 받아들이는 가장 작은 창에 필요한 여유 GPU 메모리가 부족합니다. GPU를 사용하는 다른 프로그램을 닫거나, '%2'의 '%1'이(가) 낮게 설정되어 있으면 높이세요.",
+        "de":    "Für das kleinste Fenster, das dieses Modell akzeptiert, ist nicht genug freier GPU-Speicher vorhanden. Schließen Sie andere GPU-Programme oder erhöhen Sie „%1“ unter „%2“, falls der Wert niedrig eingestellt ist.",
+        "fr":    "La mémoire GPU libre ne suffit pas pour la plus petite fenêtre que ce modèle accepte. Fermez les autres programmes qui utilisent le GPU, ou augmentez « %1 » dans « %2 » si sa valeur est basse.",
+        "es":    "No hay suficiente memoria GPU libre para la ventana más pequeña que acepta este modelo. Cierre otros programas que usen la GPU, o aumente «%1» en «%2» si está configurado bajo.",
+    },
+    # ROIToolbar: tooltip of the "Clear" button, now per frame.
+    "Clear the Region of Interest of the current frame": {
+        "zh_CN": "清除当前帧的感兴趣区域",
+        "zh_TW": "清除目前影格的感興趣區域",
+        "ja":    "現在のフレームの関心領域をクリア",
+        "ko":    "현재 프레임의 관심 영역 지우기",
+        "de":    "Region of Interest des aktuellen Bildes löschen",
+        "fr":    "Effacer la région d'intérêt de l'image actuelle",
+        "es":    "Borrar la región de interés del fotograma actual",
+    },
+    # RightSidebar: File > Export Results… before a run (sibling of the
+    # "... to post-process." line, same style).
+    "Run DIC first -- no displacement results to export.": {
+        "zh_CN": "请先运行 DIC —— 当前没有可导出的位移结果。",
+        "zh_TW": "請先執行 DIC —— 目前沒有可匯出的位移結果。",
+        "ja":    "先に DIC を実行してください —— エクスポートする変位結果がありません。",
+        "ko":    "DIC를 먼저 실행하세요 —— 내보낼 변위 결과가 없습니다.",
+        "de":    "DIC zuerst ausführen — keine Verschiebungs-Ergebnisse zum Exportieren.",
+        "fr":    "Exécutez d'abord le DIC — aucun résultat de déplacement à exporter.",
+        "es":    "Ejecute primero el DIC — no hay resultados de desplazamiento para exportar.",
+    },
+    # StrainParamPanel "Output spacing"; "gauge fit" is the VSG fit.
+    "Spacing of the strain points: 1 keeps strain at every pixel; larger values keep every n-th point, so the results take less memory and smaller files for long sequences. The gauge fit still runs at every pixel, so the computation takes about as long.": {
+        "zh_CN": "应变点的间距：1 表示在每个像素上保留应变；更大的值每隔 n 个点保留一个，因此长序列的结果占用更少内存、文件更小。VSG 拟合仍在每个像素上进行，因此计算耗时基本不变。",
+        "zh_TW": "應變點的間距：1 表示在每個像素上保留應變；較大的值每隔 n 個點保留一個，因此長序列的結果占用更少記憶體、檔案更小。VSG 擬合仍在每個像素上進行，因此計算耗時大致不變。",
+        "ja":    "ひずみ点の間隔です：1 ですべてのピクセルのひずみを保持します。大きい値では n 点ごとに 1 点を保持するため、長いシーケンスでも結果のメモリ使用量が減り、ファイルも小さくなります。VSG のフィットは引き続きすべてのピクセルで行われるため、計算時間はほぼ変わりません。",
+        "ko":    "변형률 점의 간격: 1이면 모든 픽셀의 변형률을 유지합니다. 값이 크면 n번째 점마다 하나씩 유지하므로, 긴 시퀀스에서 결과가 메모리를 덜 차지하고 파일도 작아집니다. VSG 피팅은 여전히 모든 픽셀에서 수행되므로 계산 시간은 거의 같습니다.",
+        "de":    "Abstand der Dehnungspunkte: 1 behält die Dehnung an jedem Pixel; größere Werte behalten jeden n-ten Punkt, sodass die Ergebnisse bei langen Sequenzen weniger Speicher belegen und kleinere Dateien ergeben. Die VSG-Anpassung läuft weiterhin an jedem Pixel, die Berechnung dauert also etwa gleich lang.",
+        "fr":    "Espacement des points de déformation : 1 conserve la déformation à chaque pixel ; des valeurs plus grandes conservent un point sur n, si bien que les résultats occupent moins de mémoire et donnent des fichiers plus petits pour les longues séquences. L'ajustement du VSG s'exécute toujours à chaque pixel, le calcul prend donc à peu près autant de temps.",
+        "es":    "Espaciado de los puntos de deformación: 1 conserva la deformación en cada píxel; valores mayores conservan uno de cada n puntos, de modo que los resultados ocupan menos memoria y archivos más pequeños en secuencias largas. El ajuste del VSG sigue ejecutándose en cada píxel, así que el cálculo tarda más o menos lo mismo.",
+    },
+    # StrainWindow: tooltip of "Export Results".
+    "Export displacement and strain results: data files (NPZ, MAT, HDF5, CSV), pictures (PNG, TIFF, JPEG, PDF, SVG), animations (GIF, MP4) and an HTML report": {
+        "zh_CN": "导出位移和应变结果：数据文件（NPZ、MAT、HDF5、CSV）、图片（PNG、TIFF、JPEG、PDF、SVG）、动画（GIF、MP4）以及 HTML 报告",
+        "zh_TW": "匯出位移和應變結果：資料檔案（NPZ、MAT、HDF5、CSV）、圖片（PNG、TIFF、JPEG、PDF、SVG）、動畫（GIF、MP4）以及 HTML 報告",
+        "ja":    "変位とひずみの結果をエクスポート：データファイル（NPZ、MAT、HDF5、CSV）、画像（PNG、TIFF、JPEG、PDF、SVG）、アニメーション（GIF、MP4）、HTML レポート",
+        "ko":    "변위 및 변형률 결과 내보내기: 데이터 파일(NPZ, MAT, HDF5, CSV), 그림(PNG, TIFF, JPEG, PDF, SVG), 애니메이션(GIF, MP4), HTML 보고서",
+        "de":    "Verschiebungs- und Dehnungsergebnisse exportieren: Datendateien (NPZ, MAT, HDF5, CSV), Abbildungen (PNG, TIFF, JPEG, PDF, SVG), Animationen (GIF, MP4) und einen HTML-Bericht",
+        "fr":    "Exporter les résultats de déplacement et de déformation : fichiers de données (NPZ, MAT, HDF5, CSV), images (PNG, TIFF, JPEG, PDF, SVG), animations (GIF, MP4) et un rapport HTML",
+        "es":    "Exportar resultados de desplazamiento y deformación: archivos de datos (NPZ, MAT, HDF5, CSV), imágenes (PNG, TIFF, JPEG, PDF, SVG), animaciones (GIF, MP4) y un informe HTML",
+    },
+    # WorkflowTypePanel custom reference frames: %1 the refused frame
+    # numbers, %2 the last frame that can be a reference (N - 1).
+    "Reference frames %1 dropped: a reference must be one of the frames 1 to %2 (the last frame cannot be a reference).": {
+        "zh_CN": "已舍弃参考帧 %1：参考帧必须是第 1 至第 %2 帧之一（最后一帧不能作为参考帧）。",
+        "zh_TW": "已捨棄參考影格 %1：參考影格必須是第 1 至第 %2 影格之一（最後一個影格不能作為參考影格）。",
+        "ja":    "参照フレーム %1 を除外しました：参照フレームはフレーム 1～%2 のいずれかである必要があります（最後のフレームは参照にできません）。",
+        "ko":    "참조 프레임 %1을(를) 제외했습니다: 참조 프레임은 프레임 1부터 %2까지 중 하나여야 합니다(마지막 프레임은 참조가 될 수 없습니다).",
+        "de":    "Referenzbilder %1 verworfen: Eine Referenz muss eines der Bilder 1 bis %2 sein (das letzte Bild kann keine Referenz sein).",
+        "fr":    "Images de référence %1 écartées : une référence doit être l'une des images 1 à %2 (la dernière image ne peut pas être une référence).",
+        "es":    "Fotogramas de referencia %1 descartados: una referencia debe ser uno de los fotogramas 1 a %2 (el último fotograma no puede ser una referencia).",
+    },
+    "Invalid reference frames %1: use frames 1 to %2, separated by commas (the last frame cannot be a reference).": {
+        "zh_CN": "参考帧 %1 无效：请使用第 1 至第 %2 帧，以逗号分隔（最后一帧不能作为参考帧）。",
+        "zh_TW": "參考影格 %1 無效：請使用第 1 至第 %2 影格，以逗號分隔（最後一個影格不能作為參考影格）。",
+        "ja":    "参照フレーム %1 は無効です：フレーム 1～%2 をコンマ区切りで指定してください（最後のフレームは参照にできません）。",
+        "ko":    "참조 프레임 %1이(가) 잘못되었습니다. 프레임 1부터 %2까지 중에서 쉼표로 구분해 입력하세요(마지막 프레임은 참조가 될 수 없습니다).",
+        "de":    "Ungültige Referenzbilder %1: Bilder 1 bis %2 verwenden, durch Kommas getrennt (das letzte Bild kann keine Referenz sein).",
+        "fr":    "Images de référence %1 non valides : utilisez les images 1 à %2, séparées par des virgules (la dernière image ne peut pas être une référence).",
+        "es":    "Fotogramas de referencia %1 no válidos: use los fotogramas 1 a %2, separados por comas (el último fotograma no puede ser una referencia).",
+    },
+    # Tracking-mode tooltip: the incremental reference is now "earlier" (than
+    # the frame compared), it was "a later reference frame" (later than frame 1).
+    "Accumulative: every frame is compared directly with frame 1.\nPreferred whenever the motion stays within the model's reach:\nno error accumulates from frame to frame.\n\nIncremental: each frame is compared with an earlier reference frame\nand the steps are composed. Needed when the motion from frame 1\nexceeds the model's reach (large stretch or rotation); every step\nadds its error.": {
+        "zh_CN": "累积式：每帧都直接与第 1 帧比较。\n只要运动不超出模型量程，就优先使用：\n误差不会逐帧累积。\n\n增量式：每帧与它之前的某个参考帧比较，\n再将各步结果串接。当相对第 1 帧的运动\n超出模型量程（大拉伸或大转动）时需要使用；每一步\n都会引入自己的误差。",
+        "zh_TW": "累積式：每個影格都直接與第 1 影格比較。\n只要運動不超出模型量程，就優先使用：\n誤差不會逐影格累積。\n\n增量式：每個影格與它之前的某個參考影格比較，\n再將各步結果串接。當相對第 1 影格的運動\n超出模型量程（大拉伸或大轉動）時需要使用；每一步\n都會引入自己的誤差。",
+        "ja":    "累積：すべてのフレームをフレーム 1 と直接比較します。\n動きがモデルの到達範囲内に収まる限り、こちらを推奨します：\nフレーム間で誤差が累積しません。\n\n逐次：各フレームをそれより前の参照フレームと比較し、\n各ステップを合成します。フレーム 1 からの動きが\nモデルの到達範囲を超える場合（大きな伸びや回転）に必要です。各ステップで\n誤差が加わります。",
+        "ko":    "누적형: 모든 프레임을 프레임 1과 직접 비교합니다.\n움직임이 모델의 도달 범위 안에 있으면 이 방식을 권장합니다:\n프레임 간에 오차가 누적되지 않습니다.\n\n증분형: 각 프레임을 그보다 앞선 참조 프레임과 비교하고\n단계들을 합성합니다. 프레임 1로부터의 움직임이\n모델의 도달 범위를 넘을 때(큰 신장이나 회전) 필요하며, 단계마다\n오차가 더해집니다.",
+        "de":    "Akkumulativ: Jedes Bild wird direkt mit Bild 1 verglichen.\nZu bevorzugen, solange die Bewegung in der Reichweite des Modells bleibt:\nVon Bild zu Bild sammelt sich kein Fehler an.\n\nInkrementell: Jedes Bild wird mit einem früheren Referenzbild verglichen,\nund die Schritte werden verknüpft. Nötig, wenn die Bewegung ab Bild 1\ndie Reichweite des Modells übersteigt (große Streckung oder Drehung); jeder Schritt\nfügt seinen Fehler hinzu.",
+        "fr":    "Cumulatif : chaque image est comparée directement à l'image 1.\nÀ privilégier tant que le mouvement reste dans la portée du modèle :\naucune erreur ne s'accumule d'une image à l'autre.\n\nIncrémental : chaque image est comparée à une image de référence antérieure\net les étapes sont composées. Nécessaire quand le mouvement depuis l'image 1\ndépasse la portée du modèle (grand étirement ou rotation) ; chaque étape\najoute son erreur.",
+        "es":    "Acumulativo: cada fotograma se compara directamente con el fotograma 1.\nPreferible siempre que el movimiento quede dentro del alcance del modelo:\nel error no se acumula de un fotograma a otro.\n\nIncremental: cada fotograma se compara con un fotograma de referencia anterior\ny los pasos se componen. Necesario cuando el movimiento desde el fotograma 1\nsupera el alcance del modelo (gran estiramiento o rotación); cada paso\nañade su error.",
+    },
 }
 
 # The same English word with a class-specific meaning: (context, source).
