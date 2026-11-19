@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.1 (2026-11-18)
 
 ### Models for a new user
 - **Help > Models…** replaces the read-only list: each model installed or not with its size,
@@ -13,6 +13,13 @@
   area, and Stop cancels it. The progress bar then starts again from 0 for the tracking: it used
   to stay at 100 % for the whole run after a download.
 - `raftcorr models --import FILE ...` on the command line.
+
+### Fixes
+- Cancel during "Suggest a Model" no longer shows a "StopRequested" error box.
+- A download says when the model folder cannot be written instead of blaming the network, treats
+  a dropped connection as a network failure, and writes its own temporary file, so a run and the
+  Models window can fetch the same model at once. Checked model files are not hashed again until
+  they change.
 
 ### Distribution
 - pip installs PySide6-Essentials instead of the full PySide6: every Qt module RAFTcorr uses is
