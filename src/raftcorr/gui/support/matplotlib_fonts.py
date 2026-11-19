@@ -59,8 +59,15 @@ def configure_matplotlib_fonts() -> None:
         logger.debug("matplotlib not installed; skipping font setup.")
         return
 
+    from matplotlib import font_manager  # noqa: PLC0415
+
+    # matplotlib falls back glyph by glyph only through the families listed in font.family; the
+    # generic "sans-serif" resolves to one font (Segoe UI on Windows), which drew every Chinese,
+    # Japanese or Korean label as boxes. Fonts that are not installed would only add warnings.
+    installed = {f.name for f in font_manager.fontManager.ttflist}
+    chain = [f for f in _FONT_FALLBACK_CHAIN if f in installed and f != "DejaVu Sans"] + ["DejaVu Sans"]
     matplotlib.rcParams["font.sans-serif"] = list(_FONT_FALLBACK_CHAIN)
-    matplotlib.rcParams["font.family"] = "sans-serif"
+    matplotlib.rcParams["font.family"] = chain
 
     # With CJK fonts active, matplotlib's default Unicode minus sign
     # (U+2212) renders as a tofu block in some fonts. Force ASCII '-'.
