@@ -7,7 +7,7 @@ Layers:
 
 Supports:
     - Wheel zoom (factor 1.15, 10%–2000%) anchored under mouse
-    - Middle-button pan (always) + left-button pan when tool == "pan"
+    - Middle-button pan (always) + left-button pan with the pan tool and in the default (select) mode
     - Shape tool forwarding: rect / polygon / circle drawing with add/cut modes
 """
 
@@ -272,7 +272,7 @@ class ImageCanvas(QGraphicsView):
         self._seed_preview_item = None  # QGraphicsEllipseItem for hover snap
         self._seed_preview_box = None   # QGraphicsRectItem showing subset
 
-        # Pan state (middle-button or left-button when tool == "pan")
+        # Pan state (middle button, or left button with the pan tool or in select mode)
         self._panning = False
         self._pan_start = QPointF()
 
@@ -708,10 +708,11 @@ class ImageCanvas(QGraphicsView):
             event.accept()
             return
 
-        # Left-button pan when tool == "pan"
+        # Left-button pan with the pan tool and in the default mode, where the
+        # left button has nothing else to do (drawing tools keep it for shapes)
         if (
             event.button() == Qt.MouseButton.LeftButton
-            and self._current_tool == "pan"
+            and self._current_tool in ("pan", "select")
         ):
             self._panning = True
             self._pan_start = event.position()

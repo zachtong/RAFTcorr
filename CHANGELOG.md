@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 (2026-11-19)
+
+### New
+- Drag with the left button to pan the image, in the main window and in the strain window, as the
+  Analysis tab already did. The middle button still pans at any time, and the drawing tools keep the
+  left button for their shapes.
 
 ### Documentation
 - A User Guide (PDF, LaTeX sources in `docs/user-guide/`) that walks through every panel, window

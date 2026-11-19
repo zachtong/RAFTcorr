@@ -383,7 +383,9 @@ class StrainCanvas(QGraphicsView):
             self._apply_zoom(1.0 / _ZOOM_FACTOR)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
-        if event.button() == Qt.MouseButton.MiddleButton:
+        # Middle or left button pans, as in the main window's default mode. The
+        # Analysis tab's ProbeCanvas overrides this and keeps the left button for probes.
+        if event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.LeftButton):
             self._panning = True
             self._pan_start = event.position()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
@@ -410,7 +412,7 @@ class StrainCanvas(QGraphicsView):
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if (
             self._panning
-            and event.button() == Qt.MouseButton.MiddleButton
+            and event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.LeftButton)
         ):
             self._panning = False
             self.setCursor(Qt.CursorShape.ArrowCursor)
