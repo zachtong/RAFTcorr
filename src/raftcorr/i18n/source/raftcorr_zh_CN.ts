@@ -766,7 +766,7 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
 <context>
     <name>App</name>
     <message>
-        <location filename="../../gui/app.py" line="746"/>
+        <location filename="../../gui/app.py" line="753"/>
         <source>Run DIC first -- no displacement results to post-process.</source>
         <translation>请先运行 DIC —— 当前没有可后处理的位移结果。</translation>
     </message>
@@ -774,17 +774,17 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
 <context>
     <name>Application</name>
     <message>
-        <location filename="../../gui/app.py" line="879"/>
+        <location filename="../../gui/app.py" line="886"/>
         <source>RAFTcorr has hit an error</source>
         <translation>RAFTcorr 发生错误</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="880"/>
+        <location filename="../../gui/app.py" line="887"/>
         <source>An unexpected error occurred. The application may not behave correctly from here on, so saving your project and restarting is recommended.</source>
         <translation>发生了意外错误。程序此后可能无法正常运行，建议保存项目并重新启动。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="890"/>
+        <location filename="../../gui/app.py" line="897"/>
         <source>Details were written to %1</source>
         <translation>详细信息已写入 %1</translation>
     </message>
@@ -1079,25 +1079,25 @@ Automatic: stored volume for s8 (fast), on demand for s1-s4
         <translation>最小</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="256"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="259"/>
         <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Max</source>
         <translation>最大</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="263"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="266"/>
         <location filename="../../gui/dialogs/export_widgets.py" line="179"/>
         <source>Opacity</source>
         <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Long-edge presets (pixels) of the &quot;Resolution (long edge)&quot; combos, in pyALDIC&apos;s order; the last entry, &quot;Full resolution&quot;, is 0 (no cap). Older names that share a field&apos;s colour state.</extracomment>
         <translation>不透明度</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="265"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="268"/>
         <source>Apply to all fields</source>
         <translation>应用到所有场</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="266"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="269"/>
         <source>Apply this field&apos;s colormap, opacity and auto-range to every enabled field (each field keeps its own min/max).</source>
         <translation>将该场的颜色映射、不透明度和自动范围应用到所有已启用的场（每个场保留各自的最小/最大值）。</translation>
     </message>
@@ -1213,17 +1213,17 @@ PNG 和 TIFF 保留透明；其他格式改为白色。</translation>
         <translation>隐藏背景填充</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="290"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="293"/>
         <source>Preview failed: </source>
         <translation>预览失败：</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="324"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="327"/>
         <source>Enable a field on the Images tab to preview.</source>
         <translation>请在“图像”页启用一个场以进行预览。</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="328"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="331"/>
         <source>No data for this field/frame.</source>
         <translation>该场/帧没有数据。</translation>
     </message>
@@ -2242,320 +2242,432 @@ Unchecked: plain alphabetical order, for zero-padded names.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../gui/app.py" line="136"/>
+        <location filename="../../gui/app.py" line="146"/>
         <source>&amp;File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="161"/>
+        <location filename="../../gui/app.py" line="171"/>
         <source>Quit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="165"/>
+        <location filename="../../gui/app.py" line="175"/>
         <source>&amp;Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="168"/>
+        <location filename="../../gui/app.py" line="178"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="172"/>
+        <location filename="../../gui/app.py" line="182"/>
         <source>Dark</source>
         <comment>Color theme</comment>
         <translation>深色</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="172"/>
+        <location filename="../../gui/app.py" line="182"/>
         <source>Light</source>
         <comment>Color theme</comment>
         <translation>浅色</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="182"/>
+        <location filename="../../gui/app.py" line="192"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="363"/>
+        <location filename="../../gui/app.py" line="202"/>
+        <source>Models…</source>
+        <translation>模型…</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="376"/>
         <source>Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile over frames %3); RAFTcorr-%1 reaches %4 px.</source>
         <translation>推荐：RAFTcorr-%1。感兴趣区域内最大位移约 %2 px（在第 %3 帧上取第 99 百分位数）；RAFTcorr-%1 的量程为 %4 px。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="456"/>
+        <location filename="../../gui/app.py" line="463"/>
         <source>Language changed</source>
         <translation>语言已切换</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="627"/>
+        <location filename="../../gui/app.py" line="634"/>
         <source>All Files</source>
         <translation>所有文件</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="200"/>
+        <location filename="../../gui/app.py" line="210"/>
         <source>Select Image Folder</source>
         <translation>选择图像文件夹</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="322"/>
+        <location filename="../../gui/app.py" line="334"/>
         <source>File Association Failed</source>
         <translation>文件关联失败</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="325"/>
+        <location filename="../../gui/app.py" line="337"/>
         <source>File Association</source>
         <translation>文件关联</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="146"/>
+        <location filename="../../gui/app.py" line="156"/>
         <source>Open Image Folder…</source>
         <translation>打开图像文件夹…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="148"/>
+        <location filename="../../gui/app.py" line="158"/>
         <source>Open Project…</source>
         <translation>打开项目…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="149"/>
-        <location filename="../../gui/app.py" line="230"/>
-        <location filename="../../gui/app.py" line="237"/>
+        <location filename="../../gui/app.py" line="159"/>
+        <location filename="../../gui/app.py" line="242"/>
+        <location filename="../../gui/app.py" line="249"/>
         <source>Save Project</source>
         <translation>保存项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="150"/>
+        <location filename="../../gui/app.py" line="160"/>
         <source>Save Project As…</source>
         <translation>项目另存为…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="152"/>
+        <location filename="../../gui/app.py" line="162"/>
         <source>Export Results…</source>
         <translation>导出结果…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="157"/>
+        <location filename="../../gui/app.py" line="167"/>
         <source>Associate .raftcorr files with RAFTcorr…</source>
         <translation>将 .raftcorr 文件关联到 RAFTcorr…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="158"/>
+        <location filename="../../gui/app.py" line="168"/>
         <source>Register .raftcorr so double-clicking a project file opens RAFTcorr (current user only, no admin rights needed).</source>
         <translation>注册 .raftcorr，双击项目文件即可打开 RAFTcorr（仅当前用户，无需管理员权限）。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="191"/>
+        <location filename="../../gui/app.py" line="201"/>
         <source>&amp;Help</source>
         <translation>帮助</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="192"/>
-        <source>Installed Models…</source>
-        <translation>已安装的模型…</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="193"/>
-        <location filename="../../gui/app.py" line="392"/>
-        <location filename="../../gui/app.py" line="394"/>
+        <location filename="../../gui/app.py" line="203"/>
+        <location filename="../../gui/app.py" line="399"/>
+        <location filename="../../gui/app.py" line="401"/>
         <source>Self-test</source>
         <translation>自检</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="194"/>
-        <location filename="../../gui/app.py" line="399"/>
+        <location filename="../../gui/app.py" line="204"/>
+        <location filename="../../gui/app.py" line="406"/>
         <source>About RAFTcorr</source>
         <translation>关于 RAFTcorr</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="209"/>
+        <location filename="../../gui/app.py" line="219"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="231"/>
+        <location filename="../../gui/app.py" line="243"/>
         <source>Load the images first: a project keeps the images, the regions of interest, the settings and the results together.</source>
         <translation>请先加载图像：项目会把图像、感兴趣区域、设置和结果保存在一起。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="252"/>
+        <location filename="../../gui/app.py" line="264"/>
         <source>Project saved: %1</source>
         <translation>项目已保存：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="254"/>
+        <location filename="../../gui/app.py" line="266"/>
         <source>Saving the project</source>
         <translation>正在保存项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="268"/>
+        <location filename="../../gui/app.py" line="280"/>
         <source>Include Results?</source>
         <translation>包含结果？</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="269"/>
+        <location filename="../../gui/app.py" line="281"/>
         <source>Include the computed results in this project?</source>
         <translation>在此项目中包含计算结果吗？</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="271"/>
+        <location filename="../../gui/app.py" line="283"/>
         <source>Including results (about %1 uncompressed) lets you reopen the project without recomputing. Choose No to save a small settings-only file for sharing.</source>
         <translation>包含结果（未压缩约 %1）后，重新打开项目时无需重新计算。选择“否”则只保存设置，文件小、便于分享。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="283"/>
+        <location filename="../../gui/app.py" line="295"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="290"/>
+        <location filename="../../gui/app.py" line="302"/>
         <source>Opening the project</source>
         <translation>正在打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="298"/>
+        <location filename="../../gui/app.py" line="310"/>
         <source>Images not found</source>
         <translation>未找到图像</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="299"/>
+        <location filename="../../gui/app.py" line="311"/>
         <source>The image folder of this project was not found. Choose its new location.</source>
         <translation>未找到此项目的图像文件夹。请选择它的新位置。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="300"/>
+        <location filename="../../gui/app.py" line="312"/>
         <source>Image folder of the project</source>
         <translation>项目的图像文件夹</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="307"/>
+        <location filename="../../gui/app.py" line="319"/>
         <source>Cannot open the project</source>
         <translation>无法打开项目</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="313"/>
+        <location filename="../../gui/app.py" line="325"/>
         <source>Project opened: %1</source>
         <translation>已打开项目：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="323"/>
+        <location filename="../../gui/app.py" line="335"/>
         <source>Could not register .raftcorr files: </source>
         <translation>无法注册 .raftcorr 文件：</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="326"/>
+        <location filename="../../gui/app.py" line="338"/>
         <source>Done. Double-clicking a .raftcorr file will now open RAFTcorr and restore that project.</source>
         <translation>完成。现在双击 .raftcorr 文件即可打开 RAFTcorr 并恢复该项目。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="331"/>
+        <location filename="../../gui/app.py" line="343"/>
         <source>Load at least two images first.</source>
         <translation>请先加载至少两张图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="334"/>
+        <location filename="../../gui/app.py" line="346"/>
         <source>Wait for the running task to finish.</source>
         <translation>请等待当前任务完成。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="367"/>
+        <location filename="../../gui/app.py" line="380"/>
         <source>This exceeds even the reach of RAFTcorr-s8: use incremental tracking.</source>
         <translation>这甚至超出了 RAFTcorr-s8 的量程：请使用增量追踪。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="372"/>
+        <location filename="../../gui/app.py" line="385"/>
         <source>Measuring the motion with RAFTcorr-s8</source>
         <translation>正在用 RAFTcorr-s8 测量运动</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="381"/>
-        <source>%1  (s = %2, reach %3 px): %4</source>
-        <translation>%1  （s = %2，量程 %3 px）：%4</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="382"/>
-        <source>not installed</source>
-        <translation>未安装</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="384"/>
-        <source>Searched:</source>
-        <translation>搜索位置：</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="385"/>
-        <source>Installed Models</source>
-        <translation>已安装的模型</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="400"/>
+        <location filename="../../gui/app.py" line="407"/>
         <source>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;Learned digital image correlation with the RAFTcorr-s1, -s2, -s4 and -s8 models.&lt;br&gt;&lt;br&gt;Displacements: reference to deformed, +u right, +v down, in pixels, frame-1 (Lagrangian) coordinates.&lt;br&gt;&lt;br&gt;Interface derived from pyALDIC.&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</source>
         <translation>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;基于学习的数字图像相关，使用 RAFTcorr-s1、-s2、-s4 和 -s8 模型。&lt;br&gt;&lt;br&gt;位移：从参考到变形，+u 向右，+v 向下，单位为像素，采用第 1 帧（拉格朗日）坐标。&lt;br&gt;&lt;br&gt;界面源自 pyALDIC。&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="459"/>
+        <location filename="../../gui/app.py" line="466"/>
         <source>Language set to %1. Please restart RAFTcorr for all widgets to pick up the new language.</source>
         <translation>语言已切换至 %1。请重启 RAFTcorr 以让所有界面生效。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="594"/>
+        <location filename="../../gui/app.py" line="601"/>
         <source>Frame %1 has no Region of Interest of its own — frame 1&apos;s is used for computation. Switch to frame 1 to edit it, or import a mask to give this frame its own.</source>
         <translation>帧 %1 没有自己的感兴趣区域 — 计算时使用帧 1 的感兴趣区域。请切换到帧 1 编辑，或导入掩模为此帧单独指定。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="605"/>
+        <location filename="../../gui/app.py" line="612"/>
         <source>No Region of Interest to save — load images first.</source>
         <translation>没有可保存的感兴趣区域 — 请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="612"/>
+        <location filename="../../gui/app.py" line="619"/>
         <source>Region of Interest mask is empty.</source>
         <translation>感兴趣区域掩模为空。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="624"/>
+        <location filename="../../gui/app.py" line="631"/>
         <source>Save Region of Interest Mask</source>
         <translation>保存感兴趣区域掩模</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="626"/>
+        <location filename="../../gui/app.py" line="633"/>
         <source>PNG Images</source>
         <translation>PNG 图像</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="635"/>
+        <location filename="../../gui/app.py" line="642"/>
         <source>Mask saved to %1</source>
         <translation>掩模已保存至 %1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="644"/>
+        <location filename="../../gui/app.py" line="651"/>
         <source>No Region of Interest to invert — load images first.</source>
         <translation>没有可反选的感兴趣区域 — 请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="667"/>
+        <location filename="../../gui/app.py" line="674"/>
         <source>Load images first.</source>
         <translation>请先加载图像。</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="703"/>
+        <location filename="../../gui/app.py" line="710"/>
         <source>  Imported mask for frame %1</source>
         <translation>  已导入帧 %1 的掩模</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="709"/>
+        <location filename="../../gui/app.py" line="716"/>
         <source>Batch import: %n mask(s) loaded</source>
         <translation>
             <numerusform>批量导入：已加载 %n 个掩模</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="736"/>
+        <location filename="../../gui/app.py" line="743"/>
         <source>Imported Region of Interest for %n frame(s)</source>
         <translation>
             <numerusform>为 %n 帧导入了感兴趣区域</numerusform>
         </translation>
+    </message>
+</context>
+<context>
+    <name>ModelWeights</name>
+    <message>
+        <location filename="../../gui/support/model_weights.py" line="27"/>
+        <source>Downloading model %1: %2 of %3 MB</source>
+        <extracomment>``status(fraction, text)``; an empty text ends the download status.</extracomment>
+        <translation>正在下载模型 %1：%2 / %3 MB</translation>
+    </message>
+    <message>
+        <location filename="../../gui/support/model_weights.py" line="29"/>
+        <source>Downloading model %1…</source>
+        <translation>正在下载模型 %1…</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="115"/>
+        <source>Models</source>
+        <translation>模型</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="126"/>
+        <source>RAFTcorr downloads a model the first time an analysis uses it and keeps it for later runs. Each model is about 20 MB.</source>
+        <translation>RAFTcorr 会在分析第一次用到某个模型时自动下载它，并保留供以后使用。每个模型约 20 MB。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="136"/>
+        <source>s = %1, reach %2 px</source>
+        <translation>s = %1，量程 %2 px</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="139"/>
+        <source>Download</source>
+        <translation>下载</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="164"/>
+        <source>Model folder: %1</source>
+        <translation>模型文件夹：%1</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="171"/>
+        <source>No internet on this computer? Download the .pth files from the &lt;a href=&quot;%1&quot;&gt;RAFTcorr model release&lt;/a&gt; on another computer, then import them here.</source>
+        <translation>这台电脑无法上网？请在另一台电脑上从&lt;a href=&quot;%1&quot;&gt;RAFTcorr 模型发布页&lt;/a&gt;下载 .pth 文件，再在这里导入。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="180"/>
+        <source>Download All</source>
+        <translation>全部下载</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="182"/>
+        <source>Import Model Files…</source>
+        <translation>导入模型文件…</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="184"/>
+        <source>Open Model Folder</source>
+        <translation>打开模型文件夹</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="186"/>
+        <source>Cancel Download</source>
+        <translation>取消下载</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="189"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="222"/>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="226"/>
+        <source>Not installed (%1 MB)</source>
+        <translation>未安装（%1 MB）</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="227"/>
+        <source>Not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="238"/>
+        <source>&lt;b&gt;%1 is installed now.&lt;/b&gt; Close this window and start again.</source>
+        <translation>&lt;b&gt;%1 现已安装。&lt;/b&gt;关闭此窗口后重新开始即可。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="242"/>
+        <source>&lt;b&gt;%1 is needed, but it is not installed and could not be downloaded.&lt;/b&gt; Download it again below, or import the file.</source>
+        <translation>&lt;b&gt;需要 %1，但它尚未安装，且下载失败。&lt;/b&gt;请在下方重新下载，或导入模型文件。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="286"/>
+        <source>Download cancelled.</source>
+        <translation>下载已取消。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="280"/>
+        <source>Downloaded: %1.</source>
+        <translation>已下载：%1。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="283"/>
+        <source>%1 could not be downloaded: %2</source>
+        <translation>%1 下载失败：%2</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="310"/>
+        <source>Import Model Files</source>
+        <translation>导入模型文件</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="311"/>
+        <source>RAFTcorr models (*.pth)</source>
+        <translation>RAFTcorr 模型 (*.pth)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="325"/>
+        <source>Imported: %1.</source>
+        <translation>已导入：%1。</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="327"/>
+        <source>Not imported: %1. Only the model files of the release can be imported.</source>
+        <translation>未导入：%1。只能导入发布页上的模型文件。</translation>
     </message>
 </context>
 <context>
@@ -2651,43 +2763,43 @@ Off by default: smoothing coarsens the spatial resolution.</source>
 <context>
     <name>PipelineController</name>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="77"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="80"/>
         <source>Stopped.</source>
         <extracomment>Results larger than this are kept in memory-mapped files in a temporary folder.</extracomment>
         <translation>已停止。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="84"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="92"/>
         <source>The GPU ran out of memory. Close other GPU programs, choose a model with a larger s, or lower the memory fraction (Advanced).</source>
         <translation>GPU 显存不足。请关闭其他占用 GPU 的程序，选择 s 更大的模型，或调低“高级”中的 GPU 显存比例。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="86"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="94"/>
         <source>Analysis failed</source>
         <translation>分析失败</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="164"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="173"/>
         <source>Reference frames without a Region of Interest of their own carry the one of frame 1 forward: %1</source>
         <translation>没有自己感兴趣区域的参考帧沿用第 1 帧的感兴趣区域：%1</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="185"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="196"/>
         <source>Starting...</source>
         <translation>开始中…</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="211"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="222"/>
         <source>The images changed: the running analysis is cancelled.</source>
         <translation>图像已更改：正在运行的分析已取消。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="235"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="252"/>
         <source>The images changed during the run: its results are discarded.</source>
         <translation>运行期间图像发生了变化：本次结果已丢弃。</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="248"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="265"/>
         <source>No frame was computed; the previous results are kept.</source>
         <translation>没有计算任何帧；保留之前的结果。</translation>
     </message>
@@ -3101,22 +3213,22 @@ See the console log for the full traceback.</source>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="131"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="435"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="437"/>
         <source>Ready</source>
         <translation>就绪</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="139"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="437"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="537"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="439"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="547"/>
         <source>ELAPSED  %1</source>
         <translation>已用时间  %1</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="144"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="439"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="545"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="549"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="441"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="555"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="559"/>
         <source>REMAINING  %1</source>
         <translation>剩余时间  %1</translation>
     </message>
@@ -3226,12 +3338,12 @@ See the console log for the full traceback.</source>
         <translation>清除</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="404"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="406"/>
         <source>Place at least one Starting Point in each red region before running (red = needs a Starting Point).</source>
         <translation>运行前请在每个红色区域放置至少一个种子点（红色 = 需要种子点）。</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="520"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="530"/>
         <source>%1  —  Frame %2</source>
         <translation>%1  —  第 %2 帧</translation>
     </message>
@@ -4000,7 +4112,7 @@ s8：大运动或大转动，或无先验信息。</translation>
         <translation>模型</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="114"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="115"/>
         <source>Suggest a Model</source>
         <translation>推荐模型</translation>
     </message>

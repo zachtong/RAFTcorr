@@ -67,10 +67,14 @@ pip install -e ".[dev]"
 ```
 
 The model files `RAFTcorr-s1.pth` ... `RAFTcorr-s8.pth` are assets of the release
-[`weights-v1`](https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1). A model is
-downloaded the first time it is used (or all at once with `raftcorr models --download`) and
-checked against its SHA-256; without an internet connection, put the files in the per-user folder
-below yourself (`raftcorr models` lists where the weights are looked for).
+[`weights-v1`](https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1), about 20 MB each.
+Nothing needs to be done by hand: a model is downloaded the first time an analysis uses it (the
+progress area says so) and checked against its SHA-256. **Help > Models…** shows which models are
+installed, downloads them, and opens the model folder. On a computer without an internet
+connection, download the `.pth` files on another one and use **Import Model Files…** in that
+window, or `raftcorr models --import FILE ...`; the SHA-256 says which model a file is, so a
+renamed download is recognised and any other file is refused. A run whose model can be neither
+found nor downloaded opens the Models window with the reason.
 
 The weights are found in, in order: a path you give, `$RAFTCORR_WEIGHTS`, `models/` of a source
 checkout, and the per-user folder (`%LOCALAPPDATA%\RAFTcorr\models` on Windows,

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Models for a new user
+- **Help > Models…** replaces the read-only list: each model installed or not with its size,
+  Download and Download All (cancellable), Import Model Files… for files downloaded by hand on
+  another computer (identified by their SHA-256, stored under their release name; any other file
+  is refused), Open Model Folder, and the link to the release.
+- A run or a model suggestion whose model can be neither found nor downloaded opens that window
+  with the reason, instead of an "Analysis failed" box with the raw network error.
+- The first-use download shows "Downloading model RAFTcorr-s4: 5.2 of 20.7 MB" in the progress
+  area, and Stop cancels it. The progress bar then starts again from 0 for the tracking: it used
+  to stay at 100 % for the whole run after a download.
+- `raftcorr models --import FILE ...` on the command line.
+
 ### Distribution
 - pip installs PySide6-Essentials instead of the full PySide6: every Qt module RAFTcorr uses is
   in it, and the WebEngine, Pdf and Addons packages (about 175 MB on Windows) are no longer

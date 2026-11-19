@@ -20,8 +20,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from raftcorr.callbacks import StopRequested
 from raftcorr.i18n import tr_args
 from raftcorr.gui.app_state import AppState, RunState
+from raftcorr.models.zoo import ModelUnavailableError
 from raftcorr.gui.controllers.image_controller import ImageController
 from raftcorr.gui.controllers.pipeline_controller import PipelineController
 from raftcorr.gui.controllers.roi_controller import ROIController
@@ -46,6 +48,8 @@ class _Task(QThread):
     progress = Signal(float, str)
     done = Signal(object)
     failed = Signal(str)
+    cancelled = Signal()                    # Cancel of the progress dialog: not an error
+    model_unavailable = Signal(str, str)    # (model key, reason): the Models window takes over
 
     def __init__(self, fn) -> None:
         super().__init__()
@@ -59,6 +63,10 @@ class _Task(QThread):
                                should_stop=lambda: self.stop_requested)
         try:
             self.done.emit(self._fn(cb))
+        except StopRequested:
+            self.cancelled.emit()
+        except ModelUnavailableError as exc:
+            self.model_unavailable.emit(exc.spec.key, exc.short)
         except Exception as exc:  # report to the GUI thread
             logging.getLogger("raftcorr").exception("background task failed")
             self.failed.emit(f"{type(exc).__name__}: {exc}")
@@ -125,6 +133,8 @@ class MainWindow(QMainWindow):
         self._state.current_frame_changed.connect(self._on_frame_changed_for_roi)
         self._state.roi_changed.connect(self._on_roi_changed_reload)
         self._state.results_changed.connect(self._viz_ctrl.clear_all)
+        # A model that is neither installed nor downloadable: the Models window, not an error box.
+        self._state.model_unavailable.connect(self._open_models)
 
         self._build_menu_bar()
 
@@ -189,7 +199,7 @@ class MainWindow(QMainWindow):
             language_menu.addAction(act)
 
         help_menu = menu_bar.addMenu(self.tr("&Help"))
-        add(help_menu, self.tr("Installed Models…"), self._on_show_models)
+        add(help_menu, self.tr("Models…"), lambda: self._open_models())
         add(help_menu, self.tr("Self-test"), self._on_self_test)
         add(help_menu, self.tr("About RAFTcorr"), self._on_about)
 
@@ -220,6 +230,8 @@ class MainWindow(QMainWindow):
             dlg.close()
 
         task.done.connect(lambda r: (_finish(), on_done(r)))
+        task.cancelled.connect(_finish)
+        task.model_unavailable.connect(lambda key, why: (_finish(), self._state.model_unavailable.emit(key, why)))
         task.failed.connect(lambda msg: (_finish(), QMessageBox.critical(self, title, msg),
                                          self._state.log_message.emit(msg, "error")))
         task.start()
@@ -344,9 +356,10 @@ class MainWindow(QMainWindow):
 
         def job(cb):
             from raftcorr.engine.pipeline import Pipeline
-            from raftcorr.models import load_model, resolve_weights
+            from raftcorr.gui.support.model_weights import ensure_weights
+            from raftcorr.models import load_model
 
-            p = resolve_weights("s8", allow_download=True, callbacks=cb)
+            p = ensure_weights("s8", cb, lambda f, text: cb.progress(f, text) if text else None)
             key = (str(p), cfg.device, None)
             loaded = cache.get(key)
             if loaded is None:
@@ -371,18 +384,12 @@ class MainWindow(QMainWindow):
 
         self._run_task(self.tr("Measuring the motion with RAFTcorr-s8"), job, done)
 
-    def _on_show_models(self) -> None:
-        from raftcorr.models.zoo import MODELS, available_models, search_dirs
+    def _open_models(self, missing_key: str | None = None, detail: str = "") -> None:
+        """The Models window; opened by a run or a survey whose model could not be had, it says
+        which one and why."""
+        from raftcorr.gui.dialogs.models_dialog import ModelsDialog
 
-        avail = available_models()
-        lines = []
-        for key, spec in MODELS.items():
-            p = avail.get(key)
-            lines.append(tr_args(self.tr("%1  (s = %2, reach %3 px): %4"), spec.name, spec.downsample_factor,
-                                 spec.lookup_radius_px, str(p) if p else self.tr("not installed")))
-        lines.append("")
-        lines.append(self.tr("Searched:") + " " + "; ".join(str(d) for d in search_dirs()))
-        QMessageBox.information(self, self.tr("Installed Models"), "\n".join(lines))
+        ModelsDialog(self, missing_key, detail).exec()
 
     def _on_self_test(self) -> None:
         from raftcorr.selftest import run_selftest

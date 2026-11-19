@@ -2462,6 +2462,180 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
                  "región. Afecta a la vista y a las imágenes y animaciones exportadas; los archivos de datos exportados "
                  "siempre mantienen la banda recortada como NaN.",
     },
+    # ---- The Models window (Help > Models…) and the download of a model on its first use ----
+    "Models…": {
+        "zh_CN": "模型…", "zh_TW": "模型…", "ja": "モデル…", "ko": "모델…",
+        "de": "Modelle…", "fr": "Modèles…", "es": "Modelos…",
+    },
+    "Models": {
+        "zh_CN": "模型", "zh_TW": "模型", "ja": "モデル", "ko": "모델",
+        "de": "Modelle", "fr": "Modèles", "es": "Modelos",
+    },
+    "Downloading model %1: %2 of %3 MB": {
+        "zh_CN": "正在下载模型 %1：%2 / %3 MB",
+        "zh_TW": "正在下載模型 %1：%2 / %3 MB",
+        "ja":    "モデル %1 をダウンロード中：%2 / %3 MB",
+        "ko":    "모델 %1 다운로드 중: %2 / %3 MB",
+        "de":    "Modell %1 wird heruntergeladen: %2 von %3 MB",
+        "fr":    "Téléchargement du modèle %1 : %2 sur %3 Mo",
+        "es":    "Descargando el modelo %1: %2 de %3 MB",
+    },
+    "Downloading model %1…": {
+        "zh_CN": "正在下载模型 %1…",
+        "zh_TW": "正在下載模型 %1…",
+        "ja":    "モデル %1 をダウンロード中…",
+        "ko":    "모델 %1 다운로드 중…",
+        "de":    "Modell %1 wird heruntergeladen…",
+        "fr":    "Téléchargement du modèle %1…",
+        "es":    "Descargando el modelo %1…",
+    },
+    "RAFTcorr downloads a model the first time an analysis uses it and keeps it for later runs. Each model is about 20 MB.": {
+        "zh_CN": "RAFTcorr 会在分析第一次用到某个模型时自动下载它，并保留供以后使用。每个模型约 20 MB。",
+        "zh_TW": "RAFTcorr 會在分析第一次用到某個模型時自動下載它，並保留供之後使用。每個模型約 20 MB。",
+        "ja":    "RAFTcorr は、解析で初めて使うときにモデルをダウンロードし、以降の実行のために保存します。各モデルは約 20 MB です。",
+        "ko":    "RAFTcorr는 분석에서 모델을 처음 사용할 때 내려받아 이후 실행을 위해 보관합니다. 모델 하나는 약 20 MB입니다.",
+        "de":    "RAFTcorr lädt ein Modell herunter, wenn eine Analyse es zum ersten Mal verwendet, und behält es für "
+                 "spätere Läufe. Jedes Modell ist etwa 20 MB groß.",
+        "fr":    "RAFTcorr télécharge un modèle la première fois qu'une analyse l'utilise et le conserve pour les analyses "
+                 "suivantes. Chaque modèle fait environ 20 Mo.",
+        "es":    "RAFTcorr descarga un modelo la primera vez que un análisis lo usa y lo conserva para los análisis "
+                 "siguientes. Cada modelo ocupa unos 20 MB.",
+    },
+    "s = %1, reach %2 px": {
+        "zh_CN": "s = %1，量程 %2 px",
+        "zh_TW": "s = %1，量程 %2 px",
+        "ja":    "s = %1、到達範囲 %2 px",
+        "ko":    "s = %1, 도달 범위 %2 px",
+        "de":    "s = %1, Reichweite %2 px",
+        "fr":    "s = %1, portée %2 px",
+        "es":    "s = %1, alcance %2 px",
+    },
+    "Download": {
+        "zh_CN": "下载", "zh_TW": "下載", "ja": "ダウンロード", "ko": "다운로드",
+        "de": "Herunterladen", "fr": "Télécharger", "es": "Descargar",
+    },
+    "Download All": {
+        "zh_CN": "全部下载", "zh_TW": "全部下載", "ja": "すべてダウンロード", "ko": "모두 다운로드",
+        "de": "Alle herunterladen", "fr": "Tout télécharger", "es": "Descargar todos",
+    },
+    "Model folder: %1": {
+        "zh_CN": "模型文件夹：%1",
+        "zh_TW": "模型資料夾：%1",
+        "ja":    "モデルフォルダ：%1",
+        "ko":    "모델 폴더: %1",
+        "de":    "Modellordner: %1",
+        "fr":    "Dossier des modèles : %1",
+        "es":    "Carpeta de modelos: %1",
+    },
+    "No internet on this computer? Download the .pth files from the <a href=\"%1\">RAFTcorr model release</a> on another computer, then import them here.": {
+        "zh_CN": "这台电脑无法上网？请在另一台电脑上从<a href=\"%1\">RAFTcorr 模型发布页</a>下载 .pth 文件，再在这里导入。",
+        "zh_TW": "這台電腦無法上網？請在另一台電腦上從<a href=\"%1\">RAFTcorr 模型發布頁</a>下載 .pth 檔案，再在這裡匯入。",
+        "ja":    "このコンピューターはインターネットに接続できませんか？別のコンピューターで<a href=\"%1\">RAFTcorr "
+                 "モデルのリリースページ</a>から .pth ファイルをダウンロードし、ここでインポートしてください。",
+        "ko":    "이 컴퓨터가 인터넷에 연결되지 않나요? 다른 컴퓨터에서 <a href=\"%1\">RAFTcorr 모델 릴리스 페이지</a>의 "
+                 ".pth 파일을 내려받은 뒤 여기서 가져오세요.",
+        "de":    "Kein Internet auf diesem Computer? Laden Sie die .pth-Dateien auf einem anderen Computer von der "
+                 "<a href=\"%1\">RAFTcorr-Modellveröffentlichung</a> herunter und importieren Sie sie hier.",
+        "fr":    "Pas d'internet sur cet ordinateur ? Téléchargez les fichiers .pth depuis la <a href=\"%1\">publication "
+                 "des modèles RAFTcorr</a> sur un autre ordinateur, puis importez-les ici.",
+        "es":    "¿Este ordenador no tiene internet? Descargue los archivos .pth de la <a href=\"%1\">publicación de "
+                 "modelos de RAFTcorr</a> en otro ordenador e impórtelos aquí.",
+    },
+    "Import Model Files…": {
+        "zh_CN": "导入模型文件…", "zh_TW": "匯入模型檔案…", "ja": "モデルファイルをインポート…",
+        "ko": "모델 파일 가져오기…", "de": "Modelldateien importieren…",
+        "fr": "Importer des fichiers de modèle…", "es": "Importar archivos de modelo…",
+    },
+    "Import Model Files": {
+        "zh_CN": "导入模型文件", "zh_TW": "匯入模型檔案", "ja": "モデルファイルをインポート",
+        "ko": "모델 파일 가져오기", "de": "Modelldateien importieren",
+        "fr": "Importer des fichiers de modèle", "es": "Importar archivos de modelo",
+    },
+    "Open Model Folder": {
+        "zh_CN": "打开模型文件夹", "zh_TW": "開啟模型資料夾", "ja": "モデルフォルダを開く",
+        "ko": "모델 폴더 열기", "de": "Modellordner öffnen",
+        "fr": "Ouvrir le dossier des modèles", "es": "Abrir la carpeta de modelos",
+    },
+    "Cancel Download": {
+        "zh_CN": "取消下载", "zh_TW": "取消下載", "ja": "ダウンロードをキャンセル", "ko": "다운로드 취소",
+        "de": "Download abbrechen", "fr": "Annuler le téléchargement", "es": "Cancelar la descarga",
+    },
+    "Close": {
+        "zh_CN": "关闭", "zh_TW": "關閉", "ja": "閉じる", "ko": "닫기",
+        "de": "Schließen", "fr": "Fermer", "es": "Cerrar",
+    },
+    "Installed": {
+        "zh_CN": "已安装", "zh_TW": "已安裝", "ja": "インストール済み", "ko": "설치됨",
+        "de": "Installiert", "fr": "Installé", "es": "Instalado",
+    },
+    "Not installed": {
+        "zh_CN": "未安装", "zh_TW": "未安裝", "ja": "未インストール", "ko": "설치되지 않음",
+        "de": "Nicht installiert", "fr": "Non installé", "es": "No instalado",
+    },
+    "Not installed (%1 MB)": {
+        "zh_CN": "未安装（%1 MB）", "zh_TW": "未安裝（%1 MB）", "ja": "未インストール（%1 MB）",
+        "ko": "설치되지 않음 (%1 MB)", "de": "Nicht installiert (%1 MB)",
+        "fr": "Non installé (%1 Mo)", "es": "No instalado (%1 MB)",
+    },
+    "<b>%1 is installed now.</b> Close this window and start again.": {
+        "zh_CN": "<b>%1 现已安装。</b>关闭此窗口后重新开始即可。",
+        "zh_TW": "<b>%1 現已安裝。</b>關閉此視窗後重新開始即可。",
+        "ja":    "<b>%1 がインストールされました。</b>このウィンドウを閉じて、もう一度実行してください。",
+        "ko":    "<b>%1이(가) 이제 설치되었습니다.</b> 이 창을 닫고 다시 시작하세요.",
+        "de":    "<b>%1 ist jetzt installiert.</b> Schließen Sie dieses Fenster und starten Sie erneut.",
+        "fr":    "<b>%1 est maintenant installé.</b> Fermez cette fenêtre et recommencez.",
+        "es":    "<b>%1 ya está instalado.</b> Cierre esta ventana y vuelva a empezar.",
+    },
+    "<b>%1 is needed, but it is not installed and could not be downloaded.</b> Download it again below, or import the file.": {
+        "zh_CN": "<b>需要 %1，但它尚未安装，且下载失败。</b>请在下方重新下载，或导入模型文件。",
+        "zh_TW": "<b>需要 %1，但它尚未安裝，且下載失敗。</b>請在下方重新下載，或匯入模型檔案。",
+        "ja":    "<b>%1 が必要ですが、インストールされておらず、ダウンロードもできませんでした。</b>下で再度ダウンロード"
+                 "するか、ファイルをインポートしてください。",
+        "ko":    "<b>%1이(가) 필요하지만 설치되어 있지 않고 다운로드하지 못했습니다.</b> 아래에서 다시 다운로드하거나 "
+                 "파일을 가져오세요.",
+        "de":    "<b>%1 wird benötigt, ist aber nicht installiert und konnte nicht heruntergeladen werden.</b> Laden Sie "
+                 "es unten erneut herunter oder importieren Sie die Datei.",
+        "fr":    "<b>%1 est nécessaire, mais il n'est pas installé et n'a pas pu être téléchargé.</b> Téléchargez-le de "
+                 "nouveau ci-dessous ou importez le fichier.",
+        "es":    "<b>Se necesita %1, pero no está instalado y no se pudo descargar.</b> Vuelva a descargarlo abajo o "
+                 "importe el archivo.",
+    },
+    "Download cancelled.": {
+        "zh_CN": "下载已取消。", "zh_TW": "下載已取消。", "ja": "ダウンロードをキャンセルしました。",
+        "ko": "다운로드를 취소했습니다.", "de": "Download abgebrochen.", "fr": "Téléchargement annulé.",
+        "es": "Descarga cancelada.",
+    },
+    "Downloaded: %1.": {
+        "zh_CN": "已下载：%1。", "zh_TW": "已下載：%1。", "ja": "ダウンロードしました：%1。",
+        "ko": "다운로드함: %1.", "de": "Heruntergeladen: %1.", "fr": "Téléchargé : %1.", "es": "Descargado: %1.",
+    },
+    "%1 could not be downloaded: %2": {
+        "zh_CN": "%1 下载失败：%2",
+        "zh_TW": "%1 下載失敗：%2",
+        "ja":    "%1 をダウンロードできませんでした：%2",
+        "ko":    "%1을(를) 다운로드하지 못했습니다: %2",
+        "de":    "%1 konnte nicht heruntergeladen werden: %2",
+        "fr":    "%1 n'a pas pu être téléchargé : %2",
+        "es":    "No se pudo descargar %1: %2",
+    },
+    "RAFTcorr models (*.pth)": {
+        "zh_CN": "RAFTcorr 模型 (*.pth)", "zh_TW": "RAFTcorr 模型 (*.pth)", "ja": "RAFTcorr モデル (*.pth)",
+        "ko": "RAFTcorr 모델 (*.pth)", "de": "RAFTcorr-Modelle (*.pth)", "fr": "Modèles RAFTcorr (*.pth)",
+        "es": "Modelos de RAFTcorr (*.pth)",
+    },
+    "Imported: %1.": {
+        "zh_CN": "已导入：%1。", "zh_TW": "已匯入：%1。", "ja": "インポートしました：%1。",
+        "ko": "가져옴: %1.", "de": "Importiert: %1.", "fr": "Importé : %1.", "es": "Importado: %1.",
+    },
+    "Not imported: %1. Only the model files of the release can be imported.": {
+        "zh_CN": "未导入：%1。只能导入发布页上的模型文件。",
+        "zh_TW": "未匯入：%1。只能匯入發布頁上的模型檔案。",
+        "ja":    "インポートしませんでした：%1。インポートできるのはリリースのモデルファイルだけです。",
+        "ko":    "가져오지 않음: %1. 릴리스의 모델 파일만 가져올 수 있습니다.",
+        "de":    "Nicht importiert: %1. Nur die Modelldateien der Veröffentlichung können importiert werden.",
+        "fr":    "Non importé : %1. Seuls les fichiers de modèle de la publication peuvent être importés.",
+        "es":    "No importado: %1. Solo se pueden importar los archivos de modelo de la publicación.",
+    },
 }
 
 # The same English word with a class-specific meaning: (context, source).

@@ -18,6 +18,7 @@ from PySide6.QtCore import QCoreApplication, QThread, Signal
 
 from raftcorr.callbacks import StopRequested
 from raftcorr.i18n import tr_args
+from raftcorr.models.zoo import ModelUnavailableError
 from raftcorr.gui.app_state import AppState, RunState
 from raftcorr.gui.controllers.pipeline_messages import PipelineMessages
 
@@ -50,6 +51,8 @@ class PipelineWorker(QThread):
     log = Signal(str, str)              # (message, level)
     finished_result = Signal(object)    # DisplacementSeries or None on error
     fatal_error = Signal(str, str)      # (title, message) -- modal-worthy
+    download_status = Signal(float, str)    # (fraction, text) of a model download; "" ends it
+    model_unavailable = Signal(str, str)    # (model key, reason): not installed, not downloaded
 
     def __init__(self, run_config, sequence, roi, frame_masks, loaded_cache: dict,
                  storage_dir: str | None = None) -> None:
@@ -77,6 +80,11 @@ class PipelineWorker(QThread):
             self.log.emit(QCoreApplication.translate("PipelineController", "Stopped."), "warning")
             self.finished_result.emit(None)
             return
+        except ModelUnavailableError as exc:      # the Models window offers a download or an import
+            self.log.emit(str(exc), "error")
+            self.model_unavailable.emit(exc.spec.key, exc.short)
+            self.finished_result.emit(None)
+            return
         except Exception as exc:  # report, never crash the GUI thread
             self.log.emit(traceback.format_exc(), "error")
             text = str(exc).strip() or type(exc).__name__
@@ -89,10 +97,11 @@ class PipelineWorker(QThread):
         self.finished_result.emit(series)
 
     def _load_model(self, cb):
-        from raftcorr.models import load_model, resolve_weights
+        from raftcorr.gui.support.model_weights import ensure_weights
+        from raftcorr.models import load_model
 
         cfg = self._cfg
-        path = resolve_weights(cfg.model, allow_download=True, callbacks=cb)  # first use downloads it
+        path = ensure_weights(cfg.model, cb, self.download_status.emit)    # first use downloads it
         key = (str(path), cfg.device, cfg.corr_mode)
         hit = self._cache.get(key)
         if hit is None:
@@ -178,6 +187,8 @@ class PipelineController:
         self._worker.progress.connect(self._on_progress)
         self._worker.log.connect(lambda msg, lvl: state.log_message.emit(msg, lvl))
         self._worker.fatal_error.connect(lambda t, msg: state.fatal_error.emit(t, msg))
+        self._worker.download_status.connect(self._on_download_status)
+        self._worker.model_unavailable.connect(lambda key, why: state.model_unavailable.emit(key, why))
         worker = self._worker
         # Bound to this worker: a cancelled worker's finish signal can arrive after a new one started.
         worker.finished_result.connect(lambda result, w=worker: self._on_finished(w, result))
@@ -219,6 +230,12 @@ class PipelineController:
         if self._worker and self._state.run_state == RunState.PAUSED:
             self._worker.request_resume()
             self._state.set_run_state(RunState.RUNNING)
+
+    def _on_download_status(self, fraction: float, text: str) -> None:
+        """The bar follows a model download, then starts again from 0 for the tracking (whose
+        progress never goes back, see _on_progress)."""
+        self._state.set_progress_status(text)
+        self._state.set_progress(fraction if text else 0.0, "")
 
     def _on_progress(self, fraction: float, message: str) -> None:
         fraction = max(fraction, self._state.progress)

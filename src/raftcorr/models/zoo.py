@@ -19,28 +19,56 @@ measured performance hints shown in the GUI.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import http.client
 import json
 import os
 import shutil
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..callbacks import Callbacks, coerce
+from ..callbacks import Callbacks, StopRequested, coerce
 
 ENV_WEIGHTS = "RAFTCORR_WEIGHTS"
 
 #: The weights are assets of this GitHub release of the public repository.
 RELEASE_TAG = "weights-v1"
 RELEASE_BASE_URL: str | None = f"https://github.com/zachtong/RAFTcorr/releases/download/{RELEASE_TAG}"
+#: The page of that release, for a manual download in a browser.
+RELEASE_PAGE_URL = f"https://github.com/zachtong/RAFTcorr/releases/tag/{RELEASE_TAG}"
 
 
 class WeightsUnavailableError(RuntimeError):
-    """The weights of a model could not be downloaded (not on the release, or no connection)."""
+    """The weights of a model could not be downloaded (not on the release, no connection, or a
+    corrupted transfer).
+
+    The message says what to do instead, with the folder; ``short`` is the cause alone, for a
+    window that shows the folder and the alternatives itself.
+    """
+
+    def __init__(self, message: str, short: str | None = None) -> None:
+        super().__init__(message)
+        self.short = short or message
+
+
+class ModelUnavailableError(FileNotFoundError):
+    """A released model has no verified local copy and could not be downloaded.
+
+    ``spec`` names the model and ``reason`` says why, with the folders searched; ``short`` is the
+    cause alone. A GUI can offer the download again or an import instead of showing a crash.
+    """
+
+    def __init__(self, spec: "ModelSpec", reason: str, short: str | None = None) -> None:
+        super().__init__(f"weights for {spec.name} ({spec.filename}) are not available: {reason}")
+        self.spec = spec
+        self.reason = reason
+        self.short = short or reason
 
 
 @dataclass(frozen=True)
@@ -52,6 +80,7 @@ class ModelSpec:
     filename: str
     sha256: str | None
     summary: str
+    size_bytes: int | None = None    # of the release asset, shown before a download
 
     @property
     def name(self) -> str:
@@ -98,16 +127,16 @@ MODELS: dict[str, ModelSpec] = {
     for spec in (
         ModelSpec("s1", 1, "RAFTcorr-s1.pth",
                   "e1745ace1238889e3625d46d2003d5d7e29881b11db409b7d017ee1f1e0acbca",
-                  "finest spatial resolution; small displacements"),
+                  "finest spatial resolution; small displacements", 19326737),
         ModelSpec("s2", 2, "RAFTcorr-s2.pth",
                   "5e67f70f6465cf469bdae0a21a97e6b2f98191c7f64de7fcbdf201fbd1161c23",
-                  "fine resolution, several times faster than s1; small to moderate displacements"),
+                  "fine resolution, several times faster than s1; small to moderate displacements", 20545869),
         ModelSpec("s4", 4, "RAFTcorr-s4.pth",
                   "373cecf78a5c815c396eb1a61e4fc69a006520c6fc5017295c76e92393793b41",
-                  "balanced resolution and capture range"),
+                  "balanced resolution and capture range", 20656909),
         ModelSpec("s8", 8, "RAFTcorr-s8.pth",
                   "238ec2ae1d53c8a2aa1fd0ac7e7f97a3710350ecc7ddf47fb37d0809432cde03",
-                  "largest capture range, coarsest resolution; large motion and rotation"),
+                  "largest capture range, coarsest resolution; large motion and rotation", 21101005),
     )
 }
 
@@ -183,6 +212,21 @@ def sha256_of(path: str | Path, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
+#: SHA-256 of the weights already checked, by (path, size, modification time): a model is about
+#: 20 MB, and every run and every refresh of the Models window look the files up again.
+_DIGESTS: dict[tuple[str, int, int], str] = {}
+
+
+def _checked_digest(path: Path) -> str:
+    """:func:`sha256_of`, remembered for as long as the file keeps its size and modification time."""
+    st = path.stat()
+    key = (str(path.resolve()), st.st_size, st.st_mtime_ns)
+    digest = _DIGESTS.get(key)
+    if digest is None:
+        digest = _DIGESTS[key] = sha256_of(path)
+    return digest
+
+
 def find_weights(spec: ModelSpec, weights_dir: str | Path | None = None, callbacks: Callbacks | None = None) -> Path | None:
     """First verified local copy of a model's weights, or None."""
     cb = coerce(callbacks)
@@ -190,53 +234,92 @@ def find_weights(spec: ModelSpec, weights_dir: str | Path | None = None, callbac
         p = d / spec.filename
         if not p.is_file():
             continue
-        if spec.sha256 is None or sha256_of(p) == spec.sha256:
+        if spec.sha256 is None or _checked_digest(p) == spec.sha256:
             return p
         cb.log(f"{p} exists but its SHA-256 does not match the {spec.name} release; skipping it", "warning")
     return None
+
+
+def _temp_beside(dest: Path) -> Path:
+    """A new empty file next to *dest* to write it in. Unique, so that two writers of the same model
+    (a run downloading it while the Models window imports it) never share one."""
+    fd, name = tempfile.mkstemp(dir=dest.parent, prefix=dest.name + ".", suffix=".part")
+    os.close(fd)
+    return Path(name)
+
+
+def _disk_error(spec: ModelSpec, folder: Path, exc: OSError) -> WeightsUnavailableError:
+    return WeightsUnavailableError(f"cannot write {spec.filename} in {folder} ({exc})",
+                                   f"cannot write to the model folder ({exc.strerror or exc})")
+
+
+def _fetch(req: urllib.request.Request, tmp: Path, spec: ModelSpec, cb: Callbacks, timeout: float) -> None:
+    with urllib.request.urlopen(req, timeout=timeout) as resp, open(tmp, "wb") as fh:
+        total = int(resp.headers.get("Content-Length") or 0)
+        got = 0
+        while chunk := resp.read(1 << 18):
+            if cb.should_stop():
+                raise StopRequested(f"download of {spec.filename} cancelled")
+            fh.write(chunk)
+            got += len(chunk)
+            if total:
+                cb.progress(min(1.0, got / total), f"downloading {spec.filename}: {got / 1e6:.1f} MB")
 
 
 def download(spec: ModelSpec, dest_dir: Path | None = None, callbacks: Callbacks | None = None,
              timeout: float = 60.0) -> Path:
     """Download a model's weights (atomic rename) and verify the hash.
 
-    Raises :class:`WeightsUnavailableError` when the release has no such file or the server
-    cannot be reached, with a message that says where to put the file instead.
+    Raises :class:`WeightsUnavailableError` when the release has no such file, the server cannot
+    be reached, the transfer is corrupted or the folder cannot be written, with a message that
+    says where to put the file instead; :class:`~raftcorr.callbacks.StopRequested` when
+    ``callbacks.should_stop()`` turns True. None of them leaves a file behind.
     """
     cb = coerce(callbacks)
-    dest = (dest_dir or user_weights_dir()) / spec.filename
+    folder = dest_dir or user_weights_dir()
+    dest = folder / spec.filename
     if spec.url is None:
         raise WeightsUnavailableError(
-            f"no download location is configured for {spec.filename}; place it in {dest.parent}")
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dest.with_suffix(dest.suffix + ".part")
+            f"no download location is configured for {spec.filename}; place it in {folder}",
+            "no download location is configured")
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        tmp = _temp_beside(dest)
+    except OSError as exc:
+        raise _disk_error(spec, folder, exc) from exc
     cb.log(f"downloading {spec.url}", "info")
     req = urllib.request.Request(spec.url, headers={"User-Agent": "raftcorr"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp, open(tmp, "wb") as fh:
-            total = int(resp.headers.get("Content-Length") or 0)
-            got = 0
-            while chunk := resp.read(1 << 18):
-                fh.write(chunk)
-                got += len(chunk)
-                if total:
-                    cb.progress(min(1.0, got / total), f"downloading {spec.filename}: {got / 1e6:.1f} MB")
-    except urllib.error.HTTPError as exc:
-        tmp.unlink(missing_ok=True)
-        if exc.code == 404:
-            raise WeightsUnavailableError(
-                f"{spec.filename} is not on the release {RELEASE_TAG} (HTTP 404); if you have the file, "
-                f"place it in {dest.parent}") from exc
-        raise WeightsUnavailableError(f"downloading {spec.filename} failed (HTTP {exc.code}); "
-                                      f"place the file in {dest.parent}") from exc
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        tmp.unlink(missing_ok=True)
-        raise WeightsUnavailableError(f"cannot download {spec.filename} ({exc}); check the internet "
-                                      f"connection, or place the file in {dest.parent}") from exc
-    if spec.sha256 is not None and sha256_of(tmp) != spec.sha256:
-        tmp.unlink(missing_ok=True)
-        raise RuntimeError(f"downloaded {spec.filename} failed the SHA-256 check; refusing to use it")
-    shutil.move(str(tmp), str(dest))
+        try:
+            _fetch(req, tmp, spec, cb, timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise WeightsUnavailableError(
+                    f"{spec.filename} is not on the release {RELEASE_TAG} (HTTP 404); if you have the file, "
+                    f"place it in {folder}",
+                    f"{spec.filename} is not on the release {RELEASE_TAG} (HTTP 404)") from exc
+            raise WeightsUnavailableError(f"downloading {spec.filename} failed (HTTP {exc.code}); "
+                                          f"place the file in {folder}",
+                                          f"the download server answered HTTP {exc.code}") from exc
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as exc:
+            why = exc.reason if isinstance(exc, urllib.error.URLError) else (str(exc) or type(exc).__name__)
+            raise WeightsUnavailableError(f"cannot download {spec.filename} ({exc}); check the internet "
+                                          f"connection, or place the file in {folder}",
+                                          f"no connection to the download server ({why}); check the "
+                                          f"internet connection") from exc
+        except OSError as exc:                       # writing the file, not the network
+            raise _disk_error(spec, folder, exc) from exc
+        if spec.sha256 is not None and sha256_of(tmp) != spec.sha256:
+            raise WeightsUnavailableError(f"downloaded {spec.filename} failed the SHA-256 check; refusing to "
+                                          f"use it (a corrupted transfer: try again)",
+                                          "the downloaded file was corrupted (SHA-256 mismatch); try again")
+        try:
+            os.replace(tmp, dest)
+        except OSError as exc:
+            raise _disk_error(spec, folder, exc) from exc
+    finally:
+        with contextlib.suppress(OSError):           # gone after the rename; never mask the error
+            tmp.unlink(missing_ok=True)
     cb.log(f"saved {dest}", "info")
     return dest
 
@@ -246,7 +329,8 @@ def resolve_weights(key_or_path: str | Path, weights_dir: str | Path | None = No
     """Path of the weights for a model key (``"s4"``) or an explicit checkpoint path.
 
     With *allow_download* a model without a verified local copy is downloaded from the release
-    into the per-user folder; a FileNotFoundError says why when that is not possible either.
+    into the per-user folder. A released model that is not available either way raises
+    :class:`ModelUnavailableError` (a FileNotFoundError) saying why.
     """
     p = Path(key_or_path)
     if p.suffix in (".pth", ".pt") or p.is_file():
@@ -262,12 +346,11 @@ def resolve_weights(key_or_path: str | Path, weights_dir: str | Path | None = No
         try:
             return download(spec, callbacks=callbacks)
         except WeightsUnavailableError as exc:
-            raise FileNotFoundError(f"weights for {spec.name} not found locally (looked in: {looked}) "
-                                    f"and not downloaded: {exc}") from exc
-    raise FileNotFoundError(
-        f"weights for {spec.name} ({spec.filename}) not found; looked in: {looked}. "
-        f"Place the file in one of these folders or set {ENV_WEIGHTS}."
-    )
+            raise ModelUnavailableError(spec, f"not found locally (looked in: {looked}) and not "
+                                              f"downloaded: {exc}", exc.short) from exc
+    raise ModelUnavailableError(
+        spec, f"not found; looked in: {looked}. Place the file in one of these folders or set {ENV_WEIGHTS}.",
+        "not installed")
 
 
 def download_missing(keys: list[str] | None = None, callbacks: Callbacks | None = None) -> dict[str, str]:
@@ -286,9 +369,35 @@ def download_missing(keys: list[str] | None = None, callbacks: Callbacks | None 
             continue
         try:
             out[spec.key] = f"downloaded: {download(spec, callbacks=cb)}"
-        except (WeightsUnavailableError, RuntimeError) as exc:
+        except WeightsUnavailableError as exc:      # a stop is not a failure of one model: it ends all
             out[spec.key] = str(exc)
     return out
+
+
+def import_weights(path: str | Path, dest_dir: Path | None = None) -> tuple[ModelSpec, Path]:
+    """Copy a released model's weights into the per-user folder (or *dest_dir*).
+
+    The SHA-256 of the file says which model it is, so a renamed download ("RAFTcorr-s4 (1).pth")
+    is recognised and stored under its release name; any other file raises ValueError. Returns
+    the model and the installed path. Importing the installed file itself changes nothing.
+    """
+    src = Path(path)
+    spec = spec_for_sha256(sha256_of(src))
+    if spec is None:
+        raise ValueError(f"{src.name} is not one of the released RAFTcorr models (its SHA-256 matches "
+                         f"none of {', '.join(s.filename for s in MODELS.values())})")
+    dest = (dest_dir or user_weights_dir()) / spec.filename
+    if dest.is_file() and dest.resolve() == src.resolve():
+        return spec, dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = _temp_beside(dest)
+    try:
+        shutil.copyfile(src, tmp)
+        os.replace(tmp, dest)
+    finally:
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+    return spec, dest
 
 
 def available_models(weights_dir: str | Path | None = None) -> dict[str, Path | None]:

@@ -294,6 +294,7 @@ class RightSidebar(QWidget):
         # --- Connect signals ---
         self._state.run_state_changed.connect(self._on_run_state)
         self._state.progress_updated.connect(self._on_progress)
+        self._state.progress_status.connect(self._on_progress_status)
         self._state.log_message.connect(self._console.append_log)
         # Fatal errors from the pipeline: log + modal dialog
         self._state.fatal_error.connect(self._show_fatal_error)
@@ -305,6 +306,7 @@ class RightSidebar(QWidget):
 
         # Track last known frame string to avoid flickering
         self._last_frame_str: str = ""
+        self._status_text: str = ""     # a model download, shown instead of the frame
 
     @property
     def console(self) -> ConsoleLog:
@@ -438,6 +440,7 @@ class RightSidebar(QWidget):
             self._remaining_label.setText(
                 tr_args(self.tr("REMAINING  %1"), "--:--"))
             self._last_frame_str = ""
+            self._status_text = ""
 
     def _on_geometry_changed(self, index: int) -> None:
         """Plot the field on deformed or reference node positions."""
@@ -505,6 +508,11 @@ class RightSidebar(QWidget):
                 self._cmap_combo.setCurrentIndex(idx)
             self._cmap_combo.blockSignals(False)
 
+    def _on_progress_status(self, text: str) -> None:
+        """A status line (a model download) takes the place of the frame until it is cleared."""
+        self._status_text = text
+        self._on_progress(self._state.progress, "")
+
     def _on_progress(self, fraction: float, message: str) -> None:
         """Update progress bar and label — show only percentage + frame."""
         self._progress_bar.setValue(int(fraction * 1000))
@@ -515,7 +523,9 @@ class RightSidebar(QWidget):
         # Always show last known frame to avoid flickering.
         # Percentage first (universal), then "Frame N/M" (translatable).
         pct = f"{fraction * 100:.0f}%"
-        if self._last_frame_str:
+        if self._status_text:
+            self._progress_label.setText(f"{pct}  —  {self._status_text}")
+        elif self._last_frame_str:
             self._progress_label.setText(
                 tr_args(self.tr("%1  —  Frame %2"),
                         pct, self._last_frame_str)

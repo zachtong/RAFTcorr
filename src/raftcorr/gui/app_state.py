@@ -72,6 +72,12 @@ class AppState(QObject):
     # A complete run whose tracking quality is poor: (title, text, informative,
     # details) of a non-blocking warning dialog. The same findings are in the log.
     run_warning = Signal(str, str, str, str)
+    # A line the progress area shows instead of the frame while it is set ("" ends it): the
+    # download of a model on its first use.
+    progress_status = Signal(str)
+    # A model the run needs is not installed and could not be downloaded: (model key, reason).
+    # The main window opens the Models window on it.
+    model_unavailable = Signal(str, str)
     physical_units_changed = Signal()
     seeds_changed = Signal()      # kept for widget compatibility; RAFTcorr has no seeds
     load_data_changed = Signal()
@@ -114,6 +120,7 @@ class AppState(QObject):
         self.run_state: RunState = RunState.IDLE
         self.progress: float = 0.0
         self.progress_message: str = ""
+        self.progress_status_text: str = ""
         self.elapsed_seconds: float = 0.0
         self.results = None          # raftcorr.results.DisplacementSeries
         self.strain_results = None   # raftcorr.results.StrainSeries
@@ -276,6 +283,7 @@ class AppState(QObject):
         self.run_state = RunState.IDLE
         self.progress = 0.0
         self.progress_message = ""
+        self.progress_status_text = ""
         self.elapsed_seconds = 0.0
         self.image_files = list(files)
         self.sequence = sequence
@@ -370,6 +378,10 @@ class AppState(QObject):
         self.progress = fraction
         self.progress_message = message
         self.progress_updated.emit(fraction, message)
+
+    def set_progress_status(self, text: str) -> None:
+        self.progress_status_text = text
+        self.progress_status.emit(text)
 
     def set_results(self, results, strain=None) -> None:
         from raftcorr.viz.fields import FieldProvider

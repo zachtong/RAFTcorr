@@ -6,6 +6,7 @@
     raftcorr suggest FOLDER          measure the displacement with s8 and suggest a model
     raftcorr models                  list the models and where their weights are
     raftcorr models --download       download the missing model files (per-user folder)
+    raftcorr models --import FILE    install model files downloaded by hand (offline computers)
     raftcorr selftest                run every installed model on a synthetic pair
     raftcorr info                    versions, PyTorch, CUDA
 """
@@ -58,6 +59,9 @@ def _parser() -> argparse.ArgumentParser:
     m = sub.add_parser("models", help="list the models")
     m.add_argument("--download", nargs="*", metavar="KEY",
                    help="download the missing model files (all, or the keys given: s1 s2 s4 s8)")
+    m.add_argument("--import", dest="import_files", nargs="+", metavar="FILE",
+                   help="install .pth files downloaded by hand from the weights-v1 release; the SHA-256 "
+                        "says which model each one is")
     st = sub.add_parser("selftest", help="run every installed model on a synthetic pair")
     st.add_argument("--device", default="auto")
     st.add_argument("--gui", action="store_true",
@@ -167,9 +171,16 @@ def _suggest(args) -> int:
 
 
 def _models(args) -> int:
-    from ..models.zoo import MODELS, available_models, download_missing, load_card, search_dirs
+    from ..models.zoo import MODELS, available_models, download_missing, import_weights, load_card, search_dirs
 
     failed = False
+    for name in args.import_files or ():
+        try:
+            spec, dest = import_weights(name)
+            print(f"{spec.name}: imported to {dest}")
+        except (OSError, ValueError) as exc:
+            print(f"{name}: {exc}")
+            failed = True
     if args.download is not None:
         for key, outcome in download_missing(args.download or None).items():
             print(f"RAFTcorr-{key}: {outcome}")

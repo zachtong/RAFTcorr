@@ -766,7 +766,7 @@ Automático: volumen almacenado para s8 (rápido), bajo demanda para s1-s4
 <context>
     <name>App</name>
     <message>
-        <location filename="../../gui/app.py" line="746"/>
+        <location filename="../../gui/app.py" line="753"/>
         <source>Run DIC first -- no displacement results to post-process.</source>
         <translation>Ejecute primero el DIC — no hay resultados de desplazamiento para posprocesar.</translation>
     </message>
@@ -774,17 +774,17 @@ Automático: volumen almacenado para s8 (rápido), bajo demanda para s1-s4
 <context>
     <name>Application</name>
     <message>
-        <location filename="../../gui/app.py" line="879"/>
+        <location filename="../../gui/app.py" line="886"/>
         <source>RAFTcorr has hit an error</source>
         <translation>RAFTcorr ha encontrado un error</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="880"/>
+        <location filename="../../gui/app.py" line="887"/>
         <source>An unexpected error occurred. The application may not behave correctly from here on, so saving your project and restarting is recommended.</source>
         <translation>Se ha producido un error inesperado. Es posible que la aplicación no funcione correctamente a partir de ahora; se recomienda guardar el proyecto y reiniciar.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="890"/>
+        <location filename="../../gui/app.py" line="897"/>
         <source>Details were written to %1</source>
         <translation>Los detalles se han escrito en %1</translation>
     </message>
@@ -1080,25 +1080,25 @@ Automático: volumen almacenado para s8 (rápido), bajo demanda para s1-s4
         <translation>Mín</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="256"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="259"/>
         <location filename="../../gui/dialogs/export_widgets.py" line="383"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="263"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="266"/>
         <location filename="../../gui/dialogs/export_widgets.py" line="179"/>
         <source>Opacity</source>
         <extracomment>Column widths of the field rows (export, field, colormap, range mode, min / max), shared by the header labels of the Images and Animation tabs. Long-edge presets (pixels) of the &quot;Resolution (long edge)&quot; combos, in pyALDIC&apos;s order; the last entry, &quot;Full resolution&quot;, is 0 (no cap). Older names that share a field&apos;s colour state.</extracomment>
         <translation>Opacidad</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="265"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="268"/>
         <source>Apply to all fields</source>
         <translation>Aplicar a todos los campos</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="266"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="269"/>
         <source>Apply this field&apos;s colormap, opacity and auto-range to every enabled field (each field keeps its own min/max).</source>
         <translation>Aplica el mapa de colores, la opacidad y el rango automático de este campo a todos los campos activados (cada campo conserva su propio mín/máx).</translation>
     </message>
@@ -1214,17 +1214,17 @@ La transparencia se conserva en PNG y TIFF; los demás formatos reciben blanco.<
         <translation>Fondo oculto</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="290"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="293"/>
         <source>Preview failed: </source>
         <translation>Error en la vista previa: </translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="324"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="327"/>
         <source>Enable a field on the Images tab to preview.</source>
         <translation>Active un campo en la pestaña «Imágenes» para la vista previa.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/export_preview.py" line="328"/>
+        <location filename="../../gui/dialogs/export_preview.py" line="331"/>
         <source>No data for this field/frame.</source>
         <translation>No hay datos para este campo/fotograma.</translation>
     </message>
@@ -2252,309 +2252,289 @@ Desmarcado: orden alfabético simple, para nombres con ceros a la izquierda.</tr
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../gui/app.py" line="136"/>
+        <location filename="../../gui/app.py" line="146"/>
         <source>&amp;File</source>
         <translation>Archivo</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="161"/>
+        <location filename="../../gui/app.py" line="171"/>
         <source>Quit</source>
         <translation>Salir</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="165"/>
+        <location filename="../../gui/app.py" line="175"/>
         <source>&amp;Settings</source>
         <translation>Ajustes</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="168"/>
+        <location filename="../../gui/app.py" line="178"/>
         <source>Theme</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="172"/>
+        <location filename="../../gui/app.py" line="182"/>
         <source>Dark</source>
         <comment>Color theme</comment>
         <translation>Oscuro</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="172"/>
+        <location filename="../../gui/app.py" line="182"/>
         <source>Light</source>
         <comment>Color theme</comment>
         <translation>Claro</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="182"/>
+        <location filename="../../gui/app.py" line="192"/>
         <source>Language</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="363"/>
+        <location filename="../../gui/app.py" line="202"/>
+        <source>Models…</source>
+        <translation>Modelos…</translation>
+    </message>
+    <message>
+        <location filename="../../gui/app.py" line="376"/>
         <source>Suggested: RAFTcorr-%1. Largest displacement of the region of interest about %2 px (99th percentile over frames %3); RAFTcorr-%1 reaches %4 px.</source>
         <translation>Sugerencia: RAFTcorr-%1. Mayor desplazamiento de la región de interés de unos %2 px (percentil 99 sobre los fotogramas %3); RAFTcorr-%1 alcanza %4 px.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="456"/>
+        <location filename="../../gui/app.py" line="463"/>
         <source>Language changed</source>
         <translation>Idioma cambiado</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="627"/>
+        <location filename="../../gui/app.py" line="634"/>
         <source>All Files</source>
         <translation>Todos los archivos</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="200"/>
+        <location filename="../../gui/app.py" line="210"/>
         <source>Select Image Folder</source>
         <translation>Seleccionar carpeta de imágenes</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="322"/>
+        <location filename="../../gui/app.py" line="334"/>
         <source>File Association Failed</source>
         <translation>Error al asociar archivos</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="325"/>
+        <location filename="../../gui/app.py" line="337"/>
         <source>File Association</source>
         <translation>Asociación de archivos</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="146"/>
+        <location filename="../../gui/app.py" line="156"/>
         <source>Open Image Folder…</source>
         <translation>Abrir carpeta de imágenes…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="148"/>
+        <location filename="../../gui/app.py" line="158"/>
         <source>Open Project…</source>
         <translation>Abrir proyecto…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="149"/>
-        <location filename="../../gui/app.py" line="230"/>
-        <location filename="../../gui/app.py" line="237"/>
+        <location filename="../../gui/app.py" line="159"/>
+        <location filename="../../gui/app.py" line="242"/>
+        <location filename="../../gui/app.py" line="249"/>
         <source>Save Project</source>
         <translation>Guardar proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="150"/>
+        <location filename="../../gui/app.py" line="160"/>
         <source>Save Project As…</source>
         <translation>Guardar proyecto como…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="152"/>
+        <location filename="../../gui/app.py" line="162"/>
         <source>Export Results…</source>
         <translation>Exportar resultados…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="157"/>
+        <location filename="../../gui/app.py" line="167"/>
         <source>Associate .raftcorr files with RAFTcorr…</source>
         <translation>Asociar archivos .raftcorr con RAFTcorr…</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="158"/>
+        <location filename="../../gui/app.py" line="168"/>
         <source>Register .raftcorr so double-clicking a project file opens RAFTcorr (current user only, no admin rights needed).</source>
         <translation>Registra .raftcorr para que hacer doble clic en un archivo de proyecto abra RAFTcorr (solo el usuario actual, sin permisos de administrador).</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="191"/>
+        <location filename="../../gui/app.py" line="201"/>
         <source>&amp;Help</source>
         <translation>Ayuda</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="192"/>
-        <source>Installed Models…</source>
-        <translation>Modelos instalados…</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="193"/>
-        <location filename="../../gui/app.py" line="392"/>
-        <location filename="../../gui/app.py" line="394"/>
+        <location filename="../../gui/app.py" line="203"/>
+        <location filename="../../gui/app.py" line="399"/>
+        <location filename="../../gui/app.py" line="401"/>
         <source>Self-test</source>
         <translation>Autoprueba</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="194"/>
-        <location filename="../../gui/app.py" line="399"/>
+        <location filename="../../gui/app.py" line="204"/>
+        <location filename="../../gui/app.py" line="406"/>
         <source>About RAFTcorr</source>
         <translation>Acerca de RAFTcorr</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="209"/>
+        <location filename="../../gui/app.py" line="219"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="231"/>
+        <location filename="../../gui/app.py" line="243"/>
         <source>Load the images first: a project keeps the images, the regions of interest, the settings and the results together.</source>
         <translation>Cargue primero las imágenes: un proyecto guarda juntas las imágenes, las regiones de interés, los ajustes y los resultados.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="252"/>
+        <location filename="../../gui/app.py" line="264"/>
         <source>Project saved: %1</source>
         <translation>Proyecto guardado: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="254"/>
+        <location filename="../../gui/app.py" line="266"/>
         <source>Saving the project</source>
         <translation>Guardando el proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="268"/>
+        <location filename="../../gui/app.py" line="280"/>
         <source>Include Results?</source>
         <translation>¿Incluir los resultados?</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="269"/>
+        <location filename="../../gui/app.py" line="281"/>
         <source>Include the computed results in this project?</source>
         <translation>¿Incluir los resultados calculados en este proyecto?</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="271"/>
+        <location filename="../../gui/app.py" line="283"/>
         <source>Including results (about %1 uncompressed) lets you reopen the project without recomputing. Choose No to save a small settings-only file for sharing.</source>
         <translation>Incluir los resultados (unos %1 sin comprimir) permite volver a abrir el proyecto sin recalcular. Elija No para guardar un archivo pequeño, solo con los ajustes, para compartir.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="283"/>
+        <location filename="../../gui/app.py" line="295"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="290"/>
+        <location filename="../../gui/app.py" line="302"/>
         <source>Opening the project</source>
         <translation>Abriendo el proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="298"/>
+        <location filename="../../gui/app.py" line="310"/>
         <source>Images not found</source>
         <translation>No se encontraron las imágenes</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="299"/>
+        <location filename="../../gui/app.py" line="311"/>
         <source>The image folder of this project was not found. Choose its new location.</source>
         <translation>No se encontró la carpeta de imágenes de este proyecto. Elija su nueva ubicación.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="300"/>
+        <location filename="../../gui/app.py" line="312"/>
         <source>Image folder of the project</source>
         <translation>Carpeta de imágenes del proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="307"/>
+        <location filename="../../gui/app.py" line="319"/>
         <source>Cannot open the project</source>
         <translation>No se puede abrir el proyecto</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="313"/>
+        <location filename="../../gui/app.py" line="325"/>
         <source>Project opened: %1</source>
         <translation>Proyecto abierto: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="323"/>
+        <location filename="../../gui/app.py" line="335"/>
         <source>Could not register .raftcorr files: </source>
         <translation>No se pudieron registrar los archivos .raftcorr: </translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="326"/>
+        <location filename="../../gui/app.py" line="338"/>
         <source>Done. Double-clicking a .raftcorr file will now open RAFTcorr and restore that project.</source>
         <translation>Listo. Ahora, hacer doble clic en un archivo .raftcorr abrirá RAFTcorr y restaurará ese proyecto.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="331"/>
+        <location filename="../../gui/app.py" line="343"/>
         <source>Load at least two images first.</source>
         <translation>Cargue primero al menos dos imágenes.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="334"/>
+        <location filename="../../gui/app.py" line="346"/>
         <source>Wait for the running task to finish.</source>
         <translation>Espere a que termine la tarea en curso.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="367"/>
+        <location filename="../../gui/app.py" line="380"/>
         <source>This exceeds even the reach of RAFTcorr-s8: use incremental tracking.</source>
         <translation>Esto supera incluso el alcance de RAFTcorr-s8: use el seguimiento incremental.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="372"/>
+        <location filename="../../gui/app.py" line="385"/>
         <source>Measuring the motion with RAFTcorr-s8</source>
         <translation>Midiendo el movimiento con RAFTcorr-s8</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="381"/>
-        <source>%1  (s = %2, reach %3 px): %4</source>
-        <translation>%1  (s = %2, alcance %3 px): %4</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="382"/>
-        <source>not installed</source>
-        <translation>no instalado</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="384"/>
-        <source>Searched:</source>
-        <translation>Ubicaciones buscadas:</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="385"/>
-        <source>Installed Models</source>
-        <translation>Modelos instalados</translation>
-    </message>
-    <message>
-        <location filename="../../gui/app.py" line="400"/>
+        <location filename="../../gui/app.py" line="407"/>
         <source>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;Learned digital image correlation with the RAFTcorr-s1, -s2, -s4 and -s8 models.&lt;br&gt;&lt;br&gt;Displacements: reference to deformed, +u right, +v down, in pixels, frame-1 (Lagrangian) coordinates.&lt;br&gt;&lt;br&gt;Interface derived from pyALDIC.&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</source>
         <translation>&lt;b&gt;RAFTcorr %1&lt;/b&gt;&lt;br&gt;Correlación digital de imágenes aprendida con los modelos RAFTcorr-s1, -s2, -s4 y -s8.&lt;br&gt;&lt;br&gt;Desplazamientos: de referencia a deformada, +u a la derecha, +v hacia abajo, en píxeles, en coordenadas del fotograma 1 (lagrangianas).&lt;br&gt;&lt;br&gt;Interfaz derivada de pyALDIC.&lt;br&gt;Zixiang (Zach) Tong, The University of Texas at Austin.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="459"/>
+        <location filename="../../gui/app.py" line="466"/>
         <source>Language set to %1. Please restart RAFTcorr for all widgets to pick up the new language.</source>
         <translation>Idioma establecido en %1. Reinicie RAFTcorr para que todos los elementos adopten el nuevo idioma.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="594"/>
+        <location filename="../../gui/app.py" line="601"/>
         <source>Frame %1 has no Region of Interest of its own — frame 1&apos;s is used for computation. Switch to frame 1 to edit it, or import a mask to give this frame its own.</source>
         <translation>El fotograma %1 no tiene una región de interés propia — se usa la del fotograma 1 para el cálculo. Cambie al fotograma 1 para editarla, o importe una máscara para dar a este fotograma la suya.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="605"/>
+        <location filename="../../gui/app.py" line="612"/>
         <source>No Region of Interest to save — load images first.</source>
         <translation>No hay región de interés que guardar — cargue primero las imágenes.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="612"/>
+        <location filename="../../gui/app.py" line="619"/>
         <source>Region of Interest mask is empty.</source>
         <translation>La máscara de la región de interés está vacía.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="624"/>
+        <location filename="../../gui/app.py" line="631"/>
         <source>Save Region of Interest Mask</source>
         <translation>Guardar máscara de región de interés</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="626"/>
+        <location filename="../../gui/app.py" line="633"/>
         <source>PNG Images</source>
         <translation>Imágenes PNG</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="635"/>
+        <location filename="../../gui/app.py" line="642"/>
         <source>Mask saved to %1</source>
         <translation>Máscara guardada en %1</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="644"/>
+        <location filename="../../gui/app.py" line="651"/>
         <source>No Region of Interest to invert — load images first.</source>
         <translation>No hay región de interés que invertir — cargue primero las imágenes.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="667"/>
+        <location filename="../../gui/app.py" line="674"/>
         <source>Load images first.</source>
         <translation>Cargue primero las imágenes.</translation>
     </message>
     <message>
-        <location filename="../../gui/app.py" line="703"/>
+        <location filename="../../gui/app.py" line="710"/>
         <source>  Imported mask for frame %1</source>
         <translation>  Máscara importada para el fotograma %1</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="709"/>
+        <location filename="../../gui/app.py" line="716"/>
         <source>Batch import: %n mask(s) loaded</source>
         <translation>
             <numerusform>Importación por lotes: %n máscara cargada</numerusform>
@@ -2562,12 +2542,144 @@ Desmarcado: orden alfabético simple, para nombres con ceros a la izquierda.</tr
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../gui/app.py" line="736"/>
+        <location filename="../../gui/app.py" line="743"/>
         <source>Imported Region of Interest for %n frame(s)</source>
         <translation>
             <numerusform>Región de interés importada para %n fotograma</numerusform>
             <numerusform>Región de interés importada para %n fotogramas</numerusform>
         </translation>
+    </message>
+</context>
+<context>
+    <name>ModelWeights</name>
+    <message>
+        <location filename="../../gui/support/model_weights.py" line="27"/>
+        <source>Downloading model %1: %2 of %3 MB</source>
+        <extracomment>``status(fraction, text)``; an empty text ends the download status.</extracomment>
+        <translation>Descargando el modelo %1: %2 de %3 MB</translation>
+    </message>
+    <message>
+        <location filename="../../gui/support/model_weights.py" line="29"/>
+        <source>Downloading model %1…</source>
+        <translation>Descargando el modelo %1…</translation>
+    </message>
+</context>
+<context>
+    <name>ModelsDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="115"/>
+        <source>Models</source>
+        <translation>Modelos</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="126"/>
+        <source>RAFTcorr downloads a model the first time an analysis uses it and keeps it for later runs. Each model is about 20 MB.</source>
+        <translation>RAFTcorr descarga un modelo la primera vez que un análisis lo usa y lo conserva para los análisis siguientes. Cada modelo ocupa unos 20 MB.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="136"/>
+        <source>s = %1, reach %2 px</source>
+        <translation>s = %1, alcance %2 px</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="139"/>
+        <source>Download</source>
+        <translation>Descargar</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="164"/>
+        <source>Model folder: %1</source>
+        <translation>Carpeta de modelos: %1</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="171"/>
+        <source>No internet on this computer? Download the .pth files from the &lt;a href=&quot;%1&quot;&gt;RAFTcorr model release&lt;/a&gt; on another computer, then import them here.</source>
+        <translation>¿Este ordenador no tiene internet? Descargue los archivos .pth de la &lt;a href=&quot;%1&quot;&gt;publicación de modelos de RAFTcorr&lt;/a&gt; en otro ordenador e impórtelos aquí.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="180"/>
+        <source>Download All</source>
+        <translation>Descargar todos</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="182"/>
+        <source>Import Model Files…</source>
+        <translation>Importar archivos de modelo…</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="184"/>
+        <source>Open Model Folder</source>
+        <translation>Abrir la carpeta de modelos</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="186"/>
+        <source>Cancel Download</source>
+        <translation>Cancelar la descarga</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="189"/>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="222"/>
+        <source>Installed</source>
+        <translation>Instalado</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="226"/>
+        <source>Not installed (%1 MB)</source>
+        <translation>No instalado (%1 MB)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="227"/>
+        <source>Not installed</source>
+        <translation>No instalado</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="238"/>
+        <source>&lt;b&gt;%1 is installed now.&lt;/b&gt; Close this window and start again.</source>
+        <translation>&lt;b&gt;%1 ya está instalado.&lt;/b&gt; Cierre esta ventana y vuelva a empezar.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="242"/>
+        <source>&lt;b&gt;%1 is needed, but it is not installed and could not be downloaded.&lt;/b&gt; Download it again below, or import the file.</source>
+        <translation>&lt;b&gt;Se necesita %1, pero no está instalado y no se pudo descargar.&lt;/b&gt; Vuelva a descargarlo abajo o importe el archivo.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="286"/>
+        <source>Download cancelled.</source>
+        <translation>Descarga cancelada.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="280"/>
+        <source>Downloaded: %1.</source>
+        <translation>Descargado: %1.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="283"/>
+        <source>%1 could not be downloaded: %2</source>
+        <translation>No se pudo descargar %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="310"/>
+        <source>Import Model Files</source>
+        <translation>Importar archivos de modelo</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="311"/>
+        <source>RAFTcorr models (*.pth)</source>
+        <translation>Modelos de RAFTcorr (*.pth)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="325"/>
+        <source>Imported: %1.</source>
+        <translation>Importado: %1.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/models_dialog.py" line="327"/>
+        <source>Not imported: %1. Only the model files of the release can be imported.</source>
+        <translation>No importado: %1. Solo se pueden importar los archivos de modelo de la publicación.</translation>
     </message>
 </context>
 <context>
@@ -2663,43 +2775,43 @@ Desactivado por defecto: el suavizado empeora la resolución espacial.</translat
 <context>
     <name>PipelineController</name>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="77"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="80"/>
         <source>Stopped.</source>
         <extracomment>Results larger than this are kept in memory-mapped files in a temporary folder.</extracomment>
         <translation>Detenido.</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="84"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="92"/>
         <source>The GPU ran out of memory. Close other GPU programs, choose a model with a larger s, or lower the memory fraction (Advanced).</source>
         <translation>La GPU se quedó sin memoria. Cierre otros programas que usen la GPU, elija un modelo con un s mayor o reduzca la fracción de memoria (Avanzado).</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="86"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="94"/>
         <source>Analysis failed</source>
         <translation>El análisis falló</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="164"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="173"/>
         <source>Reference frames without a Region of Interest of their own carry the one of frame 1 forward: %1</source>
         <translation>Los fotogramas de referencia sin región de interés propia arrastran la del fotograma 1: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="185"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="196"/>
         <source>Starting...</source>
         <translation>Iniciando…</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="211"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="222"/>
         <source>The images changed: the running analysis is cancelled.</source>
         <translation>Las imágenes cambiaron: se cancela el análisis en curso.</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="235"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="252"/>
         <source>The images changed during the run: its results are discarded.</source>
         <translation>Las imágenes cambiaron durante la ejecución: se descartan sus resultados.</translation>
     </message>
     <message>
-        <location filename="../../gui/controllers/pipeline_controller.py" line="248"/>
+        <location filename="../../gui/controllers/pipeline_controller.py" line="265"/>
         <source>No frame was computed; the previous results are kept.</source>
         <translation>No se calculó ningún fotograma; se conservan los resultados anteriores.</translation>
     </message>
@@ -3118,22 +3230,22 @@ Consulte el registro de la consola para ver la traza completa.</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="131"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="435"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="437"/>
         <source>Ready</source>
         <translation>Listo</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="139"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="437"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="537"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="439"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="547"/>
         <source>ELAPSED  %1</source>
         <translation>TRANSCURRIDO  %1</translation>
     </message>
     <message>
         <location filename="../../gui/panels/right_sidebar.py" line="144"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="439"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="545"/>
-        <location filename="../../gui/panels/right_sidebar.py" line="549"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="441"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="555"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="559"/>
         <source>REMAINING  %1</source>
         <translation>RESTANTE  %1</translation>
     </message>
@@ -3243,12 +3355,12 @@ Consulte el registro de la consola para ver la traza completa.</translation>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="404"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="406"/>
         <source>Place at least one Starting Point in each red region before running (red = needs a Starting Point).</source>
         <translation>Coloque al menos un punto inicial en cada región roja antes de ejecutar (rojo = requiere punto inicial).</translation>
     </message>
     <message>
-        <location filename="../../gui/panels/right_sidebar.py" line="520"/>
+        <location filename="../../gui/panels/right_sidebar.py" line="530"/>
         <source>%1  —  Frame %2</source>
         <translation>%1  —  Fotograma %2</translation>
     </message>
@@ -4017,7 +4129,7 @@ s8: movimiento o rotación grandes, o sin conocimiento previo.</translation>
         <translation>Modelo</translation>
     </message>
     <message>
-        <location filename="../../gui/widgets/workflow_type_panel.py" line="114"/>
+        <location filename="../../gui/widgets/workflow_type_panel.py" line="115"/>
         <source>Suggest a Model</source>
         <translation>Sugerir un modelo</translation>
     </message>
