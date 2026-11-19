@@ -1,0 +1,223 @@
+\section{Running the analysis}
+\label{sec:running}
+
+The top of the right sidebar holds the four buttons that start, stop and use a run, and the
+\ui{PROGRESS} area below them (Figure~\ref{fig:progress}). This section follows a run from the
+click on \ui{Run DIC Analysis} to the moment its results appear.
+
+\screenshot[0.42\textwidth]{fig-progress.png}{The top of the right sidebar during a run:
+\ui{Run DIC Analysis} (disabled while the run goes on), \ui{Cancel}, \ui{Export Results},
+\ui{Open Strain Window} and the \ui{PROGRESS} area with its bar, the status line and the
+\ui{ELAPSED} and \ui{REMAINING} times.}{fig:progress}
+
+\subsection{Run DIC Analysis}
+
+\ui{Run DIC Analysis} tracks every frame of the sequence with the tracking mode, the model and
+the parameters set in the left sidebar (Sections~\ref{sec:workflow} and~\ref{sec:parameters}).
+The button is enabled whenever no run is going on. Before anything is computed, RAFTcorr checks
+the inputs; a missing input opens a \ui{Cannot start analysis} dialog that says what to do:
+
+\begin{itemize}
+  \item fewer than 2 images: \emph{Need at least 2 images. Load an image folder in the IMAGES
+        section before running DIC.}
+  \item no region of interest on frame~1: \emph{Define a Region of Interest first: draw or
+        import one for frame 1 in the REGION OF INTEREST section.} A region with no pixel
+        selected counts as no region.
+  \item a setting the run cannot use: the same dialog names it.
+\end{itemize}
+
+In incremental tracking, a reference frame without a region of interest of its own does not stop
+the run: RAFTcorr carries the region of frame~1 to it, and the \ui{LOG} lists such frames
+(Section~\ref{sec:workflow}).
+
+The run then starts in the background. The \ui{LOG} records what it does: the model, the number
+of frames, the tracking mode, the number of iterations and the device; the line \emph{loaded
+RAFTcorr-s4 (\ldots)} when the model is loaded into memory (it stays loaded for the next run with
+the same model and device); the size and position of the region of interest; how the region is
+cut into windows (Section~\ref{sec:tiling}). A frame whose tracked part covers less
+than 90\,\% of the region of interest gets a warning line, \emph{Frame $k$: only \ldots{} of the
+region of interest could be tracked}.
+
+Results appear only when the run ends: there is no preview of frames during the run. Until then
+the canvas keeps showing the previous results, if any. They are replaced only when the new run
+returns at least one computed frame. Results larger than 2\,GB are kept on disk in a temporary
+folder until you quit (\emph{results of \ldots{} GB are kept on disk in \ldots},
+Section~\ref{sec:overview-files}).
+
+Loading other images while a run is going on cancels the run (\emph{The images changed: the
+running analysis is cancelled.}), because its results would not belong to the new images.
+
+\subsection{Cancel}
+
+\ui{Cancel} is enabled while a run is going on. It stops the run at the next check point:
+between two frames, between two tiles of a frame, or during a model download. The run does not
+stop in the middle of a window, so it can take a moment.
+
+Frames already computed are kept. The run returns them as its results, as a complete run would:
+the \ui{LOG} reports \emph{stopped by the user after $k$ of $n$ pairs} and then \emph{Results
+received: $k$ frame(s)}; \ui{Export Results} is enabled, the strain window opens, and the
+tracking-quality check (Section~\ref{sec:tracking-quality}) runs on the computed frames. The
+frames that were not computed have no result: the canvas shows their image without a field, the
+strain window shows \emph{Frame $k$ was not computed.}, and exported data files hold NaN for them
+(with a \file{Done} array that marks the computed frames, Section~\ref{sec:export}).
+
+If you cancel before the first frame is finished, nothing replaces the previous results
+(\emph{No frame was computed; the previous results are kept.}). Cancelling during the model
+download stops the download; the \ui{LOG} says \emph{Stopped.}
+
+\begin{warnbox}
+A cancelled run that finished at least one frame replaces the previous results with its partial
+ones. Save a project (\menu{File}{Save Project}, \kbd{Ctrl+S}) before you start a run you may
+cancel if you still need the previous results.
+\end{warnbox}
+
+A run that stops on an error is different: it returns no frames at all. An \ui{Analysis failed}
+dialog shows the cause, the \ui{LOG} holds the full traceback, and the previous results, if any,
+stay.
+
+\subsection{The PROGRESS area}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Progress bar]
+    The fraction of the frame pairs done. It also moves inside a pair when the pair is cut into
+    tiles.
+  \item[Status line]
+    \ui{Ready} when no run is going on. During a run it shows the percentage done and
+    \ui{Frame $k$/$N$}: $k$ is the last frame finished and $N$ the number of images, frame~1
+    included. Both count from 1, like the frame slider. Frame~1 is the reference, so the first
+    frame to finish is frame~2 or later. Before the first frame finishes, the line shows the
+    percentage alone.
+  \item[Model download]
+    While a run downloads its model (first use only), the status line shows \emph{Downloading
+    model RAFTcorr-s4: $a$ of $b$ MB} instead of the frame, and the bar follows the download. A
+    model that can be neither found nor downloaded stops the run and opens the Models window
+    (Section~\ref{sec:installing-models}).
+  \item[ELAPSED]
+    The time since you clicked \ui{Run DIC Analysis}, in minutes and seconds, updated every
+    second. It includes loading, and downloading, the model.
+  \item[REMAINING]
+    An estimate from the elapsed time and the fraction done; \ui{-{}-:-{}-} until 1\,\% of the
+    run is done. Because the elapsed time includes loading the model, the first estimates are
+    often too long; the estimate settles after a few frames.
+\end{description}
+
+\subsection{Large regions: tiles}
+\label{sec:tiling}
+
+The network sees a window of the reference image and the same window of the deformed image. A
+point can only be matched if its displaced position lies inside that window, so the window is
+the bounding box of the region of interest grown by a margin. By default the margin is the reach
+of the model, 32\,$s$\,px (128\,px for RAFTcorr-s4); \ui{Margin} and \ui{Use the Model Reach}
+under \ui{ADVANCED} change it (Section~\ref{sec:parameters}).
+
+The memory one pass of the network needs grows with the number of pixels in the window, at a
+rate that depends on the model: a larger $s$ needs less memory per pixel, and the stored
+correlation volume that RAFTcorr-s8 uses by default grows faster than the window area. Before
+each frame pair, RAFTcorr estimates the peak memory of one pass with a memory model of the
+selected model and compares it with the share of the free GPU memory set by \ui{GPU Memory}
+(default 0.85, under \ui{ADVANCED}), or with a fixed 6\,GB on the CPU.
+
+\begin{itemize}
+  \item If the whole window fits, the pair is solved in one window.
+  \item If it does not, the region is cut into tiles. Each tile has a \emph{core}, the pixels it
+        writes, and a \emph{halo} around it, the margin, which the network sees but whose result
+        is not used. Neighbouring cores overlap by \ui{Tile Blending} (default 32\,px), and the
+        overlap is blended with linear weights so that no seam shows.
+\end{itemize}
+
+Tiling is automatic and needs no setting. The \ui{LOG} says which case applies, at the first pair
+and again whenever the plan changes (in incremental tracking the region of each reference frame
+differs, and the free memory can change during a run):
+
+\begin{itemize}
+  \item \emph{tiling: one window of $W$ x $H$ px (margin $M$ px)};
+  \item \emph{tiling: $n$ tiles, windows up to $W$ x $H$ px, margin $M$ px}.
+\end{itemize}
+
+\begin{warnbox}
+When the memory only allows small windows, RAFTcorr reduces the halo so that each tile keeps a
+useful core, and the tiling line ends with \emph{(margin reduced to fit memory)}. A point that
+moves farther than the reduced margin can then leave the window of its tile and be matched
+wrongly. Free GPU memory (close other GPU programs), raise \ui{GPU Memory}, choose a model with a
+larger $s$, or reduce the region of interest.
+\end{warnbox}
+
+The memory model is an estimate. If the GPU still runs out of memory, RAFTcorr empties its memory
+cache, makes the windows smaller (at most 55\,\% of the area of the largest window that failed) and
+solves the pair again; the \ui{LOG} shows \emph{out of device memory; retrying with windows of at
+most \ldots{} px}. After three such retries the run stops with an \ui{Analysis failed} dialog
+that begins with \emph{The GPU ran out of memory. Close other GPU programs, choose a model with a
+larger s, or lower the memory fraction (Advanced).} The memory fraction is the \ui{GPU Memory}
+setting under \ui{ADVANCED}. A budget so small that a window would fall below the smallest size
+the model accepts also stops the run, with a message that gives both sizes.
+
+\subsection{Tracking quality warning}
+\label{sec:tracking-quality}
+
+When a run ends, RAFTcorr checks the residual of every computed frame: the grey-level mismatch
+that remains after the deformed image is mapped back onto frame~1 with the measured displacement
+(Section~\ref{sec:residual}). It takes the median residual over the region of interest of each
+frame. The residual grows slowly as the specimen deforms, but it jumps when tracking fails,
+typically when the displacement from the reference frame exceeds the reach of the model.
+
+A frame counts as a jump when its median residual exceeds 1.6 times that of the previous computed
+frame and 2 times that of the first computed frame. From the first jump on, every frame whose
+median residual stays above 1.6 times the level before the jump is flagged. The check needs at
+least two computed frames after frame~1, and it runs after a cancelled run too, on the frames
+computed.
+
+When frames are flagged, a \ui{Tracking Quality Warning} dialog opens with the summary \emph{Part
+of the sequence may not be tracked correctly.}, then the finding and an advice that depends on the
+tracking mode:
+
+\begin{itemize}
+  \item \emph{The tracking quality drops from frame $k$ on: the intensity residual rises to $r$
+        grey levels, against $r_0$ before.} Here $r_0$ is the highest median residual of the
+        frames before frame~$k$.
+  \item In accumulative tracking: \emph{The displacement from frame 1 may exceed the reach of the
+        model. Try incremental tracking, or a model with a larger s.}
+  \item In the other tracking modes: \emph{The step between reference frames may exceed the reach
+        of the model. Use more reference frames, or a model with a larger s.}
+\end{itemize}
+
+\ui{Show Details\ldots} lists the flagged frames (the first ten, then how many more) and suggests
+showing the \ui{Residual} field. Frame numbers count from 1, as on screen. The dialog does not
+block the application: it sits in front of the strain window, you can keep working while it is
+open, and the next run closes it. The \ui{LOG} keeps the same finding in one line
+(\emph{tracking quality drops from frame $k$ on \ldots}), and the note is stored with the
+provenance of the run in exported files.
+
+The check never changes a result. When it fires:
+
+\begin{enumerate}
+  \item Select \ui{Residual} in \ui{FIELD} and step through the flagged frames.
+  \item If the residual is high over most of the region, tracking was lost. In accumulative
+        tracking, switch \ui{Tracking Mode} to \ui{Incremental}, or choose a model with a larger
+        $s$ (\ui{Suggest a Model} measures the motion and picks one,
+        Section~\ref{sec:workflow}). In incremental tracking, use more reference frames
+        (\ui{Every Frame}, a smaller \ui{Interval}, or more \ui{Reference Frames}), or a model
+        with a larger $s$.
+  \item If the residual is high only where the images themselves change (a crack that opens,
+        light reflected from the surface, speckle that flakes off), the displacement elsewhere
+        can still be right. The median used by the check moves only when such an area is large;
+        exclude it with a region of interest on the later frames (Section~\ref{sec:roi}).
+\end{enumerate}
+
+\subsection{When a run finishes}
+
+At the end of a run that returns at least one computed frame:
+
+\begin{itemize}
+  \item the \ui{LOG} shows \emph{done: $n$ frames in \ldots{} s} and, in green, \emph{Results
+        received: $n$ frame(s)}, where $n$ counts the computed frames, frame~1 excluded;
+  \item \ui{Run DIC Analysis} is enabled again, \ui{Cancel} is disabled and \ui{Export Results}
+        becomes available (also as \menu{File}{Export Results\ldots}, \kbd{Ctrl+E});
+  \item the canvas moves to the last computed frame and draws the field selected in \ui{FIELD}
+        (Section~\ref{sec:results});
+  \item the strain window opens by itself, in front of the main window
+        (Section~\ref{sec:strain}). It computes nothing until you click \ui{Compute Strain}. If
+        you only need displacement, close it; \ui{Open Strain Window} brings it back;
+  \item a strain result of the previous run is discarded, since it belongs to other
+        displacements;
+  \item the \ui{Tracking Quality Warning} dialog opens if frames were flagged.
+\end{itemize}

@@ -1,0 +1,192 @@
+\section{Viewing displacement results}
+\label{sec:results}
+
+After a run, the canvas draws the selected field over the image, with a colorbar at its right
+edge (Figure~\ref{fig:displacement}). Three groups of the right sidebar decide what is drawn and
+how: \ui{FIELD}, \ui{VISUALIZATION} and \ui{PHYSICAL UNITS} (Figure~\ref{fig:display}). The
+\ui{LOG} at the bottom of the sidebar records what the application does.
+
+\screenshot[0.42\textwidth]{fig-display.png}{The \ui{FIELD}, \ui{VISUALIZATION} and
+\ui{PHYSICAL UNITS} groups of the right sidebar after a run.}{fig:display}
+
+Every field is Lagrangian: a value belongs to a material point and is the change from frame~1 to
+the frame on show. Frame~1 is the reference, so its displacement and residual are zero.
+
+\subsection{FIELD}
+
+Four buttons choose the field; one is always selected.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Disp U]
+    Horizontal displacement $u$, positive to the right.
+  \item[Disp V]
+    Vertical displacement $v$, positive downward, as image rows count.
+  \item[Magnitude]
+    $\sqrt{u^2 + v^2}$, the length of the displacement.
+  \item[Residual]
+    The grey-level mismatch left after the deformed image is mapped back onto frame~1 with the
+    measured displacement: a map of how well each point was tracked.
+\end{description}
+
+Displacements are in pixels, or in a physical length unit when \ui{Use physical units} is on
+(Section~\ref{sec:physical-units}). The residual is in grey levels.
+
+\screenshot[0.45\textwidth]{fig-displacement.png}{Vertical displacement \ui{Disp V} of a plate
+with two holes in tension, drawn on the deformed last frame (\ui{Show on}: \ui{Deformed frame})
+with the background image. The colorbar gives the field and its unit, V~(px), and the range of
+the colours.}{fig:displacement}
+
+\subsubsection*{The residual}
+\label{sec:residual}
+
+For each point $\mathbf{X}$ of the region of interest, RAFTcorr reads the current frame at the
+displaced position $\mathbf{X} + \mathbf{u}(\mathbf{X})$ and subtracts the frame-1 image at
+$\mathbf{X}$. It removes the local mean of this difference and takes its local root mean square,
+both over a Gaussian window of $\sigma = 4$\,px. The result is in grey levels on the 0 to 255
+scale to which RAFTcorr reads every image (Section~\ref{sec:images}). It is always computed
+against frame~1 with the total displacement, whatever the tracking mode.
+
+\begin{itemize}
+  \item Where the displacement maps the current frame back onto frame~1, the residual is small,
+        at the level of the image noise.
+  \item It grows slowly as the specimen deforms (the speckles change shape) and with changes of
+        lighting. Because the local mean is removed, a change of brightness that varies slowly
+        across the image does not raise it.
+  \item It is large where tracking failed, and where the images themselves differ: a crack that
+        opens, a reflection, speckle that flakes off, a surface that leaves the focal plane.
+\end{itemize}
+
+Read the residual by comparison, between frames and between areas of one frame, rather than
+against a fixed value. A residual that rises over the whole region from one frame to the next
+means tracking was lost there; this is what the tracking-quality check detects
+(Section~\ref{sec:tracking-quality}). A residual that rises in one area points to that area.
+Points without a displacement have no residual. The default colormap of the residual is
+\file{magma} (Figure~\ref{fig:residual}).
+
+\screenshot[0.45\textwidth]{fig-residual.png}{The residual of the frame of
+Figure~\ref{fig:displacement}, in grey levels.}{fig:residual}
+
+\subsection{Where the field is drawn}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Show on]
+    \ui{Deformed frame} (the default) draws each value where its material point is in the
+    current frame, over the image of that frame. To do so, RAFTcorr inverts the measured
+    displacement: for every pixel of the current frame it finds the point of frame~1 that lands
+    there and draws that point's value. Pixels where no point of the region of interest lands
+    stay empty. \ui{Reference frame} draws each value at the frame-1 position of its point,
+    over the image of frame~1. The values are the same; only their positions differ. On
+    frame~1 both views are the same.
+
+    Use \ui{Deformed frame} to check that the field follows the specimen: its edges and holes
+    should match the image underneath. Use \ui{Reference frame} to compare frames point by point:
+    a point stays at one place on the screen while you play the sequence.
+  \item[Show background image]
+    On by default. Untick it to see the field alone. \ui{Show on} still applies: the positions
+    of the points differ between the two views even with nothing behind them.
+  \item[Hidden background]
+    What replaces the image while it is hidden: \ui{White} (the default), \ui{Black} or
+    \ui{Transparent}, which shows the background of the canvas. The list is enabled only while
+    \ui{Show background image} is off. In exported pictures, transparency is kept for PNG and
+    TIFF; other formats get white.
+  \item[Hide untracked regions]
+    On by default. A point of the region of interest is untracked in a frame when it has no
+    result there: material that left the field of view, that moved into an area that the region
+    of interest of a later frame excludes (a crack, a hole), or that fell outside the area
+    measured from a reference frame in incremental tracking. With the option on, such points are left
+    transparent. With it off, the \ui{Reference frame} view fills them with the value of the
+    nearest tracked point inside the region of interest. On the \ui{Deformed frame} view an
+    untracked point has no position to be drawn at, so it stays empty either way.
+    The choice is also used for exported images and animations; exported data files always
+    keep NaN at untracked points.
+\end{description}
+
+\subsection{VISUALIZATION}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Colormap]
+    The list offers ten colormaps: \file{jet}, \file{viridis}, \file{turbo}, \file{coolwarm},
+    \file{plasma}, \file{inferno}, \file{magma}, \file{RdBu\_r}, \file{seismic} and
+    \file{black\_rainbow}. The default is
+    \file{turbo}, and \file{magma} for the residual. \file{coolwarm}, \file{RdBu\_r} and
+    \file{seismic} are diverging maps: with them, the automatic range is symmetric about zero,
+    so white means zero. Choose one of them to see the sign of $u$ or $v$ at a glance.
+    \file{black\_rainbow} is \file{jet} with its green band replaced by black. The black sits at
+    the middle of the colour range, not at zero, and the automatic range is not symmetric with
+    this map: give it a \ui{Fixed} range symmetric about zero if black should mean zero.
+  \item[Range]
+    \ui{Auto} (the default) sets the colour range to the 2nd and 98th percentiles of the values
+    drawn on the current frame, after the unit conversion, and computes it again for every frame.
+    The extreme 2\,\% at each end take the end colours. \ui{Fixed} keeps \ui{Min} and \ui{Max}
+    for every frame. When you switch to \ui{Fixed}, \ui{Min} and \ui{Max} start from the range
+    on screen. The boxes hold three decimals, from $-1000$ to $1000$.
+  \item[Opacity]
+    The opacity of the field over the image, from 0 (transparent) to 100 (opaque); default 70.
+\end{description}
+
+The colormap and the range are remembered for each field: switching from \ui{Disp U} to
+\ui{Disp V} restores what you last set for \ui{Disp V}. The strain window shares these settings
+for its \ui{U}, \ui{V} and \ui{Magnitude} fields (Section~\ref{sec:strain}).
+
+\begin{tipbox}
+In \ui{Auto}, each frame has its own range, so one colour means different values on different
+frames. Use \ui{Fixed} when you compare frames, play the sequence, or make figures and
+animations.
+\end{tipbox}
+
+\subsection{PHYSICAL UNITS}
+\label{sec:physical-units}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Use physical units]
+    Off by default: displacements are in pixels and velocity in pixels per frame. The two
+    fields below are enabled only while it is on.
+  \item[Pixel size]
+    The physical size of one image pixel, with its unit: nm, \textmu m, mm, cm, m or inch,
+    followed by \ui{/ px}. Default 1.0\,mm/px. The box holds four decimals: pick the unit in which
+    your pixel size has enough digits (5.12\,\textmu m rather than 0.0051\,mm).
+  \item[Frame rate]
+    The acquisition rate of the images, in frames per second (\ui{fps}); default 1.000\,fps.
+\end{description}
+
+A line below the fields shows the resulting units, for example \emph{Disp: mm Velocity: mm/s},
+or \emph{Disp: px Velocity: px/fr} while the option is off. With the option on:
+
+\begin{itemize}
+  \item \ui{Disp U}, \ui{Disp V} and \ui{Magnitude} are multiplied by the pixel size and shown
+        in its unit, on the colorbar, in the cursor read-out and in \ui{Min} and \ui{Max};
+  \item the \ui{Velocity} field of the strain window (Section~\ref{sec:strain-fields}) is
+        multiplied by the pixel size and the frame rate and shown in the length unit per second;
+  \item the \ui{Analysis} tab can plot against time (Section~\ref{sec:analysis});
+  \item the residual stays in grey levels, strains stay dimensionless and angles stay in
+        degrees.
+\end{itemize}
+
+The setting changes what is shown, not the results: data files keep displacements in pixels and
+record the pixel size and the frame rate (Section~\ref{sec:export}). The main window and the
+strain window share one setting; a change in either shows in both.
+
+\begin{notebox}
+A \ui{Fixed} range keeps its numbers when you switch units. After you turn \ui{Use physical
+units} on or off, or change the pixel size, set \ui{Min} and \ui{Max} again or go back to
+\ui{Auto}.
+\end{notebox}
+
+\subsection{The colorbar}
+
+The colorbar sits at the right edge of the canvas. Its title names the field and its unit
+(\emph{U~(px)}, \emph{V~(mm)}, \emph{Residual (grey levels)}), and five ticks run from \ui{Min}
+at the bottom to \ui{Max} at the top. It follows the range of the frame on show and disappears
+when no field is drawn: on a frame that was not computed (after \ui{Cancel}), and while you edit
+a region of interest. The cursor read-out and the frame navigator are described in
+Section~\ref{sec:canvas}.
+
+\subsection{LOG}
+
+The \ui{LOG} at the bottom of the right sidebar lists the messages of the application, each with
+the time (hours, minutes and seconds). It scrolls to the newest line by itself. Errors are red
+and completed steps green. % CHECK: warnings sent with level "warning" (engine, Stopped., OOM retry) show in the info colour, only level "warn" is amber; see report.
+A run writes its start, the model, the tiling, the frames with a low coverage, the
+tracking-quality note and its end there (Section~\ref{sec:running}); an error writes its full
+traceback there. \ui{Clear} empties the \ui{LOG}; it changes nothing else. The strain window has
+a \ui{LOG} of its own.

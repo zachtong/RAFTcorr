@@ -1,0 +1,63 @@
+\input{preamble}
+\input{version}   % \raftversion, written by build.py from src/raftcorr/_version.py
+
+\hypersetup{pdftitle={RAFTcorr User Guide}, pdfauthor={Zixiang Tong}}
+
+\begin{document}
+
+% ---------------------------------------------------------------- title page
+\begin{titlepage}
+  \centering
+  \vspace*{1.2in}
+  \includegraphics[width=1.35in]{raftcorr-icon.png}\par
+  \vspace{0.35in}
+  {\fontsize{40}{46}\selectfont\bfseries RAFTcorr\par}
+  \vspace{0.12in}
+  {\Large\color{raftaccent} Learned Digital Image Correlation\par}
+  \vspace{0.08in}
+  {\large User Guide for the desktop application, the command line and the Python library\par}
+  \vspace{0.5in}
+  {\large Version \raftversion\par}
+  \vfill
+  {\large Zixiang Tong\par}
+  {\href{mailto:zachtong@utexas.edu}{zachtong@utexas.edu}\par}
+  \vspace{0.06in}
+  {Dr.\ Jin Yang Group, The University of Texas at Austin\par}
+  \vspace{0.12in}
+  {\href{https://github.com/zachtong/RAFTcorr}{github.com/zachtong/RAFTcorr}\par}
+  \vspace*{0.4in}
+\end{titlepage}
+
+\begin{abstract}
+\noindent
+This guide follows a complete RAFTcorr analysis, from installing the application to exporting
+displacement and strain. Each section maps to a panel, a window or a menu of the application, so
+it can be read with RAFTcorr open beside it. The two-page \emph{Quick Guide} holds the same steps
+in condensed form; the last sections cover the command line, the Python library and
+troubleshooting.
+\end{abstract}
+
+{\small
+\begin{multicols}{2}
+\tableofcontents
+\end{multicols}}
+\newpage
+
+\input{sections/01-overview}
+\input{sections/02-installing}
+\input{sections/03-images}
+\input{sections/04-workflow}
+\input{sections/05-roi}
+\input{sections/06-parameters}
+\input{sections/07-canvas}
+\input{sections/08-running}
+\input{sections/09-results}
+\input{sections/10-strain}
+\input{sections/11-analysis}
+\input{sections/12-export}
+\input{sections/13-projects}
+\input{sections/14-cli-python}
+\input{sections/15-settings-help}
+\input{sections/16-troubleshooting}
+
+\end{document}

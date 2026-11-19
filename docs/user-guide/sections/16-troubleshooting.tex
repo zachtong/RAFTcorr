@@ -1,0 +1,222 @@
+\section{Troubleshooting}
+\label{sec:troubleshooting}
+
+Each entry starts with what you see, then says why it happens and what to do. Look at the
+\ui{LOG} panel first: RAFTcorr writes every warning and error there, and the full traceback of a
+failed run. Messages quoted in English below appear translated in the other languages, except the
+lines that come from the tracking engine itself.
+
+\subsection{Installing}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Windows stops the Setup program: ``Windows protected your PC'']
+    The Setup program is not code-signed, and SmartScreen asks about files that few people have
+    downloaded. Click \ui{More info}, then \ui{Run anyway} (Section~\ref{sec:installing-windows}).
+  \item[macOS refuses to open RAFTcorr]
+    The application is not notarised by Apple. Open \ui{System Settings}, \ui{Privacy \&
+    Security}, and click \ui{Open Anyway} on the line about RAFTcorr
+    (Section~\ref{sec:installing-macos}).
+  \item[``RAFTcorr could not install its Python components (code~N)'']
+    The second half of the Windows setup failed: PyTorch, RAFTcorr and its dependencies are
+    downloaded at that point, so the usual cause is a lost connection, or the console window was
+    closed. Code~4 means \emph{``PyTorch could not be installed''}, code~5 \emph{``RAFTcorr could
+    not be installed''}. Restore the connection and run \ui{Repair RAFTcorr} from the Start menu.
+    The details are in \file{install.log} in the installation folder; search it for
+    \file{ERROR}. Run \ui{Repair RAFTcorr} as well when the Start menu entry \ui{RAFTcorr} does
+    nothing after an interrupted setup.
+  \item[pip stops with ``No such file or directory'' and a hint about long paths]
+    Windows limits path lengths, and PySide6 and PyTorch install files deep below
+    \file{site-packages}. Create the virtual environment in a short folder such as
+    \file{C:\textbackslash venvs\textbackslash raftcorr}, or enable long paths in Windows
+    (Section~\ref{sec:installing-pip}).
+\end{description}
+
+\subsection{GPU, memory and speed}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[RAFTcorr runs on the CPU although the computer has an NVIDIA GPU]
+    With \ui{Device} set to \ui{Automatic}, RAFTcorr uses the GPU only when PyTorch sees one, and
+    falls back to the CPU without a message. The log line written when the model loads ends with
+    the device, for example \emph{``loaded RAFTcorr-s4 (\ldots, cpu)''}, and
+    \file{raftcorr info} prints \file{CUDA available: False}. The cause is a CPU build of PyTorch,
+    or a driver too old for the CUDA build that is installed. With the Windows Setup program,
+    update the NVIDIA driver and run \ui{Repair RAFTcorr}; \file{install.log} says which build it
+    chose and why. With pip or a source installation, run \file{pip uninstall torch} and install
+    the CUDA build from the PyTorch index (Section~\ref{sec:installing-pip}). A Mac always runs on
+    the CPU.
+  \item[``Analysis failed'': ``device 'cuda' was requested but CUDA is not available; use 'cpu'\,'']
+    \ui{Device} is set to \ui{GPU (CUDA)}, and PyTorch sees no GPU. Choose \ui{Automatic} or
+    \ui{CPU} in \ui{PARAMETERS} (Section~\ref{sec:parameters}), or make the GPU visible as in the
+    previous entry.
+  \item[``Analysis failed'': ``The GPU ran out of memory. \ldots'']
+    The GPU runs out of memory even after RAFTcorr has cut the region into tiles and retried three
+    times with smaller windows (Section~\ref{sec:tiling}). Close other GPU programs, a second
+    RAFTcorr included; choose a model with a larger $s$, which needs less memory per pixel; or
+    lower \ui{GPU Memory} in \ui{ADVANCED} for smaller windows. If the message is instead
+    \emph{``the memory budget allows windows of about N x N px, below the model's M px minimum''}, too little
+    memory is free for even one window: free memory, raise \ui{GPU Memory}, or run on the CPU.
+  \item[The tiling line ends with ``(margin reduced to fit memory)'']
+    The windows that fit the memory are too small to keep the full margin, so a large
+    displacement may be missed (Section~\ref{sec:tiling}). Free GPU memory or raise
+    \ui{GPU Memory}.
+  \item[The analysis is slow on the CPU]
+    RAFTcorr runs more slowly on the CPU than on a GPU; the Windows setup says so when it finds
+    no NVIDIA driver (\emph{``CPU build (RAFTcorr runs, but slowly)''}). On the CPU, what you can
+    change: a smaller region of interest, since the windows cover its bounding box grown by the
+    margin; a model with a larger
+    $s$, which computes faster and resolves less detail; fewer \ui{Iterations}, which shortens
+    every frame but leaves the network fewer refinement steps, so compare with a run at the
+    default 20 before you rely on it. \ui{REMAINING} in \ui{PROGRESS} tells you how long the run
+    still needs.
+\end{description}
+
+\subsection{Models}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[The Models window opens when you click Run DIC Analysis]
+    The model of the run is not on the computer and could not be downloaded. The card at the top
+    of the window gives the reason, for example \emph{``no connection to the download server
+    (\ldots); check the internet connection''}, \emph{``cannot write to the model folder
+    (\ldots)''} or \emph{``the downloaded file was corrupted (SHA-256 mismatch); try again''}. For
+    a run, the log holds the full message with every folder searched. Click \ui{Download} once the connection
+    works; on a computer without internet, or behind a firewall that blocks the download, fetch the
+    file in a browser and use \ui{Import Model Files…} (Section~\ref{sec:installing-models}).
+  \item[A model file is in the folder, but RAFTcorr does not use it]
+    Its SHA-256 does not match the release, so RAFTcorr skips it; the log says
+    \emph{``\ldots\ exists but its SHA-256 does not match the RAFTcorr-s4 release; skipping it''}.
+    The file is damaged or incomplete, or it is not a released model. Download the model again,
+    which replaces the file, or import the right file.
+  \item[A checkpoint is refused: ``The 1.x models (\ldots) are not supported'']
+    \file{-{}-model} on the command line, and the argument \file{model} in Python, also take the
+    path of a checkpoint file.
+    RAFTcorr~2 loads only checkpoints that store their architecture, such as the four released
+    models; the models of RAFTcorr~1.x cannot be used.
+\end{description}
+
+\subsection{Tracking}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[``Cannot start analysis'']
+    Fewer than two images are loaded, or frame~1 has no region of interest; the dialog says which
+    (Section~\ref{sec:running}). Load the images or define the region of interest of frame~1
+    (Sections~\ref{sec:images} and~\ref{sec:roi}).
+  \item[``Tracking Quality Warning'': the motion is beyond the reach of the model]
+    The residual jumps from one frame on, typically because the displacement from the reference
+    frame exceeds the reach of the model; the warning changes no result
+    (Section~\ref{sec:tracking-quality} explains the check). Select \ui{Residual} in \ui{FIELD} to
+    see where the images do not match, then:
+    \begin{itemize}
+      \item click \ui{Suggest a Model}, which measures the motion and picks a model that reaches
+        it, or choose a model with a larger $s$ (s8 reaches 256\,px);
+      \item in accumulative tracking, switch \ui{Tracking Mode} to \ui{Incremental}, so that only
+        each step has to stay within the reach; in incremental tracking, use more reference
+        frames (Section~\ref{sec:workflow});
+      \item if you turned \ui{Use the Model Reach} off in \ui{ADVANCED}, make the \ui{Margin}
+        cover the largest displacement of the region of interest.
+    \end{itemize}
+  \item[Results look wrong at the edges of the region of interest]
+    Look at \ui{Residual} near the edge, then check these causes:
+    \begin{itemize}
+      \item Points that leave the image cannot be matched, and RAFTcorr drops them. The log warns
+        \emph{``Frame N: only P\% of the region of interest could be tracked''} when less than
+        90\,\% of the region is left. With \ui{Hide untracked regions} ticked these points are
+        transparent; unticked, the \ui{Reference frame} view and pictures fill them from the
+        nearest value, while data files keep them empty.
+      \item A point that moves further than the margin falls outside its window and cannot be
+        matched (Section~\ref{sec:tiling}): keep \ui{Use the Model Reach}, or set a \ui{Margin}
+        larger than the largest displacement, and watch for \emph{``margin reduced to fit
+        memory''} in the tiling line.
+      \item A region of interest drawn past the specimen tracks whatever the image shows there,
+        the background or a grip. Draw it on the specimen only, cut what lies outside, and give
+        later frames a mask of their own when a crack or a hole opens (Section~\ref{sec:roi}).
+      \item Strain is biased and partly left empty next to every edge; see \emph{Strain is empty
+        next to the edges} below.
+    \end{itemize}
+  \item[Frames are in the wrong order, or an extra frame appears]
+    \ui{Natural Sort (1, 2, …, 10)}, on by default, puts \file{img2} before \file{img10}; untick it
+    for names whose plain alphabetical order is the right one. Check the order in the image list
+    before you draw the region of interest, since changing the sort starts a new session
+    (Section~\ref{sec:images}). Every image file directly inside the folder becomes a frame, a mask
+    image included. \ui{Save} in \ui{REGION OF INTEREST} proposes the image folder: save masks
+    elsewhere, or the next time you load the folder the mask becomes a frame, possibly the
+    reference image.
+\end{description}
+
+\subsection{Strain}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Strain is empty next to the edges]
+    \ui{Trim low-confidence edges} leaves a band along every edge of the region of interest, a
+    hole or a crack empty, because a gauge cut by the edge gives a one-sided, biased fit. The band
+    is 14\,px wide with the defaults (Section~\ref{sec:edge-trim}). Lower the coefficient to keep
+    more points (0 keeps every point, with the bias), or choose a smaller \ui{VSG size}, which
+    narrows the band. \ui{Fill trimmed edges (display only)} fills the band in the view and in
+    exported pictures; data files always keep it empty.
+  \item[``Strain Computation Failed'': ``Edge trimming would remove every strain point'']
+    The trimmed band is wider than half the width of the region of interest. Reduce \ui{VSG size}
+    or lower \ui{Trim low-confidence edges}.
+\end{description}
+
+\subsection{Images}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[The image list stays empty]
+    RAFTcorr loads the files directly inside the folder with the extensions \file{.png},
+    \file{.jpg}, \file{.jpeg}, \file{.tif}, \file{.tiff} and \file{.bmp}; it does not look into
+    subfolders. Open the folder that holds the images themselves.
+  \item[``Cannot open the images'': ``every frame must have the size of frame 0 (\ldots)'']
+    All images of a sequence must have the size of the first one; the message lists the files that
+    differ (here, ``frame~0'' is the first image, frame~1 everywhere else in the application).
+    Move those files out of the folder.
+  \item[Images of different bit depths, or a dark reference image]
+    RAFTcorr converts every frame with one intensity scale, taken from the reference image
+    (Section~\ref{sec:images}); the log line after loading names it, for example \emph{``51
+    image(s), 2048 x 2048 px, 12-bit (stored as uint16)''}. A later frame stored with another bit
+    depth is then scaled wrongly, and later pixels brighter than that range are clipped, without
+    a message. Store every frame in the same format and bit depth, and keep the exposure constant
+    through the sequence.
+\end{description}
+
+\subsection{The application crashes}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[``RAFTcorr has hit an error'']
+    An unexpected error. The dialog says \emph{``An unexpected error occurred. The application may
+    not behave correctly from here on, so saving your project and restarting is recommended.''}
+    Save the project, if you can, and restart RAFTcorr. \ui{Show Details} holds the traceback,
+    and the log shows it after a line starting with \file{CRASH:}. The macOS application also
+    writes it to \file{RAFTcorr.log} in
+    \file{\textasciitilde/Library/Application Support/RAFTcorr/logs}, and the dialog then says
+    \emph{``Details were written to \ldots''}.
+  \item[``Analysis failed'' with another message]
+    The run stopped on an error. Unlike \ui{Cancel}, an error discards the frames of this run;
+    the results of an earlier run stay. The dialog gives the message, and the log holds the full
+    traceback.
+  \item[RAFTcorr does not start, or closes at once]
+    The Windows and pip installations write no log file, so start RAFTcorr from a terminal to see
+    the error: \file{raftcorr} (with the Windows Setup program, when the PATH task was ticked), or
+    \file{/Applications/RAFTcorr.app/Contents/MacOS/RAFTcorr} on a Mac. The command
+    \file{raftcorr~selftest~-{}-gui} checks that the interface libraries, icons and translations
+    load. After an interrupted Windows setup, run \ui{Repair RAFTcorr}.
+\end{description}
+
+\subsection{Reporting a problem}
+\label{sec:troubleshooting-report}
+
+Report problems at \url{https://github.com/zachtong/RAFTcorr/issues}. Include:
+
+\begin{itemize}
+  \item the version (\menu{Help}{About RAFTcorr}, or \file{raftcorr -{}-version}), the operating
+    system and how you installed RAFTcorr;
+  \item the output of \file{raftcorr info} and, for a model problem, of \menu{Help}{Self-test};
+  \item the text of the \ui{LOG} (right-click it, \ui{Select All}, then \ui{Copy}) and the
+    \ui{Show Details} text of the error dialog;
+  \item \file{install.log} for a problem with the Windows setup, and \file{RAFTcorr.log} on a Mac;
+  \item the steps that lead to the problem, and the settings, best as a project saved without
+    results.
+\end{itemize}
+
+\begin{warnbox}
+Issues on GitHub are public. Do not attach images, projects or logs that you may not share; the
+log and a project name the folders of your images.
+\end{warnbox}

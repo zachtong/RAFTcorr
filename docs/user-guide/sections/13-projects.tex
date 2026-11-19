@@ -1,0 +1,100 @@
+\section{Projects}
+\label{sec:projects}
+
+A project file (\file{.raftcorr}) keeps a whole session: which images, the regions of interest, the
+settings, the probes and, if you want, the results. Opening it brings the session back without
+running the analysis again. The application saves and opens projects; \file{raftcorr run
+-{}-project} also writes one, and the Python library reads and writes them
+(Section~\ref{sec:cli}).
+
+\subsection{Saving and opening}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[\menu{File}{Save Project} (\kbd{Ctrl+S})]
+    Saves to the project file of the session. The first time, it asks for a name, starting with
+    \file{project.raftcorr} in the image folder; the extension \file{.raftcorr} is added. Images
+    have to be loaded first.
+  \item[\menu{File}{Save Project As…} (\kbd{Ctrl+Shift+S})]
+    Always asks for a name, and the session continues in the new file.
+  \item[\menu{File}{Open Project…} (\kbd{Ctrl+O})]
+    Opens a project: the images, the regions of interest, the settings, the probes, the load
+    record and the results it holds, on the frame that was shown when it was saved.
+\end{description}
+
+When the session has results, every save asks \ui{Include the computed results in this project?}
+with the approximate uncompressed size of the results. \ui{Yes} (the default) stores the
+displacement, the residual and the strain, so the project reopens ready to view, analyse and
+export. \ui{No} writes a small file with the settings only, for sharing or as a template; after
+opening it you run the analysis again. \ui{Cancel} saves nothing.
+
+Saving and opening run behind a progress dialog. \ui{Cancel} in that dialog stops a save. A save
+is written to a temporary file first, so a cancelled or failed save leaves an existing project as
+it was. After a save or an open, the title bar shows the name of the project file.
+
+\subsection{What a project holds}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Stored & Content \\
+  \midrule
+  Images & the image folder (its full path and its position relative to the project file) and
+    the file names in frame order; not the images themselves \\
+  Regions of interest & the region of interest of frame~1 and of every later frame that has one \\
+  Settings & tracking mode, model, iterations, smoothing, device, correlation and tiling settings;
+    the strain settings; the physical units \\
+  View & the displayed field, \ui{Show on}, background, opacity, \ui{Hide untracked regions}, each
+    field's colormap and colour range, the current frame, and the last model suggestion \\
+  Analysis & the probes with their names, colours and visibility; the load record of a testing
+    machine (Section~\ref{sec:analysis}) \\
+  Results (optional) & the displacement of every frame, the residual (in half precision), the run
+    information, and the strain with its settings and trimmed band \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+The images stay where they are. Keep the image folder with the project, or move both together.
+
+\subsection{When the images have moved}
+
+On opening, RAFTcorr looks for the image folder in this order:
+
+\begin{enumerate}
+  \item the folder saved in the project;
+  \item the folder at the same position relative to the project file, for example after you moved
+    or copied the project and the images together, or synced them to another computer. The
+    \ui{LOG} says which folder was used;
+  \item otherwise it says \ui{The image folder of this project was not found. Choose its new
+    location.} and asks for the folder.
+\end{enumerate}
+
+The folder must hold every image file of the project under its saved name; if one is missing,
+the project does not open and the message names the first missing file. A project saved by a
+newer RAFTcorr, with a newer project format, does not open in an older one: the message asks you
+to update RAFTcorr.
+
+\subsection{Opening a project by double-click}
+\label{sec:projects-doubleclick}
+
+The Windows installer registers the \file{.raftcorr} extension, so a double-click on a project
+file starts RAFTcorr and opens it. After a \file{pip} or source installation on Windows, use
+\menu{File}{Associate .raftcorr files with RAFTcorr…} once. It registers the extension for your
+user account only, needs no administrator rights, and confirms with \emph{``Done.
+Double-clicking a .raftcorr file will now open RAFTcorr and restore that project.''}; if the
+registry cannot be written, the dialog \ui{File Association Failed} gives the reason. Run it again
+if you move or reinstall RAFTcorr, so that the double-click starts the copy you use. The menu
+entry exists on Windows only.
+
+On every platform, a project or an image folder can be given on the command line:
+
+\begin{lstlisting}
+raftcorr gui path/to/specimen.raftcorr
+raftcorr gui path/to/images
+\end{lstlisting}
+
+\begin{tipbox}
+Save with results before you close RAFTcorr after a long run. A project with results opens
+without tracking anything; a settings-only project, or no project, means running the whole
+sequence again.
+\end{tipbox}

@@ -1,0 +1,201 @@
+\section{Workflow type: tracking mode and model}
+\label{sec:workflow}
+
+The \ui{WORKFLOW TYPE} section, below the image list (Figure~\ref{fig:workflow}), holds the two
+choices that shape a run:
+which image each frame is compared with (the \ui{Tracking Mode}) and which network compares them
+(the \ui{Model}). It sits above \ui{REGION OF INTEREST} because the tracking mode decides which
+frames are reference frames, and the hint of the region of interest follows it
+(Section~\ref{sec:roi}). The card in the top-left corner of the canvas repeats both choices
+(Section~\ref{sec:canvas}).
+
+\screenshot[0.45\textwidth]{fig-workflow.png}{The \ui{WORKFLOW TYPE} section: the \ui{Tracking
+Mode} and \ui{Model} lists and the \ui{Suggest a Model} button.}{fig:workflow}
+
+\subsection{Tracking Mode}
+
+A sequence of $n$ images is processed as $n-1$ image pairs, one for every frame after the first.
+Each pair holds a \emph{reference frame} $r$ and a later frame $k$; the network measures the
+displacement from $r$ to $k$. The tracking mode decides which reference frame each frame gets.
+Every mode computes one pair per frame, and every mode reports its results in the coordinates of
+frame~1. Table~\ref{tab:tracking-modes} summarises the choices.
+
+\begin{table}[htbp]
+  \centering
+  \caption{What each frame $k$ is compared with. Frame numbers as in the image list.}
+  \label{tab:tracking-modes}
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}
+                               >{\raggedright\arraybackslash}X
+                               >{\raggedright\arraybackslash}p{3.4cm}}
+    \toprule
+    Tracking Mode & Frame $k$ is compared with & Reference frames \\
+    \midrule
+    \ui{Accumulative} & frame 1 & 1 \\
+    \ui{Incremental}, \ui{Every Frame} & frame $k-1$ & every frame but the last \\
+    \ui{Incremental}, \ui{Every N Frames} & frame $1 + N\lfloor (k-2)/N \rfloor$:
+      frames 2 to $N+1$ with frame 1, frames $N+2$ to $2N+1$ with frame $N+1$, \ldots
+      & $1, N+1, 2N+1, \ldots$ \\
+    \ui{Incremental}, \ui{Custom Frames} & the last reference frame before $k$
+      & 1 and the frames you list \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsubsection*{Accumulative (default)}
+
+Every frame is compared directly with frame~1. Nothing is composed, so an error in one frame
+does not pass on to the next. This is the mode to use whenever the displacement from frame~1
+stays within the reach of the model (Section~\ref{sec:workflow-model}) in every frame of the
+sequence.
+
+\subsubsection*{Incremental}
+
+Each frame is compared with a reference frame nearer to it than frame~1, and the steps are
+composed back to frame~1. Choose it when the motion from frame~1 grows beyond the reach of the model, as in a
+large stretch or a large rotation. The price is that every step adds its own error to all the
+frames measured after it.
+
+Choosing \ui{Incremental} shows the \ui{Reference Update} list, which sets how often the
+reference frame changes:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Every Frame (default)]
+    Each frame is compared with the one before it. Each step is the motion between two
+    consecutive images, the shortest step the sequence offers.
+  \item[Every N Frames]
+    Shows the \ui{Interval} box (2 to 100 frames, default 5). The reference frame changes every
+    $N$ frames: with $N = 5$, frames 2 to 6 are compared with frame~1, frames 7 to 11 with
+    frame~6, and so on. Fewer steps are composed than with \ui{Every Frame}, but each step is
+    longer. Choose $N$ so that the motion over $N$ frames stays within the reach of the model.
+  \item[Custom Frames]
+    Shows the \ui{Reference Frames} field. Type the frame numbers, as in the image list,
+    separated by commas (for example \file{5, 10, 20}); the setting applies when you press
+    \kbd{Enter} or leave the field. Frame~1 is always the first reference frame, and each frame
+    is compared with the last reference frame before it. Use it when the motion is uneven: put
+    the reference frames closer together where the specimen moves fast. A list that is not made
+    of whole numbers from 1 on is refused with a warning in the log, and the previous list stays.
+\end{description}
+
+\begin{warnbox}
+The last frame cannot be a reference frame, because no frame follows it. If the
+\ui{Reference Frames} list holds the number of the last frame, or a larger one, the hint of the
+region of interest shows frame~1 as the only reference frame, and the run stops with an error.
+Keep every number below the number of the last frame.
+\end{warnbox}
+
+\subsubsection*{How the steps are composed}
+
+For a pair $(r, k)$ the network returns the displacement $\mathbf{d}_{rk}$ from frame $r$ to
+frame $k$, in the coordinates of frame $r$. A point $\mathbf{X}$ of the region of interest of
+frame~1 sits at $\mathbf{X} + \mathbf{U}_r(\mathbf{X})$ in frame $r$, so its displacement to
+frame $k$ is
+\begin{equation*}
+  \mathbf{U}_k(\mathbf{X}) = \mathbf{U}_r(\mathbf{X})
+      + \mathbf{d}_{rk}\bigl(\mathbf{X} + \mathbf{U}_r(\mathbf{X})\bigr),
+\end{equation*}
+with $\mathbf{d}_{rk}$ interpolated bilinearly between pixels. In every mode the result is the
+displacement of the points of frame~1 (Lagrangian coordinates): $+u$ to the right, $+v$
+downward, in pixels.
+
+Composition has three consequences worth knowing:
+\begin{itemize}
+  \item The region of interest of frame~1 is carried to each reference frame with the
+        displacement measured so far, and the next pairs are solved over that carried region.
+        A mask you give a reference frame replaces the carried region there
+        (Section~\ref{sec:roi-later-frames}). At the start of a run, the \ui{LOG} lists the
+        reference frames that carry the region of frame~1: \emph{Reference frames without a
+        Region of Interest of their own carry the one of frame 1 forward}, followed by their
+        numbers.
+  \item A point that is lost in a reference frame (it left the image, or a mask excludes it)
+        stays empty in every frame measured from that reference frame.
+  \item If a reference frame has no result, the frames compared with it are skipped, and the
+        log says so.
+\end{itemize}
+
+\begin{notebox}
+After a run, RAFTcorr watches the residual (the grey-level mismatch left after the
+displacement maps one image onto the other) and warns when it jumps from one frame on. In
+accumulative tracking the warning suggests incremental tracking or a model with a larger $s$;
+in incremental tracking it suggests more reference frames or a model with a larger $s$
+(Section~\ref{sec:tracking-quality}).
+\end{notebox}
+
+\subsection{Model}
+\label{sec:workflow-model}
+
+The \ui{Model} list holds the four models of Table~\ref{tab:models}, each with its reach in
+parentheses, as \ui{RAFTcorr-s4 (128 px)}. The reach is the nominal lookup radius of the model:
+its coarsest correlation level looks $32\,s$~px away from each point. A smaller $s$ resolves finer
+detail, such as a strain concentration, and a larger $s$ reaches further, so pick the finest model
+whose reach covers the largest displacement of any pair. In accumulative tracking that is the
+largest displacement from frame~1; in incremental tracking it is the largest step between a frame
+and its reference frame.
+
+Hovering over an entry shows its description and reach, and \ui{Weights not installed.} when the
+model file was missing when RAFTcorr started. A model is downloaded the first time a run or a survey
+uses it; \menu{Help}{Models…} shows which models are installed and imports model files on a
+computer without an internet connection (Section~\ref{sec:installing-models}).
+
+\subsection{Suggest a Model}
+\label{sec:suggest}
+
+\ui{Suggest a Model} measures how far the specimen moves and selects a model for you. Use it
+before the first run, in particular when you do not know the size of the motion. It needs at
+least two images and does not start while a run is going. It works in these steps:
+\begin{enumerate}
+  \item It loads RAFTcorr-s8, the model with the largest reach (downloading it on first use),
+        with the current \ui{Device} and \ui{Iterations} (Section~\ref{sec:parameters}). A
+        progress dialog, \ui{Measuring the motion with RAFTcorr-s8}, has a \ui{Cancel} button.
+  \item It compares up to three frames with frame~1: the frame a quarter of the way through
+        the sequence, the middle frame and the last frame (for 44 images, frames 11, 22 and 44).
+  \item Over the region of interest of frame~1 (the whole image if none is drawn yet), it takes
+        the 99th percentile of the displacement magnitude $\sqrt{u^2 + v^2}$ of each sampled
+        frame. The 99th percentile ignores the largest 1\,\% of the values, so a few stray points
+        do not decide the choice. The largest of the three values is the measured displacement
+        $d$.
+  \item It selects the finest model whose reach is at least $1.3\,d$: RAFTcorr-s1 for $d$ up to
+        about 24.6~px, -s2 up to about 49.2~px, -s4 up to about 98.5~px, and -s8 above.
+\end{enumerate}
+
+The \ui{Model} list switches to the suggestion, and the same message appears in the \ui{LOG}
+and in a card under the button (the parts in angle brackets are the measured values):
+\begin{lstlisting}
+Suggested: RAFTcorr-<s>. Largest displacement of the region of interest about <d> px (99th percentile over frames <a, b, c>); RAFTcorr-<s> reaches <R> px.
+\end{lstlisting}
+When $1.3\,d$ exceeds even the reach of RAFTcorr-s8 (above about 197~px), the suggestion is still
+RAFTcorr-s8, and the message adds \ui{This exceeds even the reach of RAFTcorr-s8: use incremental
+tracking.} The card stays until you open other images, and a project file keeps it.
+
+\begin{tipbox}
+Draw the region of interest before you click \ui{Suggest a Model}. The survey then measures the
+motion of the specimen, not of the background around it.
+\end{tipbox}
+
+\begin{notebox}
+The survey always compares with frame~1, whatever the tracking mode, and it looks at three frames
+only. With incremental tracking each pair spans a shorter step, so a finer model than the
+suggestion may reach it; choose it by hand. If the motion peaks between the sampled frames and
+comes back, the survey does not see the peak.
+\end{notebox}
+
+\subsection{Which combination to choose}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X
+                             >{\raggedright\arraybackslash}p{4.2cm}
+                             >{\raggedright\arraybackslash}p{3.6cm}}
+  \toprule
+  Situation & Tracking Mode & Model \\
+  \midrule
+  The displacement from frame~1 stays within the reach of a model in every frame
+    & \ui{Accumulative} & the finest model that reaches it (\ui{Suggest a Model}) \\
+  The displacement from frame~1 exceeds the reach of RAFTcorr-s8
+    & \ui{Incremental}, \ui{Every Frame} & the finest model that reaches the step between
+      two images \\
+  Many images, each step small, large total motion
+    & \ui{Incremental}, \ui{Every N Frames} & a model whose reach covers the motion over
+      $N$ frames \\
+  Uneven motion (slow, then fast)
+    & \ui{Incremental}, \ui{Custom Frames} & a model whose reach covers the longest step \\
+  \bottomrule
+\end{tabularx}
+\end{center}

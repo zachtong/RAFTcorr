@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+- A User Guide (PDF, LaTeX sources in `docs/user-guide/`) that walks through every panel, window
+  and option with screenshots, plus the command line, the Python library and troubleshooting; and
+  a two-page Quick Guide.
+- A one-minute quick-start video in English and Chinese, and its GIF preview in the README.
+- The README opens with a banner, badges and download buttons, and shows the main window, the
+  strain window and the Analysis tab.
+- `scripts/media/` makes every picture, the banner and the videos by driving the real application
+  off-screen, so they are regenerated for each version.
+- The README no longer mentions a brush or undo for the region of interest, which the application
+  does not have.
+
+### Fixes
+- Charts in Chinese, Japanese and Korean (Analysis tab) showed boxes instead of the axis labels on
+  Windows: matplotlib now gets the installed fonts as a fallback list.
+
 ## 2.0.1 (2026-11-18)
 
 ### Models for a new user
@@ -10,7 +28,7 @@
 - A run or a model suggestion whose model can be neither found nor downloaded opens that window
   with the reason, instead of an "Analysis failed" box with the raw network error.
 - The first-use download shows "Downloading model RAFTcorr-s4: 5.2 of 20.7 MB" in the progress
-  area, and Stop cancels it. The progress bar then starts again from 0 for the tracking: it used
+  area, and Cancel stops it. The progress bar then starts again from 0 for the tracking: it used
   to stay at 100 % for the whole run after a download.
 - `raftcorr models --import FILE ...` on the command line.
 
@@ -57,7 +75,7 @@ A rewrite. One Python process replaces the Flask server and the React front end.
 - Native desktop application (PySide6) whose interface is ported from pyALDIC (same layout, light and
   dark themes, seven interface languages): images with drag and drop, workflow (tracking mode and
   model, with a model suggestion), regions of interest with per-frame masks, run with progress,
-  pause and cancel, displacement on the reference or deformed frame, strain window, analysis with
+  cancel, displacement on the reference or deformed frame, strain window, analysis with
   probes, export dialog, projects (`.raftcorr`).
 - Intensity residual (tracking-quality map) for every frame, and a warning when the residual jumps.
 - One definition of velocity everywhere.

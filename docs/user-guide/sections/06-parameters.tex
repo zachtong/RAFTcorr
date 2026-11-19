@@ -1,0 +1,107 @@
+\section{Parameters}
+\label{sec:parameters}
+
+Two sections below \ui{REGION OF INTEREST} hold the remaining settings of a run
+(Figure~\ref{fig:parameters}). \ui{PARAMETERS},
+open by default, sets how the network runs; \ui{ADVANCED}, closed by default (click its title to
+open it), sets how each image pair is cut into windows for the network. Every new session starts
+from the defaults in Table~\ref{tab:parameters}; a project file keeps the values you set
+(Section~\ref{sec:projects}).
+% CHECK: after File > Open Project the ADVANCED controls and the Interval box keep their previous values on screen, although the run uses the project's values (AdvancedPanel has no sync from AppState); reproduced offscreen
+
+\begin{table}[htbp]
+  \centering
+  \caption{The controls of \ui{PARAMETERS} and \ui{ADVANCED}.}
+  \label{tab:parameters}
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm}
+                               >{\raggedright\arraybackslash}p{5.2cm}
+                               >{\raggedright\arraybackslash}X}
+    \toprule
+    Control & Default & Range or choices \\
+    \midrule
+    \ui{Iterations}   & 20 iterations & 1 to 100 iterations \\
+    \ui{Smoothing}    & \ui{Off} (0 px) & 0 to 50 px, in steps of 0.5 px \\
+    \ui{Device}       & \ui{Automatic} & \ui{Automatic}, \ui{GPU (CUDA)}, \ui{CPU} \\
+    \midrule
+    \ui{Margin}       & \ui{Use the Model Reach} ticked ($32\,s$ px) & 0 to 4096 px \\
+    \ui{GPU Memory}   & 0.85 (fraction of the free memory) & 0.05 to 1.00, in steps of 0.05 \\
+    \ui{Tile Blending} & 32 px & 0 to 512 px \\
+    \ui{Correlation}  & \ui{Automatic} & \ui{Automatic}, \ui{On Demand}, \ui{Stored Volume} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\screenshot[0.45\textwidth]{fig-parameters.png}{The \ui{PARAMETERS} and \ui{ADVANCED} sections,
+both open, with their default values.}{fig:parameters}
+
+Hovering over a label shows what it does. A spin box or a list reacts to the mouse wheel only
+after you click it, so scrolling the sidebar does not change a value by accident.
+
+\subsection{PARAMETERS}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Iterations]
+    The number of refinement iterations of the network (default 20). The network refines its
+    estimate of the displacement once per iteration, so the computing time grows with the
+    number. \ui{Suggest a Model} uses the same value, and the card on the canvas shows it under
+    \ui{ITERATIONS}. Keep the default unless you have a reason to change it; if you lower it to
+    shorten a run, compare the residual (Section~\ref{sec:results}) with that of a run at the
+    default before you rely on the result.
+  \item[Smoothing]
+    Gaussian smoothing of the tracked displacement, set as its standard deviation $\sigma$ in
+    pixels. It is \ui{Off} by default, so the results hold the displacement as the network
+    measures it. Smoothing coarsens the spatial resolution: features of the field smaller than
+    a few $\sigma$ are flattened. The smoothing stays inside the region of interest: empty points
+    and points outside the region are not used and stay empty, and a point with almost no valid
+    neighbours (less than 5\,\% of the weight of the Gaussian) becomes empty. The smoothed
+    displacement is what the results, the strain window and the exports receive; in
+    incremental tracking it is also what later frames are composed with. For strain alone,
+    prefer \ui{Pre-fit smoothing} in the strain window (Section~\ref{sec:strain}), which feeds
+    only the strain fit and leaves the displacement as it is.
+  \item[Device]
+    Where the network runs. \ui{Automatic} uses the GPU when PyTorch sees one (an NVIDIA GPU
+    with CUDA) and the CPU otherwise; on macOS RAFTcorr runs on the CPU. \ui{GPU (CUDA)} on a
+    computer without CUDA stops the run with an error. Choose \ui{CPU} to leave the GPU to
+    another program. \menu{Help}{Self-test} checks the installed models on the device you choose
+    (Section~\ref{sec:installing-check}).
+\end{description}
+
+\subsection{ADVANCED}
+
+For every pair, the network receives a \emph{window} of both images: the bounding box of the
+region of interest of the reference frame, grown by a margin on every side. When that window
+needs more memory than the device offers, RAFTcorr cuts the region into \emph{tiles}. The plan is
+automatic; Section~\ref{sec:tiling} describes it, its line in the \ui{LOG} and what happens when the
+memory runs out. The four controls below adjust it.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Margin and Use the Model Reach]
+    The margin is the image context added around the bounding box, so that a point that moves
+    stays inside the window the network sees. It must cover the largest displacement of the
+    region of interest. With \ui{Use the Model Reach} ticked (default), the margin is the reach
+    of the selected model: 32, 64, 128 or 256~px for RAFTcorr-s1, -s2, -s4 or -s8; the box is
+    greyed out and its value is not used. Untick it to type a margin from 0 to 4096~px. A
+    smaller margin than the reach saves memory when you use a model with a large $s$ on small
+    motion; a margin smaller than the displacement loses the points that move out of the
+    window. The window never extends past the image, and when tiles are needed the margin can
+    be reduced to fit the memory, in which case the tiling line of the log says so.
+  \item[GPU Memory]
+    The fraction of the free GPU memory one window may use, measured before each pair (default
+    0.85; RAFTcorr also keeps 384~MB free). A larger region is cut into tiles to fit. Lower it
+    when another program needs the GPU or when runs fail for lack of memory; raise it when the
+    GPU is free and you want fewer tiles. On the CPU it has no effect: windows are planned for a
+    fixed budget of 6~GB.
+  \item[Tile Blending]
+    The width of the overlap between neighbouring tiles, where their results are blended with
+    linear weights (default 32~px). It matters only when the region is cut into tiles. A wider
+    overlap spreads the change from one tile to the next over more pixels and needs more tiles;
+    0~px lets the tiles meet edge to edge. The default rarely needs a change.
+  \item[Correlation]
+    How the network computes its correlation lookup. Both ways give the same displacement; they
+    differ in memory and speed. \ui{Stored Volume} computes the correlation between all pairs of
+    feature points of the window once and keeps it, so its memory grows with the square of the
+    window area; it is the faster choice where it fits. \ui{On Demand} computes each lookup when it is needed,
+    with memory in proportion to the window area. \ui{Automatic} uses \ui{Stored Volume} for
+    RAFTcorr-s8 and \ui{On Demand} for -s1, -s2 and -s4. Leave it at \ui{Automatic}; with
+    RAFTcorr-s8 and little memory, \ui{On Demand} allows larger windows and fewer tiles.
+\end{description}

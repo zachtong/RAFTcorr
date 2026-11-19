@@ -1,0 +1,112 @@
+% RAFTcorr User Guide -- preamble (pdflatex, xelatex or lualatex).
+
+\documentclass[11pt,letterpaper]{article}
+
+% ---------------------------------------------------------------- fonts
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{microtype}
+\DisableLigatures[-]{encoding=T1,family=tt*}   % --roi stays two hyphens in typewriter text
+
+% ---------------------------------------------------------------- layout
+\usepackage[margin=1in,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small RAFTcorr User Guide}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{4pt}
+
+% ---------------------------------------------------------------- graphics
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf,margin=0.5in]{caption}
+
+% ---------------------------------------------------------------- color
+\usepackage{xcolor}
+\definecolor{raftaccent}{RGB}{79,70,229}     % the application's accent (light theme)
+\definecolor{raftgreen}{RGB}{22,163,74}
+\definecolor{raftred}{RGB}{220,38,38}
+\definecolor{raftamber}{RGB}{180,83,9}
+\definecolor{codebg}{RGB}{245,245,247}
+\definecolor{keybg}{RGB}{243,244,246}
+
+% ---------------------------------------------------------------- hyperlinks
+\usepackage[colorlinks=true,linkcolor=raftaccent,urlcolor=raftaccent,
+            citecolor=raftaccent]{hyperref}
+
+% ---------------------------------------------------------------- callouts
+\usepackage[most]{tcolorbox}
+\newtcolorbox{tipbox}{
+  colback=raftgreen!7!white, colframe=raftgreen, boxrule=0.5pt,
+  arc=1pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\textbf{Tip}}, fonttitle=\bfseries\small}
+\newtcolorbox{warnbox}{
+  colback=raftred!7!white, colframe=raftred, boxrule=0.5pt,
+  arc=1pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\textbf{Warning}}, fonttitle=\bfseries\small}
+\newtcolorbox{notebox}{
+  colback=raftaccent!7!white, colframe=raftaccent, boxrule=0.5pt,
+  arc=1pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\textbf{Note}}, fonttitle=\bfseries\small}
+
+% ---------------------------------------------------------------- code
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single, framerule=0pt,
+  breaklines=true, breakindent=0pt,
+  columns=fullflexible, keepspaces=true, showstringspaces=false,
+  xleftmargin=4pt, xrightmargin=4pt,
+  aboveskip=6pt, belowskip=6pt,
+  literate={~}{{\textasciitilde}}1,
+}
+
+% ---------------------------------------------------------------- misc
+\usepackage{multicol}
+\usepackage{enumitem}
+\setlist{topsep=3pt,itemsep=2pt,parsep=0pt}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+
+% ---------------------------------------------------------------- interface vocabulary
+% \ui{Run DIC Analysis}     a label, button or field exactly as the application shows it
+% \menu{File}{Save Project} a menu path (any number of levels: \menu{Help}{Models…} uses two)
+% \kbd{Ctrl+S}              a key or a key combination
+% \file{results.h5}         a file name, folder or command-line word
+% \screenshot[width]{file}{caption}{label}   a figure from figures/
+\newcommand{\ui}[1]{\textbf{#1}}
+\newcommand{\menu}[2]{\textbf{#1}\,$\triangleright$\,\textbf{#2}}
+\newcommand{\menuthree}[3]{\textbf{#1}\,$\triangleright$\,\textbf{#2}\,$\triangleright$\,\textbf{#3}}
+\newcommand{\kbd}[1]{\tcbox[on line, boxsep=0pt, left=3pt, right=3pt, top=1.5pt, bottom=1.5pt,
+  colback=keybg, colframe=black!30, boxrule=0.4pt, arc=2pt]{\footnotesize\ttfamily #1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\screenshot}[4][\textwidth]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#1]{#2}
+    \caption{#3}
+    \label{#4}
+  \end{figure}}
+
+% Unicode characters used in labels of the application
+\DeclareUnicodeCharacter{2026}{\ldots}
+\DeclareUnicodeCharacter{03B5}{\ensuremath{\varepsilon}}
+\DeclareUnicodeCharacter{03C3}{\ensuremath{\sigma}}
+\DeclareUnicodeCharacter{03C9}{\ensuremath{\omega}}
+\DeclareUnicodeCharacter{0394}{\ensuremath{\Delta}}
+\DeclareUnicodeCharacter{2081}{\ensuremath{_1}}
+\DeclareUnicodeCharacter{2082}{\ensuremath{_2}}
+\DeclareUnicodeCharacter{2080}{\ensuremath{_0}}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}

@@ -1,0 +1,300 @@
+\section{Strain}
+\label{sec:strain}
+
+Strain is computed from the displacement results in a window of its own, \ui{Strain
+Post-Processing}, called the strain window in this guide (Figure~\ref{fig:strain-window}). It
+opens by itself when a run finishes; \ui{Open Strain Window} in the right sidebar opens it at
+any time once there are displacement results (without them, the \ui{LOG} says \emph{Run DIC
+first -{}- no displacement results to post-process.}). The window has two tabs: \ui{Strain
+Field}, described here, and \ui{Analysis}, which places probes, gauges and areas on the results
+and plots them (Section~\ref{sec:analysis}).
+
+\screenshot{fig-strain-window.png}{The strain window, \ui{Strain Field} tab, showing
+\ui{εyy} around the two holes of the plate in tension. Left: the toolbar, the canvas with
+its colorbar and the frame navigator. Right: \ui{STRAIN PARAMETERS}, the buttons, \ui{FIELD} and
+\ui{VISUALIZATION}.}{fig:strain-window}
+
+\subsection{The strain window}
+
+The left part repeats the canvas of the main window: a toolbar with the fit, \ui{100\%}, zoom-in
+and zoom-out buttons, the canvas with its colorbar, and a frame navigator with the same buttons and
+playback speeds as the main one (Section~\ref{sec:canvas}). The toolbar also says why nothing is
+drawn when that happens (\emph{Click Compute Strain to show this field.}, \emph{Frame $k$ was not
+computed.}), and shows the position and value under the pointer.
+
+The right column is a scrollable stack of sections; click a header to fold or unfold it.
+\ui{STRAIN PARAMETERS}, \ui{FIELD} and \ui{VISUALIZATION} start unfolded, \ui{ADVANCED},
+\ui{PHYSICAL UNITS} and \ui{LOG} folded. The buttons \ui{Compute Strain}, \ui{Cancel} and
+\ui{Export Results} sit between the parameters and \ui{FIELD}, outside any section, so they stay
+in reach when the sections are folded.
+
+The strain window is independent of the main window. It has its own frame, so moving its slider
+does not move the main canvas, and its own \ui{Show on}, background, opacity and edge options.
+Two things are shared: \ui{PHYSICAL UNITS} (Section~\ref{sec:physical-units}), and the colormap
+and range of \ui{U}, \ui{V} and \ui{Magnitude}, which are those of \ui{Disp U}, \ui{Disp V} and
+\ui{Magnitude} in the main window.
+
+\begin{tipbox}
+The window opens on frame~1, the reference, where every field is zero. Move its slider to a later
+frame to see the deformation.
+\end{tipbox}
+
+Closing the window keeps the strain result; \ui{Open Strain Window} brings it back as you left
+it. Closing it during a strain computation cancels the computation.
+
+\subsection{How strain is computed}
+
+Strain comes from a virtual strain gauge (VSG). Around each point, RAFTcorr takes a square window
+of $L_g \times L_g$ pixels, the gauge, and fits a polynomial by least squares to each displacement
+component $u$ and $v$ over the valid points in it. The slopes of the fit at the centre are the
+displacement gradients $\partial u/\partial x$, $\partial u/\partial y$, $\partial v/\partial x$
+and $\partial v/\partial y$. They give the deformation gradient
+\[
+  \mathbf{F} = \mathbf{I} + \nabla\mathbf{u}, \qquad
+  \mathbf{F} = \begin{pmatrix} 1 + \partial u/\partial x & \partial u/\partial y \\
+  \partial v/\partial x & 1 + \partial v/\partial y \end{pmatrix},
+\]
+from which every strain field is computed. The gradients are taken with respect to the frame-1
+positions, so strain is Lagrangian like the displacement. RAFTcorr's displacement is dense (one
+value per pixel), and the strain is computed at every pixel of the region of interest unless you
+ask for a coarser spacing (\ui{Output spacing}).
+
+A point is left without strain when less than a quarter of its gauge holds valid points
+(weighted by the gauge's weighting), when the valid points are arranged so that the fit is
+ill-conditioned (a thin strip, for example), and on isolated parts of the region that hold too few
+points for a fit. A point near an edge also loses its strain to the trim described below.
+
+\subsection{STRAIN PARAMETERS}
+
+\screenshot[0.5\textwidth]{fig-strain-params.png}{\ui{STRAIN PARAMETERS} with the
+\ui{ADVANCED} section unfolded below it.}{fig:strain-params}
+
+The section holds four settings (Figure~\ref{fig:strain-params}); the less used ones are under
+\ui{ADVANCED}, below it.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Method]
+    The polynomial fitted in each gauge. \ui{Plane fitting} (the default) is the standard
+    first-order gauge: a plane, so the strain is the mean gradient over the gauge.
+    \ui{Quadratic fitting} adds the second-order terms; it follows a strain gradient inside the
+    gauge better, at the cost of more noise. Consider it with a large gauge over a strong
+    gradient, such as the edge of a hole.
+  \item[VSG size]
+    The side $L_g$ of the gauge, from 3 to 401\,px; default 41\,px. It is odd, so that the gauge
+    has a centre pixel; an even value moves to the next odd one. A larger gauge averages more
+    points: smoother strain, less noise, but a lower spatial resolution, and peaks narrower than
+    the gauge are flattened. A smaller gauge resolves sharper features with more noise. The width
+    of the trimmed band below grows with it.
+  \item[Trim low-confidence edges]
+    The coefficient $\alpha$ of the edge trim, from 0.00 to 1.00 in steps of 0.05; default 0.70.
+    See below.
+  \item[Strain type]
+    The strain measure: \ui{Infinitesimal}, \ui{Eulerian} or \ui{Green-Lagrange} (the default).
+    See below.
+\end{description}
+
+\subsubsection*{Trim low-confidence edges}
+\label{sec:edge-trim}
+
+Next to an edge, part of a gauge falls outside the valid region and the fit sees points on one
+side only. Such a one-sided fit is biased by the strain gradient, which is often largest at the
+edge (a hole, a notch), and it is noisier because fewer points enter it. The trim leaves these
+points empty rather than reporting a value that looks as reliable as the rest.
+
+An edge is any border of the valid region of the frame: the boundary of the region of interest,
+a hole or a crack, an area that became untracked, and the border of the displacement grid. A point
+is trimmed when an edge enters the central square of its gauge whose half-width is
+$\alpha\,(L_g - 1)/2$, the coefficient times the half-width of the gauge. With the default gauge
+of 41\,px and $\alpha = 0.70$, this half-width is $0.70 \times 20$\,px $= 14$\,px, and the band
+along a straight edge is 14\,px wide. Put another way, a point next to a straight edge is kept
+when the edge cuts off at most about $(1-\alpha)/2$ of its gauge width, 15\,\% at the default.
+
+\begin{itemize}
+  \item $\alpha = 0$: no trim; every point with a fit is reported.
+  \item $\alpha = 0.70$: the default.
+  \item $\alpha = 1$: only points whose whole gauge lies inside the valid region are reported.
+\end{itemize}
+
+The trim is computed for every frame on that frame's valid region, so the band follows a crack
+that grows or an area that is lost. Trimmed points are empty (NaN) in every strain field and in
+exported data files. Below the box, \emph{Trimmed: $N$ points ($p$\%)} gives how many points of
+the frame on show the computed strain lost to the trim. It describes the strain on show, computed
+with the value of the last \ui{Compute Strain}, not the value now in the box. The empty band can
+be filled in pictures with \ui{Fill trimmed edges (display only)} (Section~\ref{sec:strain-viz}).
+
+\begin{warnbox}
+If the band is wider than half the width of the region of interest, every point would be
+trimmed, and \ui{Compute Strain} stops with \emph{Edge trimming would remove every strain point
+\ldots{} Reduce the VSG size or lower `Trim low-confidence edges'.} Do one of the two, then
+compute again.
+\end{warnbox}
+
+\subsubsection*{Strain type}
+
+All three measures are computed from $\mathbf{F}$:
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Infinitesimal]
+    $\boldsymbol{\varepsilon} = \tfrac12\left(\nabla\mathbf{u} + \nabla\mathbf{u}^{T}\right)$.
+    Valid for small strains and small rotations only. It is not zero under a rigid rotation: a
+    rotation by an angle $\theta$ reads as
+    $\varepsilon_{xx} = \varepsilon_{yy} = \cos\theta - 1$.
+  \item[Eulerian]
+    The Euler-Almansi strain
+    $\mathbf{e} = \tfrac12\left(\mathbf{I} - (\mathbf{F}\mathbf{F}^{T})^{-1}\right)$, which
+    refers to the deformed configuration. Zero under any rigid rotation.
+  \item[Green-Lagrange]
+    $\mathbf{E} = \tfrac12\left(\mathbf{F}^{T}\mathbf{F} - \mathbf{I}\right)$, which refers to
+    the reference configuration. Zero under any rigid rotation. The default.
+\end{description}
+
+For small strains and small rotations the three agree. Keep \ui{Green-Lagrange} when the specimen
+rotates or strains are large; choose \ui{Infinitesimal} to compare with a small-strain
+calculation, \ui{Eulerian} to compare with a measure in the deformed configuration.
+
+\subsection{ADVANCED}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Weighting]
+    How the points of a gauge count in the fit: \ui{Uniform} (the default), all alike, or
+    \ui{Gaussian}, decreasing with the distance from the centre as
+    $\exp\!\left(-(\Delta x^2 + \Delta y^2)/2\sigma^2\right)$, where $\Delta x$ and $\Delta y$ are
+    the offsets from the centre. A Gaussian gauge counts the points near its centre more than
+    those near its border.
+  \item[Gaussian $\sigma$]
+    The $\sigma$ of the Gaussian weight, up to 200\,px; 0 shows \ui{Auto (Lg / 4)}, a quarter
+    of the gauge size (10.25\,px for 41\,px). Enabled only with \ui{Gaussian} weighting.
+  \item[Output spacing]
+    Keep the strain every $n$ pixels in $x$ and $y$, from 1 to 64\,px; default 1\,px (every
+    pixel). Each kept point is still fitted over its whole gauge. A larger spacing gives a
+    smaller strain result: less memory and smaller exported files for long sequences.
+  \item[Pre-fit smoothing]
+    Gaussian smoothing of the displacement, with $\sigma$ in pixels up to 50\,px, before the
+    strain fit; \ui{Off} (0, the default) differentiates the measured displacement as it is.
+    Only the strain uses the smoothed displacement; the displacement results do not change. The
+    \ui{Smoothing} parameter of the main window (Section~\ref{sec:parameters}) is different: it
+    smooths the displacement results themselves. Smoothing widens the effective gauge.
+  \item[Never fit across cracks or holes]
+    On by default. Each connected part of the tracked region is fitted on its own, so no gauge
+    spans a crack, a hole or the gap between two regions. With it off, a gauge that straddles a
+    narrow crack fits one surface over both faces, and the opening of the crack shows as a band
+    of high strain as wide as the gauge.
+\end{description}
+
+\subsection{Compute Strain}
+
+\ui{Compute Strain} computes the strain of every computed frame (frame~1 included) with the
+parameters on show, in the background. A progress bar and a status line appear below the
+buttons: \ui{Starting\ldots}, then \ui{Strain frame $i$/$n$}, which counts the frames done, then
+\ui{Complete}, which disappears after two seconds. The \ui{LOG} of the window adds
+\emph{Strain computation complete.} A project keeps the strain parameters, and the strain itself
+when you save the results with it (Section~\ref{sec:projects}).
+
+\ui{Cancel} appears only while the strain is being computed. It stops at the next frame and
+keeps the previous strain result (\emph{Strain computation canceled.}). If the computation fails,
+a \ui{Strain Computation Failed} dialog gives the reason.
+
+\ui{Export Results} opens the export dialog with the display settings of this window
+(Section~\ref{sec:export}). It is available as soon as there are displacement results; the strain
+is exported once it is computed.
+
+\subsubsection*{When the strain is out of date}
+
+The strain on show was computed with the parameters of the last \ui{Compute Strain}. As soon as
+you change a parameter, a warning line under the buttons reads \ui{Params changed -{}- click
+Compute Strain}. Until you click it, the canvas, the \ui{Analysis} tab and exports keep using
+the old strain. The line stays until the next \ui{Compute Strain}, even if you set the old values
+back.
+
+A new run of the analysis discards the strain, since it belongs to the previous displacements.
+The strain buttons then show \emph{Click Compute Strain to show this field.} on the toolbar. A
+strain computation still going on when a run finishes is discarded too (\emph{The displacement
+results changed during the strain computation; its result was discarded.}).
+
+\subsection{FIELD}
+\label{sec:strain-fields}
+
+\ui{FIELD} has two groups of buttons; one button is selected at a time.
+
+Under \ui{DISPLACEMENT}, \ui{U}, \ui{V} and \ui{Magnitude} are the fields of the main window
+(Section~\ref{sec:results}). \ui{Velocity} is the speed
+$\sqrt{(\partial u/\partial t)^2 + (\partial v/\partial t)^2}$. Its time derivatives are central
+differences of the displacement between the neighbouring computed frames, one-sided at the first
+and last frame, so it assumes a constant interval between images. It is in pixels per frame, or
+in the length unit per second with \ui{Use physical units} on. These four fields need no strain
+computation.
+
+Under \ui{STRAIN}, every field comes from the strain tensor of the chosen \ui{Strain type}, or
+from $\mathbf{F}$ directly (Table~\ref{tab:strain-fields}). The strains are dimensionless; the two
+angles are in degrees. The $y$ axis points down the image, so positive angles turn clockwise on
+the screen.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{The strain fields. $\varepsilon$ stands for the strain tensor of the chosen \ui{Strain
+type}.}
+\label{tab:strain-fields}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Button & Definition \\
+\midrule
+\ui{εxx}, \ui{εyy} & Normal strains along $x$ (right) and $y$ (down). \\
+\ui{εxy} & Shear strain, the tensor component: half the engineering shear,
+  $\varepsilon_{xy} = \gamma_{xy}/2$. \\
+\ui{ε₁}, \ui{ε₂} & Major and minor principal strains,
+  $\tfrac12(\varepsilon_{xx} + \varepsilon_{yy}) \pm
+  \sqrt{\tfrac14(\varepsilon_{xx} - \varepsilon_{yy})^2 + \varepsilon_{xy}^2}$,
+  with $\varepsilon_1 \geq \varepsilon_2$. \\
+\ui{max shear} & Maximum in-plane shear strain, $(\varepsilon_1 - \varepsilon_2)/2$, also a
+  tensor value (half the engineering shear). \\
+\ui{von Mises} & Equivalent strain
+  $\sqrt{\tfrac23(\varepsilon_1^2 + \varepsilon_2^2 + \varepsilon_3^2)}$ with
+  $\varepsilon_3 = -(\varepsilon_1 + \varepsilon_2)$, which assumes an incompressible
+  material. \\
+\ui{ω rot} & Rigid rotation of the material, in degrees, from the polar decomposition of
+  $\mathbf{F}$: $\operatorname{atan2}(F_{21} - F_{12},\, F_{11} + F_{22})$. \\
+\ui{ε₁ angle} & Direction of $\varepsilon_1$ from $+x$, in degrees between $-90$ and 90:
+  $\tfrac12\operatorname{atan2}(2\varepsilon_{xy},\, \varepsilon_{xx} - \varepsilon_{yy})$. \\
+\ui{ΔA/A₀} & Relative change of area, $\det\mathbf{F} - 1$. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{VISUALIZATION}
+\label{sec:strain-viz}
+
+The controls work as in the main window (Section~\ref{sec:results}); this subsection lists what
+differs.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Show on]
+    \ui{Deformed frame} (the default) or \ui{Reference frame}. Strain is computed at the frame-1
+    positions; the deformed view draws each value where its point is in the current frame, over
+    that frame's image, as the main window does for displacement.
+  \item[Background]
+    \ui{Show background image}, with \ui{Hidden background} (\ui{White}, \ui{Black},
+    \ui{Transparent}) for the hidden case. The window starts from the main window's
+    \ui{Hidden background} when it is first opened.
+  \item[Colormap, Range, Opacity]
+    The same lists and rules as in the main window, remembered for each field. In \ui{Auto} the
+    highest 2\,\% of the values, often a peak at the edge of a hole, take the end colour; set a
+    \ui{Fixed} range to see the level of the peak. \ui{Min} and \ui{Max} hold six decimals here,
+    enough for small strains. \ui{Opacity} is 70 by default.
+  \item[Edges]
+    \ui{Fill trimmed edges (display only)}, off by default, fills the trimmed band
+    (Section~\ref{sec:edge-trim}) with the value of the nearest reliable point of the same
+    region. Each region is filled from its own points, so the fill never crosses a crack or a
+    hole. It applies to the view and to exported images and animations; exported data files
+    always keep the band empty. The filled values are copies, not measurements: leave the option
+    off when the edge itself matters.
+  \item[Hide untracked regions]
+    As in the main window; the window starts from the main window's choice when it is first
+    opened, then keeps its own. On the \ui{Reference frame} view, unticking it fills every empty
+    point inside the region of interest with the nearest value, the trimmed band included,
+    whatever the \ui{Edges} option says. % CHECK: the untracked fill also fills the trimmed band (not region by region); intended? see report.
+\end{description}
+
+\ui{PHYSICAL UNITS} is the same group as in the main window and shares its setting. The window's
+\ui{LOG} lists the strain computations; failures also open a dialog, since the \ui{LOG} is folded
+by default.

@@ -1,0 +1,300 @@
+\section{Command line and Python library}
+\label{sec:cli}
+
+The application, the \file{raftcorr} command and the Python library share one engine, so the same
+images and settings give the same results in all three. The command line suits batches and
+computers without a display; the library suits your own scripts. With \file{pip} or a source
+installation the command is on the path of that Python environment; the Windows installer puts it
+on the path when \ui{Add the ``raftcorr'' command to PATH (new terminals)} is ticked, as it is by
+default; on a Mac, use the alias of Section~\ref{sec:installing-macos}.
+
+\subsection{The raftcorr command}
+
+\file{raftcorr} without arguments starts the application. \file{raftcorr -{}-version} prints the
+version, \file{raftcorr -h} the commands, and \file{raftcorr <command> -h} the options of one
+command.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Command & What it does \\
+  \midrule
+  \file{raftcorr gui [PATH]}      & starts the application, opening an image folder or a
+                                    \file{.raftcorr} project if given \\
+  \file{raftcorr run FOLDER}      & tracks a sequence and writes a data file and/or a project \\
+  \file{raftcorr suggest FOLDER}  & measures the displacement with s8 and suggests a model \\
+  \file{raftcorr models}          & lists, downloads or imports the model files \\
+  \file{raftcorr selftest}        & runs every installed model on a synthetic image pair \\
+  \file{raftcorr info}            & prints the versions of RAFTcorr, Python, PyTorch and the
+                                    libraries, and the GPU \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsubsection{raftcorr run}
+
+\file{raftcorr run FOLDER [options]} tracks the images of \file{FOLDER} (PNG, JPEG, TIFF, BMP),
+sorted in natural order with the first one as the reference image, and writes the results: it is
+\ui{Run DIC Analysis} without the window.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+  \toprule
+  Option & Default & Meaning \\
+  \midrule
+  \file{-{}-roi FILE}    & whole image & region of interest as a mask image, white inside; a mask of
+    another size is resized to the images \\
+  \file{-{}-model M}     & \file{s4} & \file{s1}, \file{s2}, \file{s4}, \file{s8} or a checkpoint
+    path; a missing model file is downloaded \\
+  \file{-{}-mode MODE}   & \file{accumulative} & \file{accumulative}, \file{incremental},
+    \file{every\_n} or \file{custom} (Section~\ref{sec:workflow}) \\
+  \file{-{}-every N}     & 10 & with \file{every\_n}: a new reference every $N$ frames \\
+  \file{-{}-keys K,K,…}  & none & with \file{custom}: reference frames as 0-based indices, such as
+    \file{0,20,45}; 0 is always one, the last image cannot be one \\
+  \file{-{}-iters N}     & 20 & iterations of the model \\
+  \file{-{}-device D}    & \file{auto} & \file{auto} (the GPU when CUDA is available), \file{cuda},
+    \file{cpu} \\
+  \file{-{}-smooth S}    & 0 & Gaussian smoothing of the displacement, $\sigma$ in px; 0 is off \\
+  \file{-{}-config FILE} & none & run settings as JSON; replaces \file{-{}-model} to \file{-{}-smooth} \\
+  \file{-{}-plain-sort}  & off & sort file names character by character, not naturally \\
+  \file{-{}-strain}      & off & also compute the strain \\
+  \file{-{}-gauge N}     & 41 & virtual strain gauge size in px, odd \\
+  \file{-{}-measure M}   & \file{green\_lagrange} & or \file{infinitesimal}, \file{euler\_almansi} \\
+  \file{-{}-edge-trim A} & 0.7 & leave strain empty within $A \times (\text{gauge} - 1)/2$\,px of an
+    edge, 0 to 1; 0 keeps every point \\
+  \file{-{}-out FILE}    & none & data file: \file{.h5}, \file{.hdf5}, \file{.mat} or \file{.npz} \\
+  \file{-{}-project FILE}& none & also save a \file{.raftcorr} project with the results \\
+  \file{-{}-overwrite}   & off & replace existing output files \\
+  \file{-{}-quiet}       & off & hide the information lines; progress, warnings and errors remain \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+The data file holds every variable of Table~\ref{tab:export-variables}, with the residual and, after
+\file{-{}-strain}, every strain component. It records no physical units (pixel size 1, unit
+\file{px}). The other strain settings keep their defaults: uniform weighting, plane fit, output
+spacing 1\,px, no pre-fit smoothing, never across cracks or holes. Regions of interest of later
+frames are not available here; use the application or \file{frame\_masks} in Python.
+
+Before tracking, \file{run} checks what would fail at the end: an existing output file without
+\file{-{}-overwrite}, a wrong \file{-{}-out} extension, an even gauge, or a trim that would empty the
+whole region of interest. Without \file{-{}-out} and \file{-{}-project} it tracks, warns and writes
+nothing. Its progress lines, such as \file{[ 25.0\%] Frame 2/5 (reference 1): …}, count frames from
+1 like the application.
+
+\begin{lstlisting}
+raftcorr run images/ --roi roi.png --model s4 --strain --out results.h5 --project specimen.raftcorr
+raftcorr run images/ --model s8 --mode incremental --out results.mat
+raftcorr run images/ --mode custom --keys 0,40,80 --out results.npz
+raftcorr run images/ --roi roi.png --strain --gauge 31 --edge-trim 0 --out results.h5 --overwrite
+raftcorr run images/ --config run.json --out results.h5 --quiet
+\end{lstlisting}
+
+A \file{-{}-config} file lists only the keys you set; the others keep their defaults and unknown keys
+are ignored. The \file{run\_info.config} entry of an exported parameters file has the same layout,
+so you can copy the settings of an earlier run from it.
+
+\begin{lstlisting}
+{"model": "s4", "iters": 20, "smoothing_sigma": 0.0,
+ "tracking": {"mode": "every_n", "every_n": 20}, "tiling": {"memory_fraction": 0.85}}
+\end{lstlisting}
+
+\subsubsection{The other commands}
+\label{sec:cli-other}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[\file{raftcorr suggest FOLDER [-{}-roi FILE] [-{}-device D]}]
+    Measures with s8 the displacement of the region of interest between the reference image and
+    up to three later images (a quarter of the way, half way, the last), and prints the finest
+    model whose reach is at least 1.3 times the largest displacement (its 99th percentile),
+    assuming accumulative tracking. When even s8 falls short, it says to use incremental tracking.
+    The frames named in its output are 0-based indices.
+  \item[\file{raftcorr models [-{}-download [KEY …]] [-{}-import FILE …]}]
+    Lists the four models: name, $s$, reach, the path of the installed file or
+    \file{NOT INSTALLED}, a summary, and the folders searched. \file{-{}-download} fetches
+    the missing files (all, or the keys given: \file{s1 s2 s4 s8}) into the per-user folder;
+    \file{-{}-import} installs \file{.pth} files downloaded by hand from the \file{weights-v1}
+    release, recognised by their SHA-256 (Section~\ref{sec:installing-models}).
+  \item[\file{raftcorr selftest [-{}-device D] [-{}-gui] [-{}-no-models]}]
+    Runs every installed model on a 256\,$\times$\,256\,px synthetic speckle pair with a known
+    translation and prints, per model, the measured $u$ and $v$, the time, and \file{ok},
+    \file{WRONG}, an error or \file{not installed}. \file{-{}-gui} also opens and closes the main
+    window off screen and checks the icons and translations; \file{-{}-no-models} skips the models.
+  \item[\file{raftcorr info}]
+    Prints the versions of RAFTcorr, Python, the operating system, PyTorch, NumPy, SciPy, PySide6,
+    h5py, tifffile, Pillow and Matplotlib, whether CUDA is available, and the GPU with its free
+    memory. Add its output to a bug report.
+\end{description}
+
+\subsubsection{Exit codes}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}c X@{}}
+  \toprule
+  Code & Meaning \\
+  \midrule
+  0 & success \\
+  1 & \file{selftest}: a model failed, none is installed, or the GUI check failed. Any command: an
+      unexpected error, printed as a Python traceback (a folder without images, a reference frame
+      out of range, an unknown model key) \\
+  2 & a wrong option or value; \file{run}: an output file exists without \file{-{}-overwrite}, a
+      wrong \file{-{}-out} extension, or invalid strain settings \\
+  3 & \file{models}: a download or an import failed \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{The Python library}
+
+\begin{lstlisting}[language=Python,showstringspaces=false]
+import raftcorr
+
+series = raftcorr.track("images/", roi="roi.png", model="s4")   # DisplacementSeries
+strain = raftcorr.compute_strain(series)                        # StrainSeries
+u = series.u[4]                        # index 4 = frame 5 on screen; px, +right
+exx = strain.components["exx"][4]      # NaN outside the region of interest
+\end{lstlisting}
+
+The library follows Section~\ref{sec:conventions}: $+u$ right, $+v$ down, in pixels, in reference
+coordinates, and index $k$ is image $k$ counted from 0 (frame $k+1$ in the application).
+
+\begin{lstlisting}[language=Python,showstringspaces=false]
+raftcorr.track(images, roi=None, model="s4", config=None, frame_masks=None, callbacks=None)
+raftcorr.compute_strain(series, config=None, callbacks=None)
+\end{lstlisting}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Argument & Meaning \\
+  \midrule
+  \file{images}      & a folder (natural order), a list of image files, an
+    \file{raftcorr.io.ImageSequence}, or a list of 2-D arrays of grey levels 0 to 255 \\
+  \file{roi}         & a mask image path (white inside), a boolean array of the image size, or
+    \file{None} for the whole image \\
+  \file{model}       & \file{s1} to \file{s8} or a checkpoint path, ignored when \file{config} is
+    given; a missing model file is downloaded \\
+  \file{config}      & \file{track}: a \file{RunConfig}; \file{compute\_strain}: a
+    \file{StrainConfig} (default settings of the strain window) \\
+  \file{frame\_masks} & \file{\{index: mask\}}, regions of interest of later frames in their own
+    coordinates: they exclude what that frame leaves out and are the region of interest when it is
+    a reference \\
+  \file{callbacks}   & progress, stop and log callbacks (below) \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+The settings are frozen dataclasses with the defaults of the application:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Class & Fields (default) \\
+  \midrule
+  \file{RunConfig} & \file{model} (\file{"s4"}), \file{device} (\file{"auto"}), \file{iters} (20),
+    \file{corr\_mode} (\file{None} automatic, \file{"tile"} on demand, \file{"volume"} stored),
+    \file{smoothing\_sigma} (0.0), \file{tracking}, \file{tiling}; \file{save(path)} and
+    \file{load(path)} use the JSON of \file{-{}-config} \\
+  \file{TrackingConfig} & \file{mode} (\file{"accumulative"}), \file{every\_n} (10),
+    \file{key\_frames} (0-based) \\
+  \file{TilingConfig} & \file{margin\_px} (\file{None}: the reach), \file{max\_tile\_pixels}
+    (\file{None}: from free GPU memory), \file{memory\_fraction} (0.85), \file{blend\_px} (32) \\
+  \file{StrainConfig} & \file{measure} (\file{"green\_lagrange"}), \file{gauge\_px} (41),
+    \file{weighting} (\file{"uniform"}, or \file{"gaussian"}), \file{poly\_order} (1, or 2),
+    \file{step} (1), \file{gaussian\_sigma} (\file{None}: gauge/4), \file{smoothing\_sigma} (0.0),
+    \file{connectivity\_aware} (\file{True}), \file{edge\_trim\_alpha} (0.70); without a control in
+    the window: \file{min\_coverage} (0.25), \file{condition\_max} (1000) \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsubsection{The result objects}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Attribute & Content \\
+  \midrule
+  \multicolumn{2}{@{}l}{\textbf{DisplacementSeries}} \\
+  \file{u}, \file{v}  & $(T, h, w)$ float32, px; NaN outside the region of interest, at untracked
+    points and in frames not computed; read-only \\
+  \file{mask}, \file{done} & $(h, w)$ region of interest of frame 0; $(T)$ computed frames \\
+  \file{grid}         & \file{x0}, \file{y0}, \file{width}, \file{height} and the image size;
+    \file{grid.coords()} gives the image coordinates \file{X}, \file{Y} \\
+  \file{residual}     & $(T, h, w)$ residual in grey levels, or \file{None} \\
+  \file{frame\_names}, \file{n\_frames} & image names; $T$ \\
+  \file{completed\_frames} & indices of the computed frames \\
+  \file{schedule}     & \file{reference\_of(k)}, the reference of frame $k$ \\
+  \file{info}         & \file{model\_name}, \file{model\_sha256}, \file{iters}, \file{device},
+    \file{config}, \file{seconds}, \file{notes} \\
+  \midrule
+  \multicolumn{2}{@{}l}{\textbf{StrainSeries}} \\
+  \file{components}   & \file{\{name: (T, h\_s, w\_s)\}} with the names of
+    Table~\ref{tab:export-variables}; point $(i, j)$ is at image pixel
+    $(x_0 + j\,\text{step},\ y_0 + i\,\text{step})$, with $x_0$, $y_0$ from \file{grid} \\
+  \file{step}, \file{done} & output spacing in px; frames with strain \\
+  \file{settings}, \file{trimmed} & settings used; edge-trimmed points, or \file{None} \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsubsection{Progress and stopping}
+
+A callbacks object has three methods: \file{progress(fraction, message)}, \file{should\_stop()},
+polled between frames, and \file{log(message, level)} with the levels \file{debug}, \file{info},
+\file{warning} and \file{error}. \file{ConsoleCallbacks} prints like the command line;
+\file{FunctionCallbacks} wraps your own functions; the default is silent. When
+\file{should\_stop()} returns \file{True}, \file{track} stops after the current frame and returns
+what it computed: check \file{series.done}; \file{series.info.notes} records the stop.
+\file{compute\_strain} and the exporters raise \file{raftcorr.StopRequested} instead.
+
+\begin{lstlisting}[language=Python,showstringspaces=false]
+import raftcorr
+from raftcorr import FunctionCallbacks, RunConfig, StrainConfig, TrackingConfig
+
+def show(fraction, message):
+    print(f"{100 * fraction:5.1f} %  {message}")
+
+cfg = RunConfig(model="s8", tracking=TrackingConfig(mode="every_n", every_n=20))
+series = raftcorr.track("images/", roi="roi.png", config=cfg,
+                        callbacks=FunctionCallbacks(progress=show))
+strain = raftcorr.compute_strain(series, StrainConfig(gauge_px=31, step=2))
+\end{lstlisting}
+
+\subsubsection{Files, probes and projects}
+
+\begin{lstlisting}[language=Python,showstringspaces=false]
+from pathlib import Path
+from raftcorr.export import PhysicalUnits, export_results, read_results
+from raftcorr.analysis import LineGeom, Probe, extract_series
+from raftcorr.io.project import Project, save_project
+
+units = PhysicalUnits(scale=0.0125, unit="mm", frame_rate=2.0)   # recorded; data stay in px
+export_results("results.h5", series, strain, units=units)        # .h5, .mat or .npz
+data = read_results("results.h5")                                # arrays and data["metadata"]
+
+ext = Probe(id=1, kind="line", geometry=LineGeom(100, 200, 400, 200),
+            label="E1", color="#ef4444")                          # reference-image pixels
+ts = extract_series(series, ext, None, "strain")                  # extensometer strain
+ts = extract_series(series, ext, "strain_exx", "mean", strain=strain)
+
+save_project("specimen.raftcorr",
+             Project(image_folder=str(Path("images").resolve()),
+                     image_files=tuple(series.frame_names), series=series, strain=strain))
+\end{lstlisting}
+
+\file{export\_results} writes the data files of the \ui{Data} tab, and \file{read\_results} reads
+any of them back with the MATLAB axis order undone. \file{extract\_series} reads a probe as the
+\ui{Analysis} tab does and returns \file{frames}, \file{values}, \file{valid\_fraction} and a
+\file{status} per frame. It takes the field names of the application (\file{disp\_u},
+\file{disp\_v}, \file{disp\_magnitude}, \file{strain\_exx}, \ldots) and, as reduction, a statistic
+(\file{value}, \file{mean}, \file{median}, \file{max}, \file{min}, \file{std},
+\file{valid\_fraction}) or, for a line, a gauge reading (\file{strain}, \file{true\_strain},
+\file{elongation}, \file{cod}, \file{cod\_sliding}, \file{cod\_magnitude}). A project saved this way
+opens in the application (Section~\ref{sec:projects}); \file{load\_project} reads one back.

@@ -1,0 +1,276 @@
+\section{Exporting results}
+\label{sec:export}
+
+One dialog writes everything RAFTcorr exports: data files, per-frame tables, pictures, animations
+and an HTML report. Open it with \ui{Export Results} in the main window, with
+\menu{File}{Export Results…} (\kbd{Ctrl+E}), or with \ui{Export Results} in the strain window, once
+a run has results. Displacement can be exported before any strain is computed.
+
+The window you open the dialog from sets the starting values of the picture settings:
+\ui{Deformed frame} or \ui{Reference frame}, \ui{Show background image}, the hidden-background
+fill, \ui{Hide untracked regions}, the opacity and the physical units. From the strain window, the
+pictures also follow its \ui{Fill trimmed edges (display only)} (Section~\ref{sec:strain-viz});
+from the main window, the trimmed band stays empty. Each field starts with the colormap and colour range
+you last gave it in either window. The dialog stays open after an export, so you can write several
+formats in turn; \ui{Close} closes it and stops an export still running.
+
+\subsection{Output folder, file names and physical units}
+
+\ui{OUTPUT FOLDER} takes the folder to write to: type it, or pick it with \ui{Browse…}, which also
+remembers it for the next time. The export buttons stay disabled until a folder is set; the folder
+is created if needed. \ui{Open Folder} opens it after the first successful export.
+
+Every export writes new names, \file{<prefix>\_<kind>\_<timestamp>}: the prefix is the name of the
+image folder (spaces and characters Windows does not allow become \file{\_}), the timestamp the
+time of the click, \file{YYYYMMDDHHMMSS}. If a file exists already, the dialog lists it and asks
+before replacing it.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Tab & Written in the output folder \\
+  \midrule
+  \ui{Data}      & \file{<p>\_parameters\_<t>.json} (always); \file{<p>\_results\_<t>.npz},
+                   \file{.mat}, \file{.h5}; \file{<p>\_npz\_<t>/frame\_0001.npz} \ldots;
+                   \file{<p>\_csv\_<t>/frame\_0001.csv} \ldots \\
+  \ui{Images}    & \file{<p>\_images\_<t>/<field>/frame\_0001.png} \ldots, a folder per field \\
+  \ui{Animation} & \file{<p>\_animation\_<t>/<field>.gif} or \file{.mp4}, a file per field \\
+  \ui{Report}    & \file{<p>\_report\_<t>.html} \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\file{<field>} is the internal field name, for example \file{disp\_u} or \file{strain\_exx}; hover
+over a field in the dialog to see it.
+
+\begin{notebox}
+File names, the \ui{FRAME RANGE} boxes and the report count frames from 1, like the frame slider
+(\file{frame\_0001} is the reference image); the arrays inside the data files count from 0
+(Section~\ref{sec:conventions}). Per-frame files are written for computed frames only, the
+reference image included.
+\end{notebox}
+
+\ui{PHYSICAL UNITS} holds \ui{Enable physical units}, the \ui{Pixel size} with its unit (\file{nm},
+\file{\textmu m}, \file{mm}, \file{cm}, \file{m}, \file{inch} \ui{/ pixel}) and the
+\ui{Frame rate} in \ui{fps}, starting from the window's physical units
+(Section~\ref{sec:physical-units}).
+In pictures, animations and the report, displacements are scaled to the length unit and the
+colorbar shows it. Data files stay in pixels: they record the calibration (\file{pixel\_size},
+\file{length\_unit}, \file{frame\_rate}), and you multiply by \file{pixel\_size} to convert. Strain
+is dimensionless and never scaled. With physical units off, the files record 1, \file{px} and no
+frame rate.
+
+\subsection{Data tab}
+
+\screenshot{fig-export-data.png}{The \ui{Data} tab of the export dialog, below the output folder
+and the physical units: the formats, the displacement and strain variables, and
+\ui{Export Data}.}{fig:export-data}
+
+\ui{FORMAT} chooses the files (Figure~\ref{fig:export-data}). \ui{NumPy Archive (.npz)} and
+\ui{MATLAB v7.3 (.mat)} are on by default, \ui{HDF5 (.h5)} and \ui{CSV (per frame)} off. With NPZ
+ticked, \ui{NPZ: one file per frame (default: single merged file)} writes one \file{.npz} per
+computed frame into a folder of its own. \ui{DISPLACEMENT} and \ui{STRAIN} choose the variables,
+with \ui{All} and \ui{None} buttons; \ui{U}, \ui{V}, \ui{Magnitude}, \ui{εxx}, \ui{εyy} and
+\ui{εxy} are ticked by default. \ui{Residual} is available when the run recorded one, and the strain
+group once you have run \ui{Compute Strain}. NPZ, MAT and HDF5 files always hold the grid
+coordinates, the region of interest and the computed-frame flags as well, and the parameters file
+is always written.
+
+\subsubsection*{What the data files hold}
+
+NPZ, MAT and HDF5 hold the same variables under the same names (Table~\ref{tab:export-variables}).
+$T$ is the number of images, $h \times w$ the bounding box of the region of interest of frame~1
+(the grid), and $h_s \times w_s$ the strain grid: the same box, taken every \ui{Output spacing}
+pixels of the strain settings (Section~\ref{sec:strain}).
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Variables of the exported data files. Per-frame arrays are float32, coordinates float64,
+flags uint8. The strain variables carry the names of the data files; the strain window shows them
+as \ui{εxx}, \ui{εyy}, \ui{εxy}, \ui{ε₁}, \ui{ε₂}, \ui{ε₁ angle}, \ui{max shear}, \ui{von Mises},
+\ui{ω rot} and \ui{ΔA/A₀}.}
+\label{tab:export-variables}
+\begin{tabularx}{\linewidth}{@{}l l l X@{}}
+  \toprule
+  Name & Shape & Unit & Content \\
+  \midrule
+  \file{U}, \file{V}        & $(T, h, w)$ & px & displacement, $+u$ right, $+v$ down \\
+  \file{Magnitude}          & $(T, h, w)$ & px & $\sqrt{U^2 + V^2}$ \\
+  \file{Residual}           & $(T, h, w)$ & grey levels & the residual (when ticked) \\
+  \file{X}, \file{Y}        & $(h, w)$ & px & reference-image column and row of each point \\
+  \file{ROI}                & $(h, w)$ & & region of interest of frame~1, 1 inside \\
+  \file{Done}               & $(T)$ & & 1 where the frame was computed \\
+  \file{exx}, \file{eyy}, \file{exy} & $(T, h_s, w_s)$ & & strain components (tensor shear) \\
+  \file{e1}, \file{e2}      & $(T, h_s, w_s)$ & & principal strains \\
+  \file{principal\_angle}, \file{rotation} & $(T, h_s, w_s)$ & deg & angle of \file{e1} from $+x$;
+    rotation \\
+  \file{max\_shear}, \file{von\_mises} & $(T, h_s, w_s)$ & & $(\varepsilon_1 - \varepsilon_2)/2$;
+    von Mises equivalent strain \\
+  \file{area\_change}       & $(T, h_s, w_s)$ & & area change $\Delta A/A_0$ \\
+  \file{X\_strain}, \file{Y\_strain} & $(h_s, w_s)$ & px & coordinates of the strain points (with
+    any strain variable) \\
+  \file{frame\_names}       & $(T)$ & & image file names in frame order \\
+  \bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{NaN.} Displacement, magnitude and residual are NaN outside the region of interest,
+    at points that could not be tracked (cut out by a later frame's region of interest, or gone out
+    of the image) and in frames not computed. Strain is NaN outside the region of interest, where
+    the virtual strain gauge found too few valid points, in the trimmed band along edges, and in
+    frames without strain.
+  \item \textbf{Frames and coordinates.} Index 0 is the reference image; its displacement is 0
+    inside the region of interest. Every field is in reference (Lagrangian) coordinates. \file{X}
+    and \file{Y} are integer pixel positions, the centre of the top-left pixel at $(0, 0)$.
+  \item \textbf{Provenance.} Every file carries a JSON document: the RAFTcorr version, creation
+    time, frame names, the reference of every frame (\file{ref\_indices}, 0-based), the run
+    information (model name and SHA-256 of its file, iterations, correlation mode, device, the run
+    settings as run, duration, notes), the grid, the strain settings, the calibration, the
+    conventions, and the shape and unit of every variable.
+\end{itemize}
+
+In \textbf{HDF5}, each variable is a compressed dataset with a \file{units} attribute; the JSON
+document is the root attribute \file{metadata}, beside simple attributes such as \file{n\_frames},
+\file{pixel\_size} and \file{frame\_rate} (NaN when unknown). In \textbf{MATLAB}, \file{load} gives
+\file{U} as a $T \times h \times w$ array; MATLAB counts from 1, so \file{U(n,:,:)} is frame $n$ of
+the slider. The JSON is the text \file{metadata\_json} (read it with \file{jsondecode}), and
+\file{frame\_names} has one line per image. In \textbf{NPZ}, the JSON is the string array
+\file{metadata\_json}. A \textbf{per-frame NPZ} holds that frame's arrays without the time axis,
+the coordinates and the JSON, whose key \file{frame} is the 0-based index.
+
+\begin{lstlisting}[language=Python,showstringspaces=false]
+import json, numpy as np
+z = np.load("specimen_results_20261119103000.npz")
+meta = json.loads(str(z["metadata_json"]))
+u = z["U"][4] * meta["pixel_size"]     # frame 5 of the slider, in meta["length_unit"]
+\end{lstlisting}
+
+\begin{lstlisting}
+S = load('specimen_results_20261119103000.mat');
+meta = jsondecode(S.metadata_json);
+u5 = squeeze(S.U(5,:,:));               % frame 5 of the slider, in pixels
+\end{lstlisting}
+
+The \textbf{parameters file} repeats the provenance as readable JSON. The \textbf{CSV tables} have
+one row per point of the region of interest of frame~1: \file{x [px]}, \file{y [px]}, then the
+chosen variables with their unit, \file{U [px]}, \ldots, \file{exx [-]}, \ldots,
+\file{rotation [deg]}; an empty field is a NaN. With an \ui{Output spacing} above 1\,px the strain
+points do not coincide with the displacement rows, so the strain columns go into a second file per
+frame, \file{frame\_0001\_strain.csv}.
+
+\begin{warnbox}
+A CSV table has one row per pixel of the region of interest: a 1000\,$\times$\,1000\,px region gives
+a million rows per frame. Use HDF5, MAT or NPZ for sequences, and CSV for a few frames.
+\end{warnbox}
+
+\subsection{Images tab}
+
+\screenshot{fig-export-images.png}{The \ui{Images} tab: one row per field with its colormap, colour
+range and opacity, then \ui{IMAGE SETTINGS} and \ui{FRAME RANGE}.}{fig:export-images}
+
+The list at the top has one row per field (Figure~\ref{fig:export-images}): \ui{Export} (ticked by
+default for \ui{U}, \ui{V}, \ui{εxx}, \ui{εyy}, \ui{εxy}), the field, its \ui{Colormap}, an
+\ui{Auto} or \ui{Fixed} range with \ui{Min} and \ui{Max}, and the \ui{Opacity} ($\alpha$, 0
+transparent to 1 opaque). Fields without data are greyed out. \ui{IMAGE SETTINGS}:
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Format]
+    \ui{PNG} (default), \ui{TIFF}, \ui{JPEG}, \ui{PDF} or \ui{SVG}. PDF and SVG keep the colorbar as
+    vectors around an embedded picture of the field.
+  \item[Resolution (long edge), JPEG quality, DPI]
+    \ui{Full resolution} (default) writes the size set by \ui{DPI} (72 to 600, default 150; the
+    field is drawn 7\,inches along its long edge, about 1050\,px at 150\,DPI). A cap of \ui{512 px}
+    to \ui{2048 px} limits the long edge of each image and keeps the layout; for PDF and SVG it
+    limits the embedded picture. \ui{JPEG quality}: 60 to 100, default 92.
+  \item[Auto range]
+    For \ui{Auto} rows: \ui{Each frame} (default) takes the range from each frame's own values, as
+    the windows do; \ui{Whole sequence} takes one range from all exported frames, so a colour means
+    the same value in every image. Use it, or a \ui{Fixed} range, for pictures shown side by side.
+  \item[Include colorbar]
+    On by default; styled on the \ui{Preview \& Colorbar} tab. It is labelled with the variable name
+    of the data files and the unit, for example \file{u (mm)} or \file{exx (-)}.
+  \item[Render as]
+    \ui{Deformed frame} draws the field where each point is in that frame, over that frame's image;
+    \ui{Reference frame} draws it at the positions in frame~1, over frame~1. Untick
+    \ui{Show background image} to draw the field alone on the hidden-background fill. \ui{Crop to
+    ROI} cuts the picture to the region of interest plus 20 image pixels.
+  \item[Hide untracked regions]
+    On: points without a result stay transparent. Off: in \ui{Reference frame} pictures they take
+    the nearest value inside the region of interest, as on the canvas. Data files keep NaN either
+    way.
+\end{description}
+
+\ui{FRAME RANGE} exports \ui{All frames}, or \ui{From} \ldots\ \ui{to}, numbered like the slider.
+\ui{Export Images} writes one picture per computed frame and ticked field. When the images of the
+run cannot be read, the pictures go on white and the \ui{LOG} says so.
+
+\subsection{Animation tab}
+
+The \ui{Animation} tab has its own field list and writes one animation per ticked field.
+\ui{Format} is \ui{MP4} (H.264, the default) or \ui{GIF}. MP4 needs the \file{imageio} and
+\file{imageio-ffmpeg} packages; without them the MP4 entry is greyed out. A GIF loops and has 255 colours
+per frame. \ui{Resolution (long
+edge)} defaults to \ui{1024 px}; \ui{Full resolution} draws the images at their own pixel size.
+Keep a cap for GIF, whose size grows fast with resolution. \ui{FPS} is 1 to 60 (default 10).
+\ui{Frame step} (1 to 20, default 1) keeps every $N$th frame and divides the written frame rate by
+$N$, so the animation lasts as long, only choppier. \ui{Include colorbar}, \ui{Render as},
+\ui{Crop to ROI} and \ui{Hide untracked regions} work as on the \ui{Images} tab. \ui{Auto} fields
+get one colour range for the whole animation. GIF and MP4 have no transparency: a transparent
+hidden background is written as white.
+
+\subsection{Report tab}
+
+\ui{Generate Report} writes one HTML file, pictures included, that opens in any browser without a
+network connection. Under \ui{CONTENT}, all on by default: \ui{Parameter summary table} (the run and
+strain parameters), \ui{Field statistics (min/max/mean/std per frame)} over the valid points of the
+region of interest, and \ui{Sample field images} of every $N$th computed frame plus the last
+(\ui{Sample every} 5 \ui{frames} by default, 1 to 100). The pictures use each field's row and the
+settings of the \ui{Images} tab, with one colour range per field. \ui{FIELDS} chooses the fields;
+\ui{U}, \ui{V}, \ui{Magnitude}, \ui{εxx}, \ui{εyy} and \ui{εxy} by default.
+
+\subsection{Preview \& Colorbar tab}
+
+This tab draws one frame with the code of the \ui{Images} export, at a lower resolution: what you
+see is what the export writes. Pick a \ui{Field} ticked on the \ui{Images} tab and a \ui{Frame}
+(from 1; it starts on frame~2). Transparency shows as a grey checkerboard. \ui{FIELD APPEARANCE}
+(\ui{Colormap}, \ui{Range}, \ui{Min}, \ui{Max}, \ui{Opacity}) is the same setting as the field's
+row on the \ui{Images} tab; \ui{Apply to all fields} copies the colormap, opacity and range mode,
+not \ui{Min} and \ui{Max}, to every ticked field of the \ui{Images} and \ui{Animation} tabs.
+\ui{COLORBAR STYLE} applies to every picture, animation and report image:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+  \toprule
+  Setting & Default & Choices \\
+  \midrule
+  \ui{Position}          & \ui{Right} & \ui{Right}, \ui{Left}, \ui{Top}, \ui{Bottom} \\
+  \ui{Font size}, \ui{Font family} & 11\,pt, sans-serif & 6 to 32\,pt; sans-serif, serif,
+    monospace \\
+  \ui{Bar thickness}     & 0.03 & 0.02 to 0.25 of the picture's width (bar left or right) or
+    height (top or bottom) \\
+  \ui{Background}        & \ui{White} & \ui{Black} or \ui{White} behind the colorbar and around
+    the picture; text takes the other colour \\
+  \ui{Margin}, \ui{Margin color} & 0, \ui{White} & 0 to 0.30 of the long edge; \ui{White} or
+    \ui{Black} \\
+  \ui{Hidden background} & from the window & \ui{White}, \ui{Black} or \ui{Transparent} where the
+    image would be; transparency is kept in PNG and TIFF, other formats get white \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Running an export}
+
+A running export shows a progress bar and the item being written; \ui{Cancel Export} stops it
+after the current frame or file and keeps what was written. Data files are written to a
+temporary file and moved into place when complete, so a cancelled or failed export never leaves a
+half-written data file and never damages an existing one. Errors appear in red under the button
+and in the \ui{LOG}.
+
+\begin{tipbox}
+The dialog exports the results it was opened with. After a new run, a new strain computation or
+opening a project, it refuses to export and asks you to close it and open it again.
+\end{tipbox}

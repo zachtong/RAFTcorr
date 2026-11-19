@@ -1,0 +1,183 @@
+\section{Overview}
+\label{sec:overview}
+
+RAFTcorr measures full-field displacement and strain from a sequence of images of a deforming
+specimen. The first image of the sequence is the reference image. Every other image is compared
+with it, or with a later reference frame, by a learned correlation model: a neural network trained
+on speckle images whose displacement is known exactly. The model returns one displacement vector
+for every pixel of the region of interest, so there is no subset size and no mesh to choose.
+Strain follows from the displacement with a virtual strain gauge, in the strain window.
+
+The same engine runs behind three interfaces: the desktop application, which most of this guide
+follows; the \file{raftcorr} command line; and the Python library (Section~\ref{sec:cli}). A
+project saved by one of them opens in the others.
+
+\begin{notebox}
+RAFTcorr is two-dimensional digital image correlation: one camera, a planar specimen, motion in
+the image plane. It does not reconstruct out-of-plane motion.
+\end{notebox}
+
+\subsection{The four models}
+\label{sec:overview-models}
+
+RAFTcorr ships four models, \file{RAFTcorr-s1}, \file{-s2}, \file{-s4} and \file{-s8}. They share
+one network architecture and differ in one number, the encoder downsampling factor $s$: the
+network describes both images on a grid $s$ times coarser than the pixels, and the correlation
+search at its coarsest level looks $32\,s$ px away. That distance is the model's nominal
+\emph{reach}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{The four models. The \ui{Model} list shows each with its reach, for example
+  \ui{RAFTcorr-s4 (128 px)}.}
+  \label{tab:models}
+  \begin{tabular}{lccl}
+    \toprule
+    Model & $s$ & Reach ($32\,s$) & Use it for \\
+    \midrule
+    RAFTcorr-s1 & 1 & 32 px  & small displacements, finest detail (strain concentrations) \\
+    RAFTcorr-s2 & 2 & 64 px  & small to moderate displacements, fine detail, faster than s1 \\
+    RAFTcorr-s4 & 4 & 128 px & a balance of detail and reach (the default) \\
+    RAFTcorr-s8 & 8 & 256 px & large motion and rotation, or no prior knowledge \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A smaller $s$ resolves shorter wavelengths of the displacement; a larger $s$ reaches further. The
+reach has to cover the largest displacement of any image pair, so the choice depends on the
+tracking mode too (Section~\ref{sec:workflow-model}). When you do not know how far the specimen
+moves, \ui{Suggest a Model} measures the motion of your sequence with s8 and picks the finest
+model whose reach covers it.
+
+Each model file is about 20\,MB. RAFTcorr downloads a model the first time an analysis uses it
+and keeps it for later runs (Section~\ref{sec:installing-models}).
+
+\subsection{An analysis in eight steps}
+\label{sec:overview-steps}
+
+The main window has three columns: settings on the left, the image in the middle, the run controls
+and the display settings on the right. An analysis goes through it from left to right.
+
+\begin{enumerate}
+  \item \textbf{Load the images} in the \ui{IMAGES} section: a folder of images, sorted in natural
+    order. The first image is the reference image (Section~\ref{sec:images}).
+  \item \textbf{Choose the tracking mode and the model} in \ui{WORKFLOW TYPE}. Do this before the
+    region of interest: the tracking mode decides which frames are reference frames
+    (Section~\ref{sec:workflow}).
+  \item \textbf{Define the region of interest} on frame~1 in \ui{REGION OF INTEREST}, and on
+    later frames that must leave a region out, such as a crack or a hole that opens
+    (Section~\ref{sec:roi}).
+  \item \textbf{Check the parameters} in \ui{PARAMETERS} and \ui{ADVANCED}. The defaults suit most
+    sequences (Section~\ref{sec:parameters}).
+  \item \textbf{Run} with \ui{Run DIC Analysis}, and follow the run in \ui{PROGRESS} and \ui{LOG}
+    (Section~\ref{sec:running}).
+  \item \textbf{Review the displacement} on the canvas: each component, the magnitude, and the
+    residual, which shows how well each frame was tracked (Sections~\ref{sec:canvas}
+    and~\ref{sec:results}).
+  \item \textbf{Compute the strain} in the strain window, which opens when the run finishes, and
+    measure points, lines and areas in its \ui{Analysis} tab (Sections~\ref{sec:strain}
+    and~\ref{sec:analysis}).
+  \item \textbf{Export and save}: data files, figures, animations and a report with
+    \ui{Export Results}, and the whole session with \menu{File}{Save Project}
+    (Sections~\ref{sec:export} and~\ref{sec:projects}).
+\end{enumerate}
+
+\screenshot{fig-main-window.png}{The main window after a run, showing the vertical displacement on
+the last frame. The numbers mark the five regions described in the text: (1) the \ui{IMAGES}
+section; (2) the settings column; (3) the canvas with the frame navigator; (4) the run controls and
+\ui{PROGRESS}; (5) \ui{FIELD}, \ui{VISUALIZATION}, \ui{PHYSICAL UNITS} and \ui{LOG}.}{fig:main-window}
+
+The five regions of Figure~\ref{fig:main-window}:
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[1. IMAGES]
+    The drop zone (\ui{Drop image folder or Browse}), the \ui{Natural Sort (1, 2, …, 10)}
+    checkbox and the image list. The list numbers the frames from 1 and has a \ui{Region}
+    column, whose button adds or edits the region of interest of each frame. See
+    Section~\ref{sec:images}.
+  \item[2. The settings column]
+    Four sections that fold open and closed: \ui{WORKFLOW TYPE} (tracking mode, model,
+    \ui{Suggest a Model}), \ui{REGION OF INTEREST} (drawing tools and mask files),
+    \ui{PARAMETERS} (iterations, smoothing, device) and \ui{ADVANCED} (margin, GPU memory, tile
+    blending, correlation; folded by default). See Sections~\ref{sec:workflow},
+    \ref{sec:roi} and~\ref{sec:parameters}.
+  \item[3. The canvas]
+    The current frame with the region of interest or the displacement field drawn over it, the
+    zoom buttons and a read-out of the position and value under the cursor at the top, and the
+    frame navigator at the bottom. See Section~\ref{sec:canvas}.
+  \item[4. Run controls and PROGRESS]
+    \ui{Run DIC Analysis}, \ui{Cancel}, \ui{Export Results} and \ui{Open Strain Window}, and below
+    them the progress of a run. See Sections~\ref{sec:running}, \ref{sec:strain}
+    and~\ref{sec:export}.
+  \item[5. Display and log]
+    \ui{FIELD} chooses what is drawn (\ui{Disp U}, \ui{Disp V}, \ui{Magnitude}, \ui{Residual}) and
+    where (\ui{Show on}); \ui{VISUALIZATION} holds the colormap, the colour range and the opacity;
+    \ui{PHYSICAL UNITS} converts pixels and frames to lengths and seconds; \ui{LOG} lists every
+    message of the session with its time, errors in red. See Section~\ref{sec:results}.
+\end{description}
+
+The menu bar has three menus: \ui{File} (images, projects, export), \ui{Settings} (theme and
+language) and \ui{Help} (models, self-test, version). Section~\ref{sec:settings} lists them with
+their keyboard shortcuts.
+
+\subsection{Conventions}
+\label{sec:conventions}
+
+These rules hold everywhere: on the screen, in exported files, on the command line and in
+Python.
+
+\begin{itemize}
+  \item \textbf{Displacement} $(u, v)$ goes from the reference image to the deformed image: a
+    material point at pixel $X$ in the reference image appears at $X + (u, v)$ in the deformed
+    image. $+u$ points right and $+v$ points down, as the image rows and columns run. The unit is
+    the pixel, unless you set physical units (Section~\ref{sec:physical-units}).
+  \item \textbf{Lagrangian storage.} Every field is stored in the coordinates of the reference
+    image: the value at a pixel belongs to the material point that sits at that pixel in frame~1.
+    Incremental tracking composes its steps into these coordinates as well. Choosing
+    \ui{Deformed frame} in \ui{Show on} moves the field to the current positions of the points for
+    display only; the stored data do not change.
+  \item \textbf{Frame numbers.} The application counts frames from 1: the image list, the frame
+    navigator and the log call the reference image frame~1. File names written by
+    the export dialog count the same way (\file{frame\_0001} is the reference image). Inside the
+    arrays of the exported data files, and in Python, index $k$ is image $k$ counted from 0, so
+    frame~$n$ on the screen is index $n-1$. The command line uses both: its progress lines count
+    from 1, its frame options and its \file{suggest} report from 0 (Section~\ref{sec:cli}).
+  \item \textbf{Shear strain} $\varepsilon_{xy}$ is the tensor component, half the engineering
+    shear strain $\gamma_{xy}$ (Section~\ref{sec:strain}).
+  \item \textbf{Grey levels.} RAFTcorr compares grey levels from 0 to 255. Colour images are
+    converted to luminance, and images with more than 8 bits are scaled with one factor for the
+    whole sequence, taken from the reference image (Section~\ref{sec:images}).
+\end{itemize}
+
+\subsection{Where RAFTcorr keeps its files}
+\label{sec:overview-files}
+
+RAFTcorr writes into the image folder only what you save there yourself. Its own files are in
+your user account, so no administrator rights are needed.
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Model files]
+    \file{\%LOCALAPPDATA\%\textbackslash RAFTcorr\textbackslash models} on Windows,
+    \file{\textasciitilde/.raftcorr/models} on macOS and Linux. \menu{Help}{Models…} shows the
+    folder and opens it (Section~\ref{sec:installing-models}).
+  \item[Settings]
+    The theme, the language and the last export folder, in the settings store of your user
+    account: the registry key
+    \file{HKEY\_CURRENT\_USER\textbackslash Software\textbackslash RAFTcorr} on Windows, a property
+    list in \file{\textasciitilde/Library/Preferences} on macOS.
+  \item[Log file]
+    The macOS application writes \file{RAFTcorr.log} in the folder
+    \file{\textasciitilde/Library/Application Support/}\allowbreak\file{RAFTcorr/logs}. On Windows
+    and with pip
+    there is no log file: the messages are in the \ui{LOG} panel, and in the terminal when you
+    start RAFTcorr from one (Section~\ref{sec:troubleshooting}).
+  \item[Windows installation]
+    \file{\%LOCALAPPDATA\%\textbackslash Programs\textbackslash RAFTcorr} by default, with the
+    private Python and \file{install.log}, the log of the setup (Section~\ref{sec:installing}).
+  \item[Large results]
+    When the results of a run (displacement and residual) need more than 2\,GB of memory,
+    RAFTcorr keeps them in memory-mapped files in a temporary folder named
+    \file{raftcorr\_results\_\ldots}, which the \ui{LOG} names, and deletes the folder when you
+    quit. Save a project or export the results to keep them (Sections~\ref{sec:projects}
+    and~\ref{sec:export}).
+\end{description}

@@ -1,0 +1,327 @@
+\section{Installing RAFTcorr}
+\label{sec:installing}
+
+Pick the route that fits your computer. Every route gives you the same application, the same
+\file{raftcorr} command line and the same model files.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}p{0.4\linewidth}X@{}}
+  \toprule
+  You have & Use \\
+  \midrule
+  Windows 10 (version 1809 or later) or 11, 64-bit & the Setup program, \file{RAFTcorr-Windows-Setup.exe}
+    (Section~\ref{sec:installing-windows}) \\
+  A Mac with Apple silicon, macOS 14 or later & the disk image, \file{RAFTcorr-macOS.dmg}
+    (Section~\ref{sec:installing-macos}) \\
+  Python 3.10 or later, on any system & \file{pip install raftcorr}
+    (Section~\ref{sec:installing-pip}) \\
+  A copy of the source code & \file{install.bat} on Windows, or a conda environment
+    (Section~\ref{sec:installing-source}) \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+Both downloads are on the release page, \url{https://github.com/zachtong/RAFTcorr/releases/latest}.
+
+\subsection{Windows: the Setup program}
+\label{sec:installing-windows}
+
+The Setup program is small: it holds a private Python and RAFTcorr itself, but not PyTorch, the
+library that runs the models. Which PyTorch build fits depends on your graphics card, so Setup
+chooses and downloads it while it installs. It needs an internet connection once, for PyTorch,
+the other Python packages and the model files.
+
+\begin{enumerate}
+  \item Download \file{RAFTcorr-Windows-Setup.exe} from the release page and run it. It installs
+    for your own user account and asks for no administrator password, so it works on a lab
+    computer too. Windows may warn you first; see the note below.
+  \item Accept the licence and keep the proposed folder,
+    \file{\%LOCALAPPDATA\%\textbackslash Programs\textbackslash RAFTcorr}, or choose another one.
+  \item Choose the additional tasks. \ui{Add the "raftcorr" command to PATH (new terminals)} is
+    ticked by default; \ui{Create a desktop shortcut} is not. Click \ui{Install}.
+  \item Setup copies its files, then opens a console window and installs the Python components in
+    three steps: \file{[1/3] PyTorch}, \file{[2/3] RAFTcorr} and its dependencies,
+    \file{[3/3] model files}. The status line reads \emph{``Installing PyTorch, RAFTcorr and the
+    model files (up to 3 GB with a GPU; this takes a while)...''}. Wait for the console window to
+    close by itself.
+  \item On the last page, keep \ui{Launch RAFTcorr} ticked to start the application. The box is
+    offered only when the Python components were installed.
+\end{enumerate}
+
+\begin{warnbox}
+Do not close the console window while it works: that stops the installation of the Python
+components. If it happened, run \ui{Repair RAFTcorr} from the Start menu.
+\end{warnbox}
+
+\subsubsection*{Which PyTorch}
+Setup asks the NVIDIA driver (the program \file{nvidia-smi}) which CUDA version it supports and
+installs the matching PyTorch build:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  The driver reports & PyTorch build \\
+  \midrule
+  CUDA 12.8 or later, or a GeForce RTX 50 series card & CUDA 12.8 \\
+  CUDA 12.0 to 12.7 & CUDA 12.6 \\
+  CUDA 11.x & CUDA 11.8 \\
+  CUDA 10 or older, no CUDA version, or no NVIDIA driver & CPU build \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The console line of step \file{[1/3]} says which case applied, for example
+\emph{``[1/3] PyTorch: driver supports CUDA 12.4: PyTorch with CUDA 12.6''}. Without an NVIDIA GPU, RAFTcorr runs
+on the CPU, more slowly. If the driver is too old, the line ends with \emph{``(update the NVIDIA
+driver for the GPU)''}: update the driver, then run \ui{Repair RAFTcorr}.
+
+\subsubsection*{What you get}
+\begin{itemize}
+  \item \ui{RAFTcorr} in the Start menu, and on the desktop if you asked for it.
+  \item \ui{Repair RAFTcorr} in the Start menu. It runs the second half of the setup again:
+    detects the driver, installs PyTorch, RAFTcorr and the model files. Use it when the setup
+    was interrupted (no connection, console window closed) or after you installed or updated an
+    NVIDIA driver.
+    % CHECK: does Repair replace an already installed CPU build of PyTorch with a CUDA build? setup_runtime.py runs "pip install --upgrade torch --index-url <cuda index>"; pip should prefer the +cuXXX local version, not verified on a real machine.
+  \item The \file{raftcorr} command in every new terminal, when the PATH task was ticked. Only the
+    folder \file{bin} of the installation goes on the PATH; the private Python and its
+    \file{pip} stay off it.
+  \item \file{.raftcorr} project files open in RAFTcorr when you double-click them.
+  \item \file{install.log} in the installation folder: the full output of every setup and
+    repair, the PyTorch build chosen and, at the end, the versions found
+    (\file{raftcorr info}, Section~\ref{sec:installing-check}).
+\end{itemize}
+
+If the Python components could not be installed, Setup says so: \emph{``RAFTcorr could not install
+its Python components (code~N). Check the internet connection, then run `Repair RAFTcorr' from the
+Start menu.''}, followed by the path of \file{install.log}. A model file that could not be
+downloaded does not stop the setup; RAFTcorr fetches the model when it is first used.
+
+\begin{notebox}
+RAFTcorr is not code-signed, so Windows SmartScreen may stop the Setup program the first time
+with \emph{``Windows protected your PC''}. Click \ui{More info}, then \ui{Run anyway}. SmartScreen
+reports that the file is not yet widely downloaded; it is not a virus detection.
+\end{notebox}
+
+\subsubsection*{Upgrading}
+Run the Setup program of the new version; there is no need to uninstall first. It installs into
+the same folder, replaces the private Python with a clean one and installs PyTorch again, so it
+needs the internet connection again. Your model files, settings and projects stay. Close RAFTcorr
+before you start.
+
+\subsubsection*{Uninstalling}
+Open the Windows settings, \ui{Apps}, then \ui{Installed apps} (Windows~11) or
+\ui{Apps \& features} (Windows~10), and uninstall \ui{RAFTcorr}. This removes the installation
+folder with its private Python and \file{install.log}, the PATH entry and the \file{.raftcorr}
+file association. The model files in
+\file{\%LOCALAPPDATA\%\textbackslash RAFTcorr\textbackslash models} and your settings stay;
+delete the folder by hand if you no longer need the models.
+
+\subsection{macOS: the disk image}
+\label{sec:installing-macos}
+
+\begin{enumerate}
+  \item Download \file{RAFTcorr-macOS.dmg} from the release page.
+  \item Open it and drag \ui{RAFTcorr} onto \ui{Applications}.
+  \item Start RAFTcorr from Applications, Launchpad or Spotlight.
+\end{enumerate}
+
+It needs a Mac with Apple silicon and macOS 14 (Sonoma) or later; Intel Macs are not supported.
+The application is self-contained: Python, PyTorch and Qt are inside, and nothing else is
+installed. PyTorch runs on the CPU, since a Mac has no CUDA. The model files are not inside; they
+are downloaded the first time each is used (Section~\ref{sec:installing-models}). To upgrade,
+drag the new version onto \ui{Applications} and replace the old one.
+
+\begin{notebox}
+The application is not notarised by Apple, so the first time macOS refuses to open it. Open
+\ui{System Settings}, then \ui{Privacy \& Security}, scroll to the line about RAFTcorr, click
+\ui{Open Anyway} and confirm. From then on it opens like any other application. A new version may
+ask again.
+\end{notebox}
+
+The command line is inside the application. To use it as \file{raftcorr}, add an alias to your
+shell, for example in \file{\textasciitilde/.zshrc}:
+
+\begin{lstlisting}
+alias raftcorr=/Applications/RAFTcorr.app/Contents/MacOS/RAFTcorr
+\end{lstlisting}
+
+Without arguments this command opens the application; with a command such as \file{run} or
+\file{models} it is the command line of Section~\ref{sec:cli}. RAFTcorr does not register
+\file{.raftcorr} project files on macOS: open a project with \menu{File}{Open Project…}.
+
+\subsection{With pip}
+\label{sec:installing-pip}
+
+Use this route on Linux, or when you work in Python already. It needs Python 3.10 or later.
+Install RAFTcorr into a virtual environment of its own, so its dependencies cannot collide with
+other packages.
+
+On a computer with an NVIDIA GPU, install PyTorch from the PyTorch index first, choosing the CUDA
+build that your driver supports (the table of Section~\ref{sec:installing-windows};
+\url{https://pytorch.org/get-started/locally/} lists the builds). The PyTorch on PyPI is the CPU
+build on Windows, and \file{pip install raftcorr} alone would install it. On a Mac, skip this
+step.
+
+\begin{lstlisting}
+pip install torch --index-url https://download.pytorch.org/whl/cu126
+pip install raftcorr
+raftcorr                     # start the application
+raftcorr models --download   # fetch the model files now (otherwise on first use)
+raftcorr selftest            # run every installed model on a synthetic pair
+\end{lstlisting}
+
+\file{python -m raftcorr} works like \file{raftcorr} when the script folder of pip is not on your
+PATH. pip also installs \file{raftcorr-gui}, which starts the application without a console
+window on Windows.
+
+\begin{notebox}
+On Windows, PySide6 and PyTorch install files up to about 150 characters deep below
+\file{site-packages}. If pip stops with \emph{``No such file or directory''} and a hint about long
+paths, create the environment in a shorter folder, for example
+\file{C:\textbackslash venvs\textbackslash raftcorr}, or enable long paths in Windows
+(\url{https://pip.pypa.io/warnings/enable-long-paths}).
+\end{notebox}
+
+If PyTorch is already installed as the CPU build, \file{pip install torch -{}-index-url ...} keeps
+it. Remove it first with \file{pip uninstall torch}, then install the CUDA build.
+
+\subsection{From the source code}
+\label{sec:installing-source}
+
+Clone the repository, \url{https://github.com/zachtong/RAFTcorr}. On Windows with Anaconda or
+Miniconda, run \file{install.bat} in its folder. It creates the conda environment
+\file{raftcorr-app} (Python 3.11), detects the GPU as the Setup program does, installs the
+matching PyTorch build (a download of about 2.5\,GB), RAFTcorr in editable mode and the model
+files, and writes \file{install.log} in the same folder. Start the application with
+\file{run.bat}.
+
+On any platform:
+
+\begin{lstlisting}
+conda env create -f environment.yml
+conda activate raftcorr-app
+pip install torch --index-url https://download.pytorch.org/whl/cu126  # or /cpu
+pip install -e ".[dev]"
+\end{lstlisting}
+
+In a source checkout, RAFTcorr also looks for model files in its folder \file{models}.
+
+\subsection{First launch}
+\label{sec:installing-first}
+
+Start RAFTcorr from the Start menu, Applications, \file{run.bat} or the \file{raftcorr} command.
+The main window opens empty: the image list shows the drop zone \ui{Drop image folder or Browse},
+the canvas is blank and the progress area reads \ui{Ready}. The window does not shrink below
+1120 $\times$ 760 pixels. The first time, the interface follows the language of the operating
+system when RAFTcorr has a translation for it; change it in \menu{Settings}{Language}
+(Section~\ref{sec:settings}).
+
+\subsection{The models}
+\label{sec:installing-models}
+
+You need not install the models by hand. The first time an analysis uses a model that is not on
+the computer, RAFTcorr downloads it from the release \file{weights-v1} of the RAFTcorr repository.
+The \ui{PROGRESS} area says so, for example \emph{``Downloading model RAFTcorr-s4: 5.2 of 20.7
+MB''}, and the bar follows the download; then the bar starts again from 0 for the tracking.
+\ui{Cancel} stops the download and leaves no partial file. Every file is checked against its
+SHA-256 before it is used, and kept for later runs; the \ui{LOG} names the address and the file
+it is saved to. \ui{Suggest a Model} downloads s8 the same way when it is missing, and shows the download in
+its progress dialog.
+
+\screenshot[0.75\textwidth]{fig-models-window.png}{The Models window
+(\menu{Help}{Models…}). One row per model with its downsampling factor, its reach, its state and
+a \ui{Download} button while it is missing; below, the model folder, the link to the release page
+and the buttons \ui{Download All}, \ui{Import Model Files…}, \ui{Open Model Folder} and
+\ui{Close}.}{fig:models-window}
+
+\menu{Help}{Models…} opens the Models window (Figure~\ref{fig:models-window}):
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[The model rows]
+    Each row shows the model, \emph{``s = 4, reach 128 px''}, and its state: \ui{Installed} (the
+    tooltip gives the path) or \ui{Not installed}, with the size of the download. A missing model
+    has a \ui{Download} button.
+  \item[Download All]
+    Downloads every missing model, one after the other, and stops at the first failure.
+    \ui{Cancel Download} appears while a download runs. Closing the window also cancels it.
+  \item[Import Model Files…]
+    Installs \file{.pth} files that you downloaded by hand. The SHA-256 of a file says which model
+    it is, so a renamed download such as \file{RAFTcorr-s4 (1).pth} is recognised and stored under
+    its release name; any other file is refused with \emph{``Not imported: \ldots\ Only the model
+    files of the release can be imported.''}
+  \item[Open Model Folder]
+    Opens the per-user model folder, shown above the buttons as \ui{Model folder}.
+\end{description}
+
+When a run, or \ui{Suggest a Model}, needs a model that is neither on the computer nor
+downloadable, the Models window opens instead of an error box. A card at the top names the model
+and the reason, for example \emph{``RAFTcorr-s4 is needed, but it is not installed and could not
+be downloaded.''} followed by \emph{``no connection to the download server (\ldots); check the
+internet connection''}. Once the model is there, the card reads \emph{``RAFTcorr-s4 is installed
+now. Close this window and start again.''} Then click \ui{Run DIC Analysis} again.
+
+\subsubsection*{A computer without internet}
+
+\begin{enumerate}
+  \item On a computer with internet, open the release page of the models,
+    \url{https://github.com/zachtong/RAFTcorr/releases/tag/weights-v1}; the Models window links
+    to it. Download the files you need, from \file{RAFTcorr-s1.pth} to \file{RAFTcorr-s8.pth},
+    about 20\,MB each.
+  \item Copy them to the offline computer.
+  \item Click \ui{Import Model Files…} in the Models window, or run
+    \file{raftcorr models -{}-import FILE ...} (Section~\ref{sec:cli}).
+\end{enumerate}
+
+The Windows Setup program itself downloads PyTorch, so it cannot complete without internet. The
+macOS disk image needs the connection only for the model files.
+
+\subsubsection*{Where RAFTcorr looks for the model files}
+
+For each model, RAFTcorr takes the first verified copy it finds, in this order:
+
+\begin{enumerate}
+  \item a file path that you give (\file{-{}-model} on the command line, or the Python library);
+  \item the folder named by the environment variable \file{RAFTCORR\_WEIGHTS};
+  \item the folder \file{models} of a source checkout;
+  \item the per-user folder, \file{\%LOCALAPPDATA\%\textbackslash RAFTcorr\textbackslash models}
+    on Windows, \file{\textasciitilde/.raftcorr/models} on macOS and Linux;
+  \item a download into the per-user folder.
+\end{enumerate}
+
+A file whose SHA-256 does not match the release is skipped, never used, and the log says so:
+\emph{``\ldots\ exists but its SHA-256 does not match the RAFTcorr-s4 release; skipping it''}.
+\file{raftcorr models} lists the four models, where each one is installed and the folders
+searched.
+
+\subsection{Checking an installation}
+\label{sec:installing-check}
+
+\menu{Help}{Self-test} runs every installed model on a synthetic pair of $256 \times 256$ px
+speckle images with a known translation, $u = +2.30$\,px and $v = -1.20$\,px, on the device set
+in \ui{PARAMETERS}. The result opens in a dialog and goes to the log: one line per model with the
+measured $u$ and $v$ and \file{ok} or \file{WRONG}, then \emph{``All installed models pass.''} or
+\emph{``Some models FAILED.''} The self-test downloads nothing: a model that is not installed is
+listed as \file{not installed}, and with no model installed at all the test fails.
+
+From a terminal:
+
+\begin{lstlisting}
+raftcorr selftest              # the same test, on the device "auto"
+raftcorr selftest --gui        # also open and close the main window offscreen
+raftcorr info                  # versions, CUDA and the GPU
+\end{lstlisting}
+
+\file{raftcorr selftest} ends with exit code 0 when every check passes. \file{raftcorr info}
+prints \file{CUDA available: True} or \file{False}, and with a GPU its name and free memory.
+Section~\ref{sec:cli-other} describes both commands.
+
+\subsection{GPU or CPU}
+\label{sec:installing-gpu}
+
+RAFTcorr runs on an NVIDIA GPU through CUDA, or on the CPU. For the GPU you need an NVIDIA card,
+a current NVIDIA driver and a CUDA build of PyTorch. The Windows Setup program and
+\file{install.bat} choose that build for you; with pip you install it yourself
+(Section~\ref{sec:installing-pip}). On a Mac, RAFTcorr runs on the CPU. The \ui{Device} setting,
+\ui{Automatic} by default, picks the GPU when PyTorch sees one (Section~\ref{sec:parameters});
+\file{raftcorr info} tells you whether it does.

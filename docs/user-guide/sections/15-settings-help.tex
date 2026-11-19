@@ -1,0 +1,105 @@
+\section{Settings, help and keyboard shortcuts}
+\label{sec:settings}
+
+The main window has three menus: \ui{File}, \ui{Settings} and \ui{Help}. This section covers the
+\ui{Settings} and \ui{Help} menus, lists the \ui{File} menu with the sections that describe its
+items, and gives the keyboard shortcuts. RAFTcorr remembers the theme and the language for the next start, in
+the settings of your user account (Section~\ref{sec:overview-files}).
+
+\subsection{The Settings menu}
+\label{sec:settings-menu}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[\menuthree{Settings}{Theme}{Dark} or \ui{Light}]
+    The colour theme of the interface. \ui{Light} is the default. The change is immediate: every
+    open window, the strain window included, is drawn again in the new colours, and the log keeps
+    its lines.
+  \item[\menu{Settings}{Language}]
+    The language of the interface: English, Simplified Chinese, Traditional Chinese, Japanese,
+    Korean, German, French or Spanish, each listed under its own name. RAFTcorr saves your choice
+    and shows \ui{Language changed}, which asks you to restart: the windows already open keep
+    their labels until then. The first time RAFTcorr starts, it takes the language of the
+    operating system when it has a translation for it (Portuguese falls back to Spanish), and
+    English otherwise.
+\end{description}
+
+Messages that come from the tracking engine itself, such as the tiling line and the
+out-of-memory retries in the \ui{LOG}, stay in English in every language, as does the command
+line.
+
+\subsection{The Help menu}
+\label{sec:settings-help}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[\menu{Help}{Models…}]
+    The Models window: which models are installed, downloads, import of model files for an
+    offline computer, and the model folder (Section~\ref{sec:installing-models}). It also opens by
+    itself when a run needs a model that is missing and cannot be downloaded.
+  \item[\menu{Help}{Self-test}]
+    Runs every installed model on a synthetic image pair with a known translation and reports
+    whether each one finds it (Section~\ref{sec:installing-check}). Use it after an installation,
+    an upgrade or a change of PyTorch.
+  \item[\menu{Help}{About RAFTcorr}]
+    The version number, the four models and the displacement convention: reference to deformed,
+    $+u$ right, $+v$ down, in pixels, in the coordinates of frame~1. Give this version number when
+    you report a problem (Section~\ref{sec:troubleshooting-report}).
+\end{description}
+
+\subsection{The File menu}
+\label{sec:settings-file}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[\menu{File}{Open Image Folder…}]
+    Loads a folder of images, as the drop zone of the \ui{IMAGES} section does
+    (Section~\ref{sec:images}).
+  \item[\menu{File}{Open Project…}, \ui{Save Project}, \ui{Save Project As…}]
+    Projects, \file{.raftcorr} files that hold the images, the regions of interest, the settings
+    and optionally the results (Section~\ref{sec:projects}).
+  \item[\menu{File}{Export Results…}]
+    The export dialog, as the \ui{Export Results} button opens it (Section~\ref{sec:export}). It
+    does nothing while there are no results.
+  \item[\menu{File}{Associate .raftcorr files with RAFTcorr…}]
+    Windows only: makes a double-click on a project file open this copy of RAFTcorr
+    (Section~\ref{sec:projects-doubleclick}).
+  \item[\menu{File}{Quit}]
+    Closes RAFTcorr, as closing the main window does. A run in progress is asked to stop first,
+    the strain window closes, and the temporary folder of large results is deleted.
+\end{description}
+
+\begin{warnbox}
+RAFTcorr does not ask before it closes. Regions of interest, results and probes that are not in a
+saved project are lost: save a project first (Section~\ref{sec:projects}).
+\end{warnbox}
+
+\subsection{Keyboard shortcuts}
+\label{sec:settings-keys}
+
+Table~\ref{tab:shortcuts} lists the shortcuts of the menus and the other keys the application
+answers to. On macOS, press \kbd{Cmd} where the table says \kbd{Ctrl}.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Keyboard shortcuts.}
+\label{tab:shortcuts}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.3\linewidth}Xl@{}}
+  \toprule
+  Keys & Action & Section \\
+  \midrule
+  \kbd{Ctrl+I} & \menu{File}{Open Image Folder…} & \ref{sec:images} \\
+  \kbd{Ctrl+O} & \menu{File}{Open Project…} & \ref{sec:projects} \\
+  \kbd{Ctrl+S} & \menu{File}{Save Project} & \ref{sec:projects} \\
+  \kbd{Ctrl+Shift+S} & \menu{File}{Save Project As…} & \ref{sec:projects} \\
+  \kbd{Ctrl+E} & \menu{File}{Export Results…} & \ref{sec:export} \\
+  \kbd{Cmd+Q} & \menu{File}{Quit} on macOS (\kbd{Ctrl+Q} on Linux). Windows has no shortcut
+    for it; close the window with \kbd{Alt+F4} & \\
+  \midrule
+  \kbd{Up}, \kbd{Down}, \kbd{Page Up}, \kbd{Page Down}, \kbd{Home}, \kbd{End}
+    & In the image list: move to another frame & \ref{sec:images} \\
+  \kbd{Esc} & On the canvas: cancel the shape being drawn & \ref{sec:roi} \\
+  \kbd{Esc} & In the \ui{Analysis} tab: cancel the placement of a probe, or deselect & \ref{sec:analysis} \\
+  \kbd{Delete} & In the \ui{Analysis} tab: delete the selected probe & \ref{sec:analysis} \\
+  \kbd{F2} & In the \ui{Analysis} tab: rename the selected probe & \ref{sec:analysis} \\
+  \bottomrule
+\end{tabularx}
+\end{table}

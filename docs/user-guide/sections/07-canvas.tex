@@ -1,0 +1,69 @@
+\section{The canvas}
+\label{sec:canvas}
+
+The canvas fills the centre of the main window (callout~3 in Figure~\ref{fig:main-window}). It
+shows the current frame: before a run, the image with its mask as a blue tint; while you edit a
+mask, the same with the editing banner (Section~\ref{sec:roi-editing}); after a run, the
+displacement field over the image, with a colorbar (Section~\ref{sec:results}). A toolbar runs along its
+top edge and the frame navigator along its bottom edge.
+
+\subsection{Zoom and pan}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Fit]
+    Fits the whole image into the canvas. RAFTcorr also fits the image when you open a folder.
+  \item[100\%]
+    Shows one image pixel per screen pixel.
+  \item[Zoom in, Zoom out]
+    The two magnifier buttons next to \ui{100\%} zoom by one step, a factor of 1.15.
+  \item[Mouse wheel]
+    Zooms by the same step around the point under the cursor, which stays in place.
+  \item[Middle mouse button]
+    Drag with the middle button (the pressed wheel) to pan. The canvas has no scroll bars.
+\end{description}
+The wheel and the zoom buttons stop at 10\,\% and 2000\,\%. Without a middle button, as on a touchpad, move
+around by zooming out (or \ui{Fit}) and zooming in again over the place you want to see.
+
+At the right end of the toolbar, a read-out follows the cursor: its position as
+\file{x 512.0  y 384.0 px}, and, when a field is shown, the value of the field under the cursor
+with its unit. The position is in image coordinates, $x$ to the right and $y$ downward in pixels,
+with the centre of the top-left pixel at $(0, 0)$, the same convention as the data files.
+
+\subsection{The configuration card}
+
+Once at least two images are loaded, a card in the top-left corner of the canvas summarises what
+a run would do:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[MODE] \ui{Accumulative}, \ui{Incremental}, \ui{Incremental, every N frames} (with the
+    interval) or \ui{Custom reference frames} (Section~\ref{sec:workflow}).
+  \item[MODEL] The selected model, for example \ui{RAFTcorr-s4}.
+  \item[ITERATIONS] The number of iterations (Section~\ref{sec:parameters}).
+\end{description}
+The card follows the sidebar as you change the settings. Mouse clicks pass through it to the
+canvas.
+
+\subsection{The frame navigator}
+
+The bar below the canvas holds, from left to right:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Previous frame, Play animation, Next frame]
+    The arrows step one frame back or forward and stop at the first and the last frame. Play
+    advances one frame at a time and starts again at frame~1 after the last frame; the same
+    button pauses. Opening other images stops the playback.
+  \item[Playback speed]
+    \file{1 fps}, \file{2 fps} (default), \file{5 fps}, \file{10 fps} or \file{30 fps}. This is
+    the speed of the display, not the frame rate of the experiment; that one belongs to the
+    physical units (Section~\ref{sec:physical-units}).
+  \item[FRAME n/N]
+    The current frame and the number of frames, counted from 1 as in the image list.
+  \item[Slider]
+    Drag it to move through the sequence.
+\end{description}
+The slider, the image list and the canvas always show the same frame: moving one moves the
+others.
+
+RAFTcorr has no keyboard shortcut for frames that works everywhere in the window. \kbd{Up},
+\kbd{Down}, \kbd{Page Up}, \kbd{Page Down}, \kbd{Home} and \kbd{End} move through the frames when
+the image list has the keyboard focus (click a row first), and the same keys move the slider after
+you click it. Table~\ref{tab:shortcuts} lists every key the application answers to.
+% CHECK: slider keys are Qt's standard QSlider behaviour (singleStep 1, pageStep 10 by default), not RAFTcorr code; confirm on Windows and macOS

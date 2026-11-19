@@ -1,0 +1,138 @@
+\section{Loading images}
+\label{sec:images}
+
+An analysis starts from a folder that holds the image sequence. The \ui{IMAGES} section at the
+top of the left sidebar loads the folder, sets the order of the images and lists them. The first
+image of the list is the \emph{reference image}: every displacement is measured from it and
+reported in its coordinates. On screen it is frame~1; in exported data files and in Python it is
+index~0.
+
+\subsection{Opening a folder}
+
+There are three ways to open a folder:
+\begin{itemize}
+  \item drag the folder onto the drop zone (\ui{Drop image folder or Browse}); if you drop a file
+        instead, RAFTcorr opens the folder that contains it;
+  \item click the drop zone and choose the folder in the \ui{Select Image Folder} dialog;
+  \item choose \menu{File}{Open Image Folder…} (\kbd{Ctrl+I}; \kbd{Cmd+I} on macOS).
+\end{itemize}
+From a terminal, \file{raftcorr gui FOLDER} starts the application with that folder open
+(Section~\ref{sec:cli}).
+
+RAFTcorr reads every image file directly inside the folder. It does not look into subfolders,
+and it skips hidden files (names that start with a dot). After loading, the badge next to the
+\ui{IMAGES} title shows the number of images, the canvas shows frame~1 fitted to the view, and
+the \ui{LOG} in the right sidebar reports the number of images, their size in pixels and the
+grey-level scale (next subsection).
+
+\begin{warnbox}
+Opening a folder starts a new session. The regions of interest, the results, the probes, the
+load data and the model suggestion of the previous images are discarded. Save a project first
+if you want to keep them (Section~\ref{sec:projects}).
+\end{warnbox}
+
+\subsection{Formats, bit depths and colour}
+
+RAFTcorr reads PNG (\file{.png}), TIFF (\file{.tif}, \file{.tiff}), BMP (\file{.bmp}) and JPEG
+(\file{.jpg}, \file{.jpeg}) files; the extension is not case sensitive. Of a multi-page TIFF file
+only the first page is read.
+
+The network works on grey levels from 0 to 255. RAFTcorr converts every image with the same
+rules, so that the brightness of a speckle does not change from one image to the next because
+of the conversion:
+\begin{itemize}
+  \item \textbf{Colour images} become their luminance ($0.299\,R + 0.587\,G + 0.114\,B$, the
+        ITU-R BT.601 weights). An alpha channel is dropped.
+  \item \textbf{8-bit images} are used as they are.
+  \item \textbf{Images stored with more bits} (16-bit PNG or TIFF files) are scaled by their
+        \emph{effective} bit depth: the smallest of 8, 10, 12, 14 and 16 bits that holds the
+        brightest pixel of the reference image. A 12-bit camera that writes 16-bit files gives
+        values up to 4095, so RAFTcorr maps 4095 (not 65535) to 255 and the speckle keeps its
+        contrast.
+  \item \textbf{Floating-point images} with values from 0 to 1 are multiplied by 255; any other
+        range is divided by the largest value of the reference image and multiplied by 255.
+\end{itemize}
+The scaled values stay floating-point numbers (they are not rounded back to 8 bits) and are
+clipped to the range 0 to 255. The canvas shows the images after this conversion, in grey. The
+log line after loading names the scale in use, for example \file{8-bit}, or
+\file{12-bit (stored as uint16)} for the camera above.
+
+\begin{notebox}
+The scale is decided once, from the reference image, and applied to the whole sequence. If a
+later image is brighter than the bit depth of the reference image allows (a 12-bit reference
+followed by images with values above 4095), its brightest pixels are clipped to 255. Keep the
+exposure constant over the sequence.
+\end{notebox}
+
+\subsection{Image size}
+
+All images of a sequence must have the size of the reference image. If one does not, RAFTcorr
+shows the \ui{Cannot open the images} dialog, which names up to five of the images that
+differ, and loads nothing. The message counts the reference image as ``frame~0'', the index it
+has in data files.
+
+The models also need a minimum image size: each side must be at least $16\,s$~px, which is
+16, 32, 64 and 128~px for RAFTcorr-s1, -s2, -s4 and -s8. A smaller image stops the run with an
+error.
+
+\subsection{Sort order}
+
+The order of the list is the order of the sequence, and the first image becomes the reference
+image. The \ui{Natural Sort (1, 2, …, 10)} checkbox, on by default, sorts by the numbers inside
+the file names: \file{img2.png} comes before \file{img10.png}. Unticked, the list is in plain
+alphabetical order, which puts \file{img10.png} before \file{img2.png}. For names with
+zero-padded numbers (\file{img\_0002.png}, \file{img\_0010.png}) both orders are the same.
+
+\begin{warnbox}
+Changing \ui{Natural Sort} reloads the images in the new order and, like opening a folder,
+starts a new session: the regions of interest, the results and the probes are discarded. Set the
+order before you draw a region of interest.
+\end{warnbox}
+
+\subsection{The image list}
+
+\screenshot[0.45\textwidth]{fig-images.png}{The \ui{IMAGES} section after opening a folder of 44
+images: the count badge, the drop zone, the \ui{Natural Sort} checkbox and the image list with its
+\ui{\#}, \ui{Filename} and \ui{Region} columns.}{fig:images}
+
+The list below the drop zone (Figure~\ref{fig:images}) has three columns:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[\#] The frame number, counted from 1 and shown with two digits (\file{01}, \file{02},
+    \ldots), the same number as on the frame slider below the canvas.
+  \item[Filename] The file name. The rows of the reference frames (the frames that later frames
+    are compared with, Section~\ref{sec:workflow}) are tinted with the accent colour and their
+    names are bold. Which frames these are depends on the tracking mode, and the highlight
+    follows it when you change the mode.
+  \item[Region] A button that shows whether the frame has a mask of its own:
+    \begin{itemize}
+      \item \textcolor{raftred}{\ui{Need}} (red): frame~1 has no region of interest yet. A run
+            cannot start without one.
+      \item \textcolor{raftgreen}{\ui{Edit}} (green): the frame has a mask of its own.
+      \item \ui{Add} (grey): the frame has no mask of its own. This is the normal state of every
+            frame after the first; a mask there is optional.
+    \end{itemize}
+    Clicking the button shows that frame on the canvas and opens its mask for editing
+    (Section~\ref{sec:roi-editing}).
+\end{description}
+
+Clicking the number or the name of a row shows that frame on the canvas. When the list has the
+keyboard focus, \kbd{Up}, \kbd{Down}, \kbd{Page Up}, \kbd{Page Down}, \kbd{Home} and \kbd{End}
+move through the frames. \kbd{Ctrl}-click (\kbd{Cmd}-click on macOS) and \kbd{Shift}-click
+select several rows.
+
+Right-clicking the selected rows opens a menu:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[Import Region of Interest for $n$ frame(s)] Opens a file dialog. Choose exactly as many
+    mask files as rows are selected; with any other number nothing is imported and the log says
+    that the counts must match. The rows receive the files in the order the dialog returns them.
+    % CHECK: the pairing follows QFileDialog.getOpenFileNames order, which may differ from the order of selection; confirm on Windows and macOS
+    Check the \ui{Region} buttons afterwards, or use \ui{Batch Import}, which shows every
+    pairing before it applies them (Section~\ref{sec:roi}).
+  \item[Clear Region of Interest] Removes the masks of the selected frames. The entry tells how
+    many of them have one.
+  \item[Delete $n$ image(s)] Removes the selected images from the sequence. The files stay on
+    disk. The remaining frames are numbered again, their masks follow their images and the
+    probes are kept; the results are discarded, because their frame numbers no longer match.
+    Deleting frame~1 makes the next image the reference image; the region of interest of the
+    deleted frame goes with it, so the new frame~1 keeps only a mask it had of its own.
+\end{description}

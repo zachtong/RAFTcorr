@@ -1,0 +1,261 @@
+\section{Probes and charts: the Analysis tab}
+\label{sec:analysis}
+
+The strain window has two tabs. \ui{Strain Field} draws one field over the whole region of
+interest (Section~\ref{sec:strain}). \ui{Analysis} shows what happens at one place over the
+sequence: the displacement of a point, the mean strain of an area, the reading of a virtual
+extensometer or a crack-opening gauge, the field along a line, and, with the record of a testing
+machine, a stress--strain curve.
+
+On the left of the tab are the placement tools, the reference image with the probes, and a frame
+navigator; on the right, the view tabs, the plot controls, the chart and, below it, the probe
+table (Figure~\ref{fig:analysis}). A status line at the bottom repeats the last message, which also
+goes to the \ui{LOG}. Probes need a finished run, and strain fields need \ui{Compute Strain} on the
+\ui{Strain Field} tab; until then the chart says what is missing.
+
+\screenshot{fig-analysis.png}{The \ui{Analysis} tab with three probes on the reference image: a
+virtual extensometer (P1), a point between the holes (P2) and a rectangle (P3). The canvas shows
+the plotted field at the current frame. The chart shows each probe's reading in the
+\ui{Over time} view, the dashed line marking the current frame; the probe table is below
+it.}{fig:analysis}
+
+\subsection{Placing a probe}
+
+The toolbar holds seven placement tools as icons; hover over one to see its name and what it
+expects. Click a tool, then click on the image.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+  \toprule
+  Tool & Clicks & Result \\
+  \midrule
+  \ui{Point}     & one & a point (type \ui{Point} in the table) \\
+  \ui{Line}      & two: start and end & a line (type \ui{Line}) \\
+  \ui{Rectangle} & two: opposite corners & a region (type \ui{Region}) \\
+  \ui{Circle}    & two: centre, then the edge & a region \\
+  \ui{Polygon}   & one per vertex, double-click to close & a region of three vertices or more \\
+  \ui{Virtual extensometer} & two: the gauge points & a line; the chart plots
+    \ui{Extensometer strain} \\
+  \ui{Crack gauge} & two: one on each side of the crack & a line; the chart plots
+    \ui{Crack opening} \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+While a tool is armed, a note on the canvas names it and says what it waits for; \kbd{Esc} cancels
+the placement. While you draw a line, its length follows the cursor, in pixels or in the length
+unit of the physical units, so you can place an extensometer to a prescribed gauge length $L_0$. A
+zero-length line, or a shape without area, is ignored.
+
+The extensometer and the crack gauge are ordinary lines. The two tools only choose what the chart
+plots once the line is placed, and only if the chart does not already show a reading of the same
+kind. Any line can show any gauge reading.
+
+\begin{notebox}
+The canvas always shows the reference image (frame~1), whatever frame the chart is on. Probe
+coordinates are reference-image pixels and the fields are stored in reference coordinates
+(Section~\ref{sec:conventions}), so a probe follows the material it was placed on through the whole
+sequence.
+\end{notebox}
+
+\ui{Show field} (on by default) colours the reference image with the plotted field at the current
+frame, with the field's own colormap and colour range; for a gauge reading, which has no field, it
+shows the field of the \ui{Strain Field} tab. The colorbar uses the unit chosen in
+\ui{Strain as}. The buttons after the tools fit the image to the view, show it at \ui{100\%} and
+zoom in and out; the mouse wheel zooms as well.
+
+\subsection{Selecting, editing and deleting probes}
+
+With no tool armed:
+
+\begin{itemize}
+  \item \textbf{Click} a probe to select it: its row is selected and its curve drawn thicker.
+    Click empty space, or press \kbd{Esc}, to clear the selection.
+  \item \textbf{Drag} a probe to move it, or drag a square \textbf{handle} of the selected probe to
+    reshape it: the ends of a line, the corners of a rectangle, the vertices of a polygon, the
+    centre (moves) and the right-hand handle (radius) of a circle. A movement of a few screen
+    pixels counts as a click. The chart is recomputed when you release the button.
+  \item \textbf{Double-click} a probe, or press \kbd{F2}, to rename it. \kbd{Delete} removes the
+    selected probe. There is no undo.
+  \item \textbf{Drag empty space}, or drag with the middle mouse button, to pan.
+\end{itemize}
+
+Markers and labels keep their size on screen at any zoom; the label of a line also gives its
+length. New probes are named \file{P1}, \file{P2}, \ldots\ and take the first free colour of an
+eight-colour palette. A deleted probe's number is not reused while other probes remain; once every
+probe is deleted, the names start again at \file{P1}.
+
+The probe table has the columns \ui{Show} (untick to hide a probe on the canvas and in the chart
+without deleting it), \ui{Name} (double-click to edit; it labels the curve and the CSV columns),
+\ui{Type} (\ui{Point}, \ui{Line} or \ui{Region}), \ui{Color} and \ui{Note}, which says why a
+probe has gaps or is not plotted. Below it, \ui{Color…} recolours the selected probe, \ui{Delete}
+removes it, and \ui{Clear All} removes every probe after a confirmation.
+
+\subsection{Choosing what to plot}
+
+A chart plots one \emph{quantity}, and every visible probe that can produce it is drawn: a point, a
+line and a region can share a chart of $\varepsilon_{yy}$, but a strain and a displacement never
+share an axis.
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Plot]
+    A field (\ui{Displacement U}, \ui{Displacement V}, \ui{Displacement magnitude} and the ten
+    strain components of Section~\ref{sec:strain}) or, below the separator, a gauge reading of a
+    line (Table~\ref{tab:gauge-readings}). Until you choose, the chart follows the field of the
+    \ui{Strain Field} tab.
+  \item[Statistic]
+    How the samples of a line or region become one number per frame: \ui{Mean}, \ui{Median},
+    \ui{Maximum}, \ui{Minimum}, \ui{Standard deviation}, or \ui{Valid fraction}, the share of the
+    probe's material with a valid value on that frame. A point plots its own value for the first
+    four and is left out of the last two. Shown for fields, in the \ui{Over time} and
+    \ui{Stress–strain} views.
+  \item[Strain as] \ui{ratio}, \ui{\%} or \ui{µε}, for strains (the two angles stay in degrees).
+  \item[X axis]
+    \ui{Frame} (from 1, as in the application); \ui{Time (s)} when physical units with a frame rate
+    are on, frame~1 at 0\,s; \ui{Load (N)} and \ui{Stress (MPa)} with load data (see below).
+  \item[Min. valid fraction]
+    Default 0.50 (0 to 1). A line or region frame is left blank when fewer than this fraction of its
+    points are valid, so that a curve does not stay smooth while its sample shrinks to a few points
+    next to a crack. Points are not affected.
+\end{description}
+
+A point reads the field by bilinear interpolation. A line is sampled once per grid step along its
+length. A region reads every grid point inside it, so its statistics are area-weighted; a region
+smaller than one grid cell is read at its centre. Displacements and lengths are in pixels, or in
+the length unit when physical units are on; $v$ is positive down, as everywhere in RAFTcorr.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Gauge readings of a line. $L_0$ is the drawn length, $L$ the distance between the two
+ends on the current frame, $\Delta\mathbf{d}$ the displacement of the second end relative to the
+first, $\mathbf{e}$ the unit vector from the first end to the second, and $\mathbf{n}$ that vector
+turned to the right on screen.}
+\label{tab:gauge-readings}
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  Reading & Value & Meaning \\
+  \midrule
+  \ui{Extensometer strain}      & $(L - L_0)/L_0$ & engineering strain of the gauge \\
+  \ui{Extensometer true strain} & $\ln(L/L_0)$ & logarithmic strain \\
+  \ui{Elongation ΔL}            & $L - L_0$ & change of the gauge length \\
+  \ui{Crack opening}            & $\Delta\mathbf{d}\cdot\mathbf{e}$ & what a clip gauge reads \\
+  \ui{Crack sliding}            & $\Delta\mathbf{d}\cdot\mathbf{n}$ & perpendicular to the gauge,
+    along the crack \\
+  \ui{Crack opening magnitude}  & $|\Delta\mathbf{d}|$ & the whole separation \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+A gauge reads the displacement at its two ends only, and reads across a crack by design: an
+extensometer that spans a crack includes the opening in its elongation. Place a crack gauge with
+its ends on the material on each side of the crack, where they stay tracked in every frame.
+
+\subsection{The four views}
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Over time]
+    Each probe's reading at every frame; a dashed line marks the current frame. Click the chart to
+    go to a frame (with a load or stress axis, the nearest one). The frame is shared with the
+    \ui{Strain Field} tab and the navigator under the canvas.
+  \item[Along the line]
+    The field along the selected line, or the newest visible one, on the current frame, against the
+    distance from its first end. With \ui{Other frames} (on by default), up to twelve other frames,
+    evenly spaced, are drawn in grey behind it. A gauge reading has no profile: choose a field.
+  \item[Kymograph]
+    The same line on every frame at once: distance against frame (or time), the value as colour in
+    the field's colormap and colour range. Load and stress are not offered as the $x$ axis here,
+    because they are not evenly spaced.
+  \item[Stress–strain]
+    Stress, or load without a cross-section, against the plotted quantity, one curve per probe, the
+    current frame ringed. With \ui{Extensometer strain} it is a stress--strain curve; with
+    \ui{Crack opening}, a load--opening curve. It needs load data.
+\end{description}
+
+The small toolbar above the plot pans, zooms and saves the screen picture; while one of its tools
+is active, a click does not change the frame.
+
+\subsection{Gaps and marks}
+
+Every frame of every probe is judged on its own, and a gap in a curve is a gap in the data; it is
+never bridged. A frame that has a value but lost part of the probe's material (cut out of that
+frame's region of interest, or gone out of the image) gets a hollow marker. In the line views,
+lost material has its own grey, because it is neither a zero nor a missing measurement. The
+legend and the \ui{Note} column say why a probe has gaps:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+  \toprule
+  Note & Meaning \\
+  \midrule
+  \ui{partly untracked from frame N} & part of the material is lost from frame N on; the value
+    comes from what remains \\
+  \ui{endpoint lost from frame N} & a gauge end left the tracked material \\
+  \ui{gaps: too few valid points} & frames below \ui{Min. valid fraction} \\
+  \ui{gaps: no strain value} & the virtual strain gauge found too few points (edge, hole,
+    trimmed band): use a smaller gauge or a displacement \\
+  \ui{not plotted: off the measured area} & the probe lies outside the region of interest \\
+  \ui{not plotted: gauges need a line} & a gauge reading for a point or region \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Load data from a testing machine}
+
+\ui{Load data…} imports the machine's record as a CSV file (\file{.csv}, \file{.txt},
+\file{.dat}). In the \ui{Load Data} dialog, \ui{Choose file…} reads it and shows its first eight
+rows. Comma, semicolon and tab separators, decimal commas, a title line and a units row below the
+header (whose units join the column names) are all understood. RAFTcorr guesses the columns from
+their names; check them:
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Load column] The force, and its unit, \ui{N} or \ui{kN}.
+  \item[Match rows to frames: By time]
+    A \ui{Time column} and an \ui{Offset}, the machine's time at the reference image (if the camera
+    started 2\,s after the machine, enter 2\,s). Frame $n$ is at machine time
+    $(n-1)/f + \text{offset}$, with $f$ the frame rate of the physical units; the load is
+    interpolated there, and frames outside the record get none. Available only with a frame rate.
+  \item[By frame number]
+    A \ui{Frame column}, and whether \ui{The first image is numbered} 1 or 0. Rows of the same frame
+    are averaged.
+  \item[Cross-section A0]
+    The initial cross-section in mm$^2$, for the engineering stress $F/A_0$ in MPa; 0 plots the load
+    only.
+\end{description}
+
+A line at the bottom, \ui{Frames with a load: n of N.}, follows every change, so a wrong offset
+shows at once. The record is saved with the project. Loading a new image folder clears it; removing
+frames keeps it and warns in the \ui{LOG}. \ui{Remove Load Data}, in the same dialog, clears it by
+hand.
+
+\subsection{Exporting probes and charts}
+
+The \ui{Export} menu above the chart is available when the chart shows data:
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+  \item[Probe data (CSV)…]
+    In \ui{Over time} and \ui{Stress–strain}. One row per frame: \file{frame} (from 1; frame~1 is the reference
+    image), \file{image}, \file{time\_s} with a frame rate, \file{load\_N} and \file{stress\_MPa}
+    with load data, then three columns per probe: the value (named after probe, field and
+    statistic, as \file{P3\_strain\_eyy\_mean}, or probe and reading, as \file{P1\_strain}), its
+    \file{\_valid\_fraction} and a \file{\_flag} (\file{ok}, \file{untracked},
+    \file{below\_threshold}, \file{unreliable}, \file{endpoint\_lost}, \file{not\_computed},
+    \file{no\_data}). An empty cell means no valid measurement, never 0. Strains are written as
+    ratios. Header lines starting with \file{\#} give each probe's geometry in reference pixels, the
+    units, the frame numbering, the axis convention, the run and strain settings and the source of
+    the load. The file is UTF-8 with a byte-order mark, so spreadsheets read non-Latin names.
+  \item[Line data (CSV)…]
+    In the line views. One row per sample along the line (distance, \file{x\_px}, \file{y\_px}) and
+    one column per frame (\file{frame\_1}, \file{frame\_2}, \ldots).
+  \item[Chart image…]
+    The chart redrawn for a page: white, 16\,$\times$\,10\,cm, 300\,dpi, PNG, SVG or PDF, text
+    editable in SVG and PDF, without the frame cursor and the selection.
+  \item[Copy chart, Copy plotted data]
+    The same figure, or the numbers as drawn and in the units shown as tab-separated text, to the
+    clipboard.
+\end{description}
+
+Probes with their names, colours and visibility, and the load record, are saved with the project
+(Section~\ref{sec:projects}); the chart settings are not.

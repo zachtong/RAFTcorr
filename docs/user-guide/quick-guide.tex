@@ -1,0 +1,219 @@
+% RAFTcorr Quick Guide -- two-page, two-column reference sheet.
+% Build with build.py (or pdflatex twice); the full walkthrough is user-guide.tex.
+
+\documentclass[10pt,letterpaper,twocolumn]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amssymb}
+\usepackage{microtype}
+\usepackage[margin=0.55in,columnsep=0.3in,top=0.5in,bottom=0.5in]{geometry}
+\usepackage{xcolor}
+\definecolor{raftaccent}{RGB}{79,70,229}
+\usepackage[colorlinks=true,linkcolor=raftaccent,urlcolor=raftaccent]{hyperref}
+\usepackage{enumitem}
+\setlist{topsep=1pt,itemsep=0pt,parsep=0pt,leftmargin=*}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{5pt}{1pt}
+\titleformat{\section}{\normalsize\bfseries\color{raftaccent}}{\thesection.}{4pt}{}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\input{version}
+
+\newcommand{\ui}[1]{\textbf{#1}}
+\newcommand{\menu}[2]{\textbf{#1}\,$\triangleright$\,\textbf{#2}}
+\newcommand{\file}[1]{\texttt{#1}}
+\DeclareUnicodeCharacter{2026}{\ldots}
+\DeclareUnicodeCharacter{03B5}{\ensuremath{\varepsilon}}
+\DeclareUnicodeCharacter{03C3}{\ensuremath{\sigma}}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\pagestyle{empty}
+\raggedbottom
+
+\begin{document}
+
+% The outer {...} is needed: without it the \\[2pt] closes \twocolumn's optional argument.
+\twocolumn[{%
+\begin{center}
+  {\Large\bfseries\color{raftaccent} RAFTcorr Quick Guide}\\[2pt]
+  {\small Version \raftversion. Two-page reference; the full walkthrough is the \emph{RAFTcorr User Guide}.}
+\end{center}
+\vspace{4pt}
+}]
+
+\section{Install \& launch}
+Downloads are on \href{https://github.com/zachtong/RAFTcorr/releases/latest}{the latest release}.
+\begin{itemize}
+  \item \textbf{Windows 10/11}: \file{RAFTcorr-Windows-Setup.exe}, no administrator rights. It needs
+        the internet once: it installs the PyTorch build that matches the NVIDIA driver (CUDA 12.8,
+        12.6, 11.8, or CPU), RAFTcorr and the models. SmartScreen asks once: \ui{More info}
+        $\to$ \ui{Run anyway}. An interrupted setup: \ui{Repair RAFTcorr} in the Start menu.
+  \item \textbf{macOS 14+, Apple silicon}: open \file{RAFTcorr-macOS.dmg}, drag RAFTcorr to
+        Applications. First launch: \emph{System Settings} $\to$ \emph{Privacy \& Security} $\to$
+        \emph{Open Anyway}. PyTorch runs on the CPU.
+  \item \textbf{pip}, Python 3.10 or later: with an NVIDIA GPU install PyTorch from the PyTorch
+        index first, then \file{pip install raftcorr}; start with \file{raftcorr}.
+\end{itemize}
+
+\section{Models}
+Four models share one network and differ in the encoder downsampling \emph{s}; the reach is
+\(32\,s\) px.
+\begin{center}\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+Model & Reach & Use it for \\
+\midrule
+RAFTcorr-s1 & 32 px & small motion, finest detail \\
+RAFTcorr-s2 & 64 px & fine detail, faster than s1 \\
+RAFTcorr-s4 & 128 px & detail and reach (default) \\
+RAFTcorr-s8 & 256 px & large motion and rotation \\
+\bottomrule
+\end{tabular}
+\end{center}
+A model is downloaded (about 20 MB, checked by SHA-256) the first time a run needs it.
+\menu{Help}{Models…} downloads them, opens the model folder, and imports \file{.pth} files
+downloaded on another computer (\ui{Import Model Files…}; also \file{raftcorr models --import}).
+
+\section{Load images}
+Drop a folder on the drop zone, click it to browse, or \menu{File}{Open Image Folder…}
+(\texttt{Ctrl+I}). The first image is the reference. Grey or colour, 8 to 16 bit, PNG, TIFF, BMP,
+JPEG. Keep \ui{Natural Sort} on for numbered files (\file{image2} before \file{image10}).
+Frames are numbered from 1 on screen and from 0 in exported data.
+
+\section{Workflow type}
+\begin{itemize}
+  \item \ui{Tracking Mode}: \ui{Accumulative} (default) compares every frame with frame 1; no
+        error accumulates, so prefer it while the motion stays within the reach.
+        \ui{Incremental} compares each frame with an earlier reference frame and composes the
+        steps; \ui{Reference Update}: \ui{Every Frame}, \ui{Every N Frames} (\ui{Interval}) or
+        \ui{Custom Frames}. Use it when the motion from frame 1 exceeds even s8's reach.
+  \item \ui{Model}: s1 to s8 (above).
+  \item \ui{Suggest a Model}: measures the motion inside the region of interest with s8 on a few
+        frames and selects the finest model that reaches it; the log says why.
+\end{itemize}
+
+\section{Region of interest}
+\ui{+ Add} and \ui{Cut} open the shapes: \ui{Polygon}, \ui{Rectangle}, \ui{Circle},
+\ui{Circle (3-point)}. Drag on the canvas (polygon: click the corners, double-click to close;
+3-point circle: click three points on the edge). \ui{Import} reads a mask image (bright =
+inside); \ui{Batch Import} assigns masks to many frames; \ui{Save}, \ui{Invert}, \ui{Clear}. Only
+frame 1 needs a region; incremental tracking carries it to the reference frames. A mask on a
+later frame cuts out what it leaves out there (a crack, a hole) and is the region of interest
+whenever that frame is a reference. The \ui{Region} column of the image list shows which frames
+have one (\ui{Edit}) and which need one (\ui{Need}).
+
+\section{Parameters}
+\begin{center}\small
+\begin{tabularx}{\columnwidth}{@{}lX@{}}
+\toprule
+Control & Default and meaning \\
+\midrule
+Iterations & 20; refinement steps of the network (1--100). \\
+Smoothing & Off; Gaussian \(\sigma\) of the stored displacement (coarsens the resolution). \\
+Device & Automatic: the GPU when PyTorch sees one. \\
+\midrule
+\multicolumn{2}{@{}l}{\emph{ADVANCED (tiling; rarely changed)}} \\
+Margin & \ui{Use the Model Reach} (32\,s px): context around the region. \\
+GPU Memory & 0.85 of the free memory per window; tiles otherwise. \\
+Tile Blending & 32 px of feathered overlap between tiles. \\
+Correlation & Automatic; on demand or stored volume, identical results. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Run}
+\ui{Run DIC Analysis}. The progress area shows the frame, elapsed and remaining time, and a first
+model download. Large regions are split into tiles that fit the GPU; after an out-of-memory error
+RAFTcorr retries with smaller tiles. \ui{Cancel} stops the run and keeps the frames already
+computed. If the residual jumps (motion beyond the model's reach), RAFTcorr warns: try a larger
+\emph{s} or incremental tracking. When the run ends, the strain window opens.
+
+\section{View the displacement}
+\ui{FIELD}: \ui{Disp U} (+ right), \ui{Disp V} (+ down), \ui{Magnitude}, \ui{Residual} (grey-level
+mismatch after warping: large where tracking failed). \ui{Show on} the reference or the deformed
+frame; background, \ui{Hide untracked regions}. \ui{VISUALIZATION}: colormap, range \ui{Auto} or
+\ui{Fixed}, opacity. \ui{PHYSICAL UNITS}: the pixel size and the frame rate convert the display to
+a length unit and seconds; data files stay in pixels. Play the sequence with the frame navigator
+under the canvas.
+
+\section{Strain window}
+It opens when a run ends (later: \ui{Open Strain Window}). Set the \ui{STRAIN PARAMETERS}, then
+click \ui{Compute Strain}.
+\begin{itemize}
+  \item \ui{Method}: \ui{Plane fitting} (default) or \ui{Quadratic fitting} over a virtual strain
+        gauge of \ui{VSG size} 41 px.
+  \item \ui{Trim low-confidence edges} 0.70: points whose gauge an edge (region, hole, crack) cuts
+        within 0.7 of its half-width are left empty; 0 keeps all, 1 only uncut gauges.
+  \item \ui{Strain type}: \ui{Green-Lagrange} (default), \ui{Infinitesimal}, \ui{Eulerian}.
+  \item \ui{ADVANCED}: \ui{Weighting} (uniform or Gaussian), \ui{Gaussian σ}, \ui{Output spacing},
+        \ui{Pre-fit smoothing}, \ui{Never fit across cracks or holes} (on).
+\end{itemize}
+Fields: εxx, εyy, εxy (tensor shear), ε\(_1\), ε\(_2\), max shear, von Mises, \(\omega\) rot
+(rotation), ε\(_1\) angle, \(\Delta A/A_0\), and the displacements and velocity.
+
+\section{Analysis tab}
+Probes on the reference image: points, lines, virtual extensometers, crack-opening gauges,
+rectangles, circles and polygons. Their readings plot over the frames, along a line, as a
+kymograph, or against the load of a testing machine (stress--strain). Chart data exports as CSV.
+
+\section{Export}
+\ui{Export Results} (\texttt{Ctrl+E}):
+\begin{itemize}
+  \item \ui{Data}: HDF5, MATLAB v7.3, NumPy (one file or one per frame), CSV per frame, with every
+        field and the settings, model and version; NaN outside the region of interest.
+  \item \ui{Images}: PNG, TIFF, JPEG, PDF, SVG, with colorbar options.
+  \item \ui{Animation}: MP4 or GIF, one colour range for every frame.
+  \item \ui{Report}: an HTML summary with parameters, statistics and pictures.
+\end{itemize}
+
+\section{Projects}
+\menu{File}{Save Project} (\texttt{Ctrl+S}) writes a \file{.raftcorr} file: images, regions,
+settings and, if you choose, the results. \menu{File}{Open Project…} (\texttt{Ctrl+O}), or a
+double-click on Windows, reopens the session.
+
+\section{Command line \& Python}
+{\small
+\begin{verbatim}
+raftcorr run images/ --roi roi.png --model s4 \
+    --strain --out results.h5
+raftcorr suggest images/ --roi roi.png
+raftcorr models --download
+raftcorr selftest
+\end{verbatim}
+\begin{verbatim}
+import raftcorr
+s = raftcorr.track("images/", roi="roi.png",
+                   model="s4")
+e = raftcorr.compute_strain(s)
+u, v = s.u[5], s.v[5]   # index 5 = frame 6
+\end{verbatim}
+}
+
+\section{Conventions}
+\((u, v)\) is the displacement from the reference to the deformed image, +u right, +v down, in
+pixels, stored on the reference image (Lagrangian). Shear strain is the tensor component (half the
+engineering shear).
+
+\section{When something is off}
+\begin{center}\small
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}p{0.38\columnwidth}X@{}}
+\toprule
+Symptom & What to do \\
+\midrule
+Residual jumps, odd field & Larger \emph{s}, \ui{Suggest a Model}, or incremental tracking. \\
+Model cannot be downloaded & The Models window opens: \ui{Import Model Files…} from another computer. \\
+Frames out of order & Turn on \ui{Natural Sort}. \\
+Strain empty near edges & Lower \ui{Trim low-confidence edges}; 0 keeps all. \\
+Slow & Device on the GPU (\ui{Automatic} picks it when PyTorch sees one). \\
+pip: path too long (Windows) & Shorter environment folder, or enable long paths. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Issues: \href{https://github.com/zachtong/RAFTcorr/issues}{github.com/zachtong/RAFTcorr/issues}.
+
+\end{document}

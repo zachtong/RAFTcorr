@@ -63,6 +63,7 @@ all = []
 [project.urls]
 Homepage = "https://github.com/zachtong/RAFTcorr"
 Repository = "https://github.com/zachtong/RAFTcorr"
+Documentation = "https://github.com/zachtong/RAFTcorr/blob/main/docs/RAFTcorr_User_Guide.pdf"
 Issues = "https://github.com/zachtong/RAFTcorr/issues"
 Releases = "https://github.com/zachtong/RAFTcorr/releases"
 
