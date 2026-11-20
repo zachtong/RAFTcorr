@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "RAFTcorr"
+type: software
+version: "2.2.0"
+repository-code: "https://github.com/zachtong/RAFTcorr"
+authors:
+  - given-names: Zixiang
+    family-names: Tong
+    orcid: "https://orcid.org/0009-0008-6807-0757"
+    affiliation: "The University of Texas at Austin"
+  - given-names: Lehu
+    family-names: Bu
+    affiliation: "The University of Texas at Austin"
+  - given-names: Qihang
+    family-names: Shi
+    affiliation: "The University of Texas at Austin"
+  - given-names: Runtian
+    family-names: Du
+    affiliation: "The University of Texas at Austin"
+  - given-names: Jin
+    family-names: Yang
+    orcid: "https://orcid.org/0000-0002-5967-980X"
+    affiliation: "The University of Texas at Austin"
+date-released: "2026-11-20"

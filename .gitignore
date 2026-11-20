@@ -17,6 +17,9 @@ dist/
 
 # Local outputs
 /outputs/
+/training/runs/
+/training/cache/
+/samples/
 *.raftcorr
 install.log
 

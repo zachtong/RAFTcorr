@@ -213,6 +213,16 @@ u, v = series.u[5], series.v[5]                                   # image 5 (0-b
 exx = strain.components["exx"][5]
 ```
 
+## Training code and test images
+
+- [`training/`](training/README.md): the code that trained the four models, with the settings of
+  each, and the data generator that draws the training pairs (speckle images and their exact
+  displacement). It is not part of the pip package; run it from a clone of this repository.
+- `RAFTcorr_paper1_test_images.zip`, attached to the
+  [v2.2.0 release](https://github.com/zachtong/RAFTcorr/releases/tag/v2.2.0): the test images of
+  the RAFTcorr paper (synthetic pairs with their exact displacement, and the tensile test), with
+  their SHA-256 checksums and a README.
+
 ## Conventions
 
 `(u, v)` is the displacement from the reference to the deformed image: `+u` right, `+v` down, in
@@ -227,4 +237,5 @@ from RAFT (Teed and Deng, ECCV 2020), BSD 3-Clause License: see `src/raftcorr/nn
 
 ## Citing
 
-TODO: the RAFTcorr paper (in preparation).
+Please cite the software as given in [`CITATION.cff`](CITATION.cff) (GitHub: "Cite this
+repository"). The RAFTcorr paper is in preparation.

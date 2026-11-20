@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.0 (2026-11-20)
+
+The application and the models are unchanged (the model files are still those of `weights-v1`).
+
+### Training code and test data
+- `training/`: the code that trained RAFTcorr-s1, -s2, -s4 and -s8, with the settings of each
+  model, and the data generator that draws the training pairs with their exact displacement.
+  `generate_samples.py` writes generator pairs without training, and `check_parity.py` checks that
+  this network gives the same displacement as the application. The DIV2K images that the
+  deformation fields are made from are not redistributed; `training/README.md` says where to get
+  them. Not part of the pip package.
+- The test images of the RAFTcorr paper are attached to the release as
+  `RAFTcorr_paper1_test_images.zip`.
+- `CITATION.cff`.
+
 ## 2.1.0 (2026-11-19)
 
 ### New
